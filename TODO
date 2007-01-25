@@ -1,0 +1,121 @@
+- Distribution
+  * numchildren method
+  * perlidentifiers regexp
+ 
+  * bypass and no bypass on an individual base (fine grain bypass)
+
+  ***** Reorganize the translation of Treeregexp: the code in the "and" and =>
+    clauses will be a method of the classes of the nodes matching the treeregexp
+    - $treereg->classes computes the classes. doing nothing yet
+    - @{$methods{$_}} contain the classes
+    - Methods Parse::Eyapp::Treeregexp::REGEXP_INNER::classes included
+    - Factorize
+
+  * star treeregexp will be supressed *
+  * "previous" clause for YATW objects when using "bud". The YATW will 
+    be executed before visiting the children. An example of the advantage
+    of doing this is to use "bud" for scope analysis
+  * Jonathan error message
+  * %default action must have an scope
+  * Factorize YYBuildAST and YYActionforT_TX1X2 etc.
+    There is a problem with TERMINAL::save_attributes
+    bypass, plus and star lists, etc. There is no coherent interface
+    at the moment
+  * An action in a %tree directive that returns
+    - undef : eliminate the node
+    - reference: insert the node
+    - string or number: create a TERMINAL node with attr as the string/number
+  * tests and reference manual
+  * #line directives in treereg
+  * Introduce DECLARATION* in treeregexes
+  * version numbers
+  * dags in types
+  * Warning diagnostic (Yure): ID and 'ID' is prone to error
+    Non defined variables are considered terminals: see Identifyattr2.yp. Put info in Output
+  * Better diagnostics: see -v 
+  * Redesign eyapp program structure: head body legs tail or __END__
+  * .output in HTML
+  * Some data structures inside the Parser object are only required 
+    if the %tree or %metatree directives are active. Otimize them away
+    when they are not used (for example syntax tokens, bypass, etc.).
+  * Change names of _PLUSLIST, etc. Make a directive to name them 
+       %name * => _STAR  + => ... , etc.
+    It may influence optimizations like the PARENTHESIS one?
+  * bypass method for YATW and Node objects
+
+  * test for yyfilename
+  * Fix the yyprefix consistency problem between new and YYParse (args)
+  * test for warnings in Lalr Simple1.eyp
+  * What is YYFilename in Driver.pm
+
+  * Treereg grammar
+  * Reference manual. Document functions and methods
+    -- Sort by alphabetical order
+    -- User methods and subroutines. Internal documentation
+    -- Reference manual (perldoc)
+    -- Internal methods and subroutines
+  * Type analysis and scopes
+  * match returning a tree (for scope analysis will be good)
+
+  * Factorize
+
+- Lexical Analysis
+  * Specify reserved words, characters, and handlers (like C code) for specific beginnings
+  * Lexer automatic construction
+
+- Treereg Tree grammars and tree walkers
+ 
+  * Tests
+     - Some rules can be optimized away. Then the name dissapears!!
+     - When a token is in uppercase then it does not agree with the string?
+     - tests with syntax errors
+     - Standalone works?
+     - Debug mode works?
+
+  * Uniformize 
+     - Lower case in new_grammar, uppercase in Treeregexp new, etc.
+     - Also look at scripts
+
+  * Private methods
+  * Indentation and line numbers. 
+
+- Translation Schemes
+  * Scheme examples: leftrec, etc.
+  * Tests
+    - In TS delete the code refs using treeregexp
+  * Documentation
+  * Executable transscheme
+  * Delete args in YATW objects it seems they are no use
+  * TERMINAL nodes inherit from TS and Node. What if I have two parsers
+    in the same application?
+  * Put option %yaml file when using a translation scheme to save the AST
+
+  * TS: Don't check syntax during the construction phase?
+  * Check syntax option in eyapp
+  * Keep Line Numbers in the tree (for tokens)
+
+  * Documentation 
+    - Write package with lex and error for Docs
+  * Copyrights! Parse::Yapp
+
+  * Factorize lists code
+  * Private methods
+  * Admitir directivas-especificaciones de si la lista debe ser left-recursive o right-recursive
+  * Esquema de nombres de las reglas temporales:
+      Reservar la numeración de las reglas de la gramática original
+      y usar posiciones adicionales para las reglas temporales.
+  * Hacer una directiva para la generacion de reglas de error en listas
+  
+  * Supress when production code use Data::Dumper;
+  
+  * %packagename %outputfile %numbers, etc.
+  
+- Optimizations:
+  * Driver in C
+  * BuildAST in C
+
+
+************ PROJECTS *********************
+* C interface with YAML
+* Human friendly warnings and errors, conflicts, debugger with breaks, etc.
+

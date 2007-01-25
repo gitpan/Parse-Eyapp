@@ -1,0 +1,332 @@
+Cannot find page `Parse::Eyapp::Man' at L<> on line 365
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
+<meta content="text/css" http-equiv="Content-Style-Type">
+<meta content="Marek::Pod::HTML 0.49" name="GENERATOR">
+<title>treereg</title>
+</head>
+<body>
+<a class="POD_NAVLINK" name="Pod_TOP_OF_PAGE"></a>
+<h1 class="POD_TITLE">treereg</h1>
+<hr>
+<ul>
+<li><a class="POD_NAVLINK" href="#SYNOPSIS">SYNOPSIS</a>
+<li><a class="POD_NAVLINK" href="#OPTIONS">OPTIONS</a>
+<li><a class="POD_NAVLINK" href="#DESCRIPTION">DESCRIPTION</a>
+<li><a class="POD_NAVLINK" href="#EXAMPLE">EXAMPLE</a>
+<li><a class="POD_NAVLINK" href="#SEE_ALSO">SEE ALSO</a>
+<li><a class="POD_NAVLINK" href="#AUTHOR">AUTHOR</a>
+<li><a class="POD_NAVLINK" href="#LICENSE_AND_COPYRIGH">LICENSE AND COPYRIGHT</a>
+</ul>
+<hr>
+<h2 class="POD_HEAD1"><a name="SYNOPSIS">SYNOPSIS</a></h2>
+<pre class="POD_VERBATIM">
+  treereg [-m packagename] [[no]syntax] [[no]numbers] [-severity 0|1|2|3] \
+          [-p treeprefix] [-o outputfile] -i filename[.trg] 
+  treereg [-m packagename] [[no]syntax] [[no]numbers] [-severity 0|1|2|3] \
+          [-p treeprefix] [-o outputfile] filename[.trg] 
+  treereg -v 
+  treereg -h
+</pre>
+<h2 class="POD_HEAD1"><a name="OPTIONS">OPTIONS</a></h2>
+<p class="POD_TEXT">
+Options can be used both with one dash and double dash.
+It is not necessary to write the full name of the option.
+A disambiguation prefix suffices.
+</p>
+<ul class="POD_LIST">
+<li class="POD_ITEM"><a name="_i_n_filename"><p><code>-i[n] filename</code></p></a>
+<p class="POD_TEXT">
+Input file. Extension <code>.trg</code> is assumed if no extension is provided.
+</p>
+<li class="POD_ITEM"><a name="_o_ut_filename"><p><code>-o[ut] filename</code></p></a>
+<p class="POD_TEXT">
+Output file. By default is the name of the input file (concatenated with .pm)
+</p>
+<li class="POD_ITEM"><a name="_m_od_packagename"><p><code>-m[od] packagename</code></p></a>
+<p class="POD_TEXT">
+Name of the package containing the generated subroutines. 
+By default is the longest prefix of the input file name that
+conforms to the classic definition of integer <code>[a-z_A-Z]\w*</code>.
+</p>
+<li class="POD_ITEM"><a name="_p_refix_treeprefix"><p><code>-p[refix] treeprefix</code></p></a>
+<p class="POD_TEXT">
+Tree nodes automatically generated using <code>Parse::Eyapp</code> are objects blessed 
+into the name of the production. To avoid crashes the programmer may prefix 
+the class names with a given prefix when calling the parser; for example:
+</p>
+<pre class="POD_VERBATIM">
+  $self-&gt;YYParse( yylex =&gt; \&amp;_Lexer, yyerror =&gt; \&amp;_Error, yyprefix =&gt; __PACKAGE__.&quot;::&quot;)
+</pre>
+<p class="POD_TEXT">
+The <code>-prefix treeprefix</code> option simplifies the process of writing the tree 
+grammar so that instead of writing with the full names
+</p>
+<pre class="POD_VERBATIM">
+ CLASS::TIMES(CLASS::NUM, $x) and { $NUM-&gt;{VAL} == 0) =&gt; { $NUM }
+</pre>
+<p class="POD_TEXT">
+it can be written:
+</p>
+<pre class="POD_VERBATIM">
+ TIMES(NUM, $x) and { $NUM-&gt;{VAL} == 0) =&gt; { $NUM }
+</pre>
+<li class="POD_ITEM"><a name="_n_umbers_"><p><code>-n[umbers]</code></p></a>
+<p class="POD_TEXT">
+Produces <code>#line</code> directives.
+</p>
+<li class="POD_ITEM"><a name="_non_umbers_"><p><code>-non[umbers]</code></p></a>
+<p class="POD_TEXT">
+Disable source file line numbering embedded in your parser
+</p>
+<p></p>
+<li class="POD_ITEM"><a name="_sy_ntax_"><p><code>-sy[ntax]</code></p></a>
+<p class="POD_TEXT">
+Checks that Perl code is syntactically correct.
+</p>
+<li class="POD_ITEM"><a name="_nosy_ntax_"><p><code>-nosy[ntax]</code></p></a>
+<p class="POD_TEXT">
+Does not check the syntaxis of Perl code
+</p>
+<li class="POD_ITEM"><a name="_se_verity_number"><p><code>-se[verity] number</code></p></a>
+<dl class="POD_LIST">
+<dt class="POD_ITEM"><a name="_0_Don_t_check_arity">- 0 = Don&#39;t  check arity (default). Matching does not check the arity. The actual node 
+being visited may have more children.</a>
+<dt><a name="_1_Check_arity_Match">- 1 = Check arity. Matching requires the equality of the number of children 
+and the actual node and the pattern.</a>
+<dt><a name="_2_Check_arity_and_g">- 2 = Check arity and give a warning</a>
+<dt><a name="_3_Check_arity_give_">- 3 = Check arity, give a warning and exit</a>
+<dd></dl>
+<li class="POD_ITEM"><a name="_v_ersion_"><p><code>-v[ersion]</code></p></a>
+
+Gives the version
+<li class="POD_ITEM"><a name="_u_sage_"><p><code>-u[sage]</code></p></a>
+<p class="POD_TEXT">
+Prints the usage info
+</p>
+<li class="POD_ITEM"><a name="_h_elp_"><p><code>-h[elp]</code></p></a>
+<p class="POD_TEXT">
+Print this help
+</p>
+</ul>
+<h2 class="POD_HEAD1"><a name="DESCRIPTION">DESCRIPTION</a></h2>
+<p class="POD_TEXT">
+<code>Treereg</code> translates a tree grammar specification
+file (default extension <code>.trg</code> describing 
+a set of tree patterns
+and the actions to modify them 
+using tree-terms like:
+</p>
+<pre class="POD_VERBATIM">
+  TIMES(NUM, $x) and { $NUM-&gt;{VAL} == 0) =&gt; { $NUM }
+</pre>
+<p class="POD_TEXT">
+which says that wherever an abstract syntax tree representing
+the product of a numeric expression with value 0 times
+any other kind of expression, the <code>TIMES</code> tree can be substituted by
+its left child.
+</p>
+<p class="POD_TEXT">
+The compiler produces a Perl module containing the subroutines
+implementing those sets of pattern-actions.
+</p>
+<h2 class="POD_HEAD1"><a name="EXAMPLE">EXAMPLE</a></h2>
+<p class="POD_TEXT">
+Consider the following <code>eyapp</code> grammar (see the <code>Parse::Eyapp</code> documentation
+to know more about <code>Parse::Eyapp</code> grammars):
+</p>
+<pre class="POD_VERBATIM">
+  ----------------------------------------------------------
+  nereida:~/LEyapp/examples&gt; cat Rule6.yp
+  %{
+  use Data::Dumper;
+  %}
+  %right  &#39;=&#39;
+  %left   &#39;-&#39; &#39;+&#39;
+  %left   &#39;*&#39; &#39;/&#39;
+  %left   NEG
+  %tree
+
+  %%
+  line: exp  { $_[1] }
+  ;
+
+  exp:      %name NUM
+	      NUM
+	  | %name VAR
+	    VAR
+	  | %name ASSIGN
+	    VAR &#39;=&#39; exp
+	  | %name PLUS
+	    exp &#39;+&#39; exp
+	  | %name MINUS
+	    exp &#39;-&#39; exp
+	  | %name TIMES
+	    exp &#39;*&#39; exp
+	  | %name DIV
+	    exp &#39;/&#39; exp
+	  | %name UMINUS
+	    &#39;-&#39; exp %prec NEG
+	  |   &#39;(&#39; exp &#39;)&#39;  { $_[2] } /* Let us simplify a bit the tree */
+  ;
+
+  %%
+
+  sub _Error {
+      die  &quot;Syntax error.\n&quot;;
+  }
+
+  sub _Lexer {
+      my($parser)=shift;
+
+	  $parser-&gt;YYData-&gt;{INPUT}
+      or  $parser-&gt;YYData-&gt;{INPUT} = &lt;STDIN&gt;
+      or  return(&#39;&#39;,undef);
+
+      $parser-&gt;YYData-&gt;{INPUT}=~s/^\s+//;
+
+      for ($parser-&gt;YYData-&gt;{INPUT}) {
+	  s/^([0-9]+(?:\.[0-9]+)?)// and return(&#39;NUM&#39;,$1);
+	  s/^([A-Za-z][A-Za-z0-9_]*)// and return(&#39;VAR&#39;,$1);
+	  s/^(.)//s and return($1,$1);
+      }
+  }
+
+  sub Run {
+      my($self)=shift;
+      $self-&gt;YYParse( yylex =&gt; \&amp;_Lexer, yyerror =&gt; \&amp;_Error );
+  }
+  ----------------------------------------------------------
+</pre>
+<p class="POD_TEXT">
+Compile it using <code>eyapp</code>:
+</p>
+<pre class="POD_VERBATIM">
+  ----------------------------------------------------------
+  nereida:~/LEyapp/examples&gt; eyapp Rule6.yp
+  nereida:~/LEyapp/examples&gt; ls -ltr | tail -1
+  -rw-rw----  1 pl users  4976 2006-09-15 19:56 Rule6.pm
+  ----------------------------------------------------------
+</pre>
+<p class="POD_TEXT">
+Now consider this tree grammar:
+</p>
+<pre class="POD_VERBATIM">
+  ----------------------------------------------------------
+  nereida:~/LEyapp/examples&gt; cat Transform2.trg
+  %{
+  my %Op = (PLUS=&gt;&#39;+&#39;, MINUS =&gt; &#39;-&#39;, TIMES=&gt;&#39;*&#39;, DIV =&gt; &#39;/&#39;);
+  %}
+
+  fold: &#39;TIMES|PLUS|DIV|MINUS&#39;:bin(NUM($n), NUM($m))
+    =&gt; {
+      my $op = $Op{ref($bin)};
+      $n-&gt;{attr} = eval  &quot;$n-&gt;{attr} $op $m-&gt;{attr}&quot;;
+      $_[0] = $NUM[0];
+    }
+  zero_times_whatever: TIMES(NUM($x), .) and { $x-&gt;{attr} == 0 } =&gt; { $_[0] = $NUM }
+  whatever_times_zero: TIMES(., NUM($x)) and { $x-&gt;{attr} == 0 } =&gt; { $_[0] = $NUM }
+
+  /* rules related with times */
+  times_zero = zero_times_whatever whatever_times_zero;
+  ----------------------------------------------------------
+</pre>
+<p class="POD_TEXT">
+Compile it with <code>treereg</code>:
+</p>
+<pre class="POD_VERBATIM">
+  ----------------------------------------------------------
+  nereida:~/LEyapp/examples&gt; treereg Transform2.trg
+  nereida:~/LEyapp/examples&gt; ls -ltr | tail -1
+  -rw-rw----  1 pl users  1948 2006-09-15 19:57 Transform2.pm
+  ----------------------------------------------------------
+</pre>
+<p class="POD_TEXT">
+The following program makes use of both modules <code>Rule6.pm</code>
+and <code>Transform2.pm</code>:
+</p>
+<pre class="POD_VERBATIM">
+  ----------------------------------------------------------
+  nereida:~/LEyapp/examples&gt; cat foldand0rule6_3.pl
+  #!/usr/bin/perl -w
+  use strict;
+  use Rule6;
+  use Parse::Eyapp::YATW;
+  use Data::Dumper;
+  use Transform2;
+
+  $Data::Dumper::Indent = 1;
+  my $parser = new Rule6();
+  my $t = $parser-&gt;Run;
+  print &quot;\n***** Before ******\n&quot;;
+  print Dumper($t);
+  $t-&gt;s(@Transform2::all);
+  print &quot;\n***** After ******\n&quot;;
+  print Dumper($t);
+  ----------------------------------------------------------
+</pre>
+<p class="POD_TEXT">
+When the program runs with input <code>b*(2-2)</code> produces the following output:
+</p>
+<pre class="POD_VERBATIM">
+  ----------------------------------------------------------
+  nereida:~/LEyapp/examples&gt; foldand0rule6_3.pl
+  b*(2-2)
+
+  ***** Before ******
+  $VAR1 = bless( {
+    &#39;children&#39; =&gt; [
+      bless( {
+	&#39;children&#39; =&gt; [
+	  bless( { &#39;children&#39; =&gt; [], &#39;attr&#39; =&gt; &#39;b&#39;, &#39;token&#39; =&gt; &#39;VAR&#39; }, &#39;TERMINAL&#39; )
+	]
+      }, &#39;VAR&#39; ),
+      bless( {
+	&#39;children&#39; =&gt; [
+	  bless( { &#39;children&#39; =&gt; [
+	      bless( { &#39;children&#39; =&gt; [], &#39;attr&#39; =&gt; &#39;2&#39;, &#39;token&#39; =&gt; &#39;NUM&#39; }, &#39;TERMINAL&#39; )
+	    ]
+	  }, &#39;NUM&#39; ),
+	  bless( {
+	    &#39;children&#39; =&gt; [
+	      bless( { &#39;children&#39; =&gt; [], &#39;attr&#39; =&gt; &#39;2&#39;, &#39;token&#39; =&gt; &#39;NUM&#39; }, &#39;TERMINAL&#39; )
+	    ]
+	  }, &#39;NUM&#39; )
+	]
+      }, &#39;MINUS&#39; )
+    ]
+  }, &#39;TIMES&#39; );
+
+  ***** After ******
+  $VAR1 = bless( {
+    &#39;children&#39; =&gt; [
+      bless( { &#39;children&#39; =&gt; [], &#39;attr&#39; =&gt; 0, &#39;token&#39; =&gt; &#39;NUM&#39; }, &#39;TERMINAL&#39; )
+    ]
+  }, &#39;NUM&#39; );
+  ----------------------------------------------------------
+</pre>
+<h2 class="POD_HEAD1"><a name="SEE_ALSO">SEE ALSO</a></h2>
+<p class="POD_TEXT">
+<u>Parse::Eyapp::Man</u>, <a class="POD_LINK" href="http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html">http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html</a>
+and  <a class="POD_LINK" href="eyapp.html">eyapp</a>
+</p>
+<h2 class="POD_HEAD1"><a name="AUTHOR">AUTHOR</a></h2>
+<p class="POD_TEXT">
+Casiano Rodriguez-Leon
+</p>
+<h2 class="POD_HEAD1"><a name="LICENSE_AND_COPYRIGH">LICENSE AND COPYRIGHT</a></h2>
+<p class="POD_TEXT">
+Copyright (C) 2006 by Casiano Rodriguez-Leon
+</p>
+<p class="POD_TEXT">
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.8 or,
+at your option, any later version of Perl 5 you may have available.
+</p>
+<hr>
+<a class="POD_NAVLINK" href="#Pod_TOP_OF_PAGE">[Top]</a>
+</body>
+</html>
+
