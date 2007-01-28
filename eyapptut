@@ -1,12 +1,12 @@
-#
-# Module Parse::Eyapp.pm.
-#
-#
-package Parse::eyapptut;
-
+#!/usr/bin/perl -w
+use strict;
+use Pod::Usage;
+use Parse::Eyapp::Scope;
+use Parse::Eyapp::Base;
+use Parse::Eyapp::_TreeregexpSupport;
 our $VERSION = $Parse::Eyapp::Driver::VERSION;
 
-1;
+pod2usage(-exitval => 1, verbose => 2);
 
 __END__
 
@@ -17,7 +17,7 @@ Parse::Eyapp
  
 =head1 VERSION
  
-1.06503
+1.06548
 
 =head1 SYNOPSIS
  
@@ -1751,7 +1751,9 @@ code:
 
 =item * perldoc L<Parse::Eyapp>
 
-=item * The C<Eyapp.pdf> and  C<eyapptut.pdf> files accompanying this distribution
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
+L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+
 
 =item * perldoc L<eyapp>, 
 

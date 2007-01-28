@@ -62,18 +62,18 @@ print "Syntax Tree:",$t->str;
 
 # Let us transform the tree. Define the tree-regular expressions ..
 my $p = Parse::Eyapp::Treeregexp->new( STRING => q{
-  { #  Example of support code
-    my %Op = (PLUS=>'+', MINUS => '-', TIMES=>'*', DIV => '/');
-  }
-  constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y)) 
-    => { 
-      my $op = $Op{ref($_[0])};
-      $x->{attr} = eval  "$x->{attr} $op $y->{attr}";
-      $_[0] = $NUM[0]; 
+    { #  Example of support code
+      my %Op = (PLUS=>'+', MINUS => '-', TIMES=>'*', DIV => '/');
     }
-  uminus: UMINUS(NUM($x)) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
-  zero_times_whatever: TIMES(NUM($x), .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-  whatever_times_zero: TIMES(., NUM($x)) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+    constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y)) 
+      => { 
+        my $op = $Op{ref($bin)};
+        $x->{attr} = eval  "$x->{attr} $op $y->{attr}";
+        $_[0] = $NUM[0]; 
+      }
+    uminus: UMINUS(NUM($x)) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
+    zero_times_whatever: TIMES(NUM($x), .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+    whatever_times_zero: TIMES(., NUM($x)) and { $x->{attr} == 0 } => { $_[0] = $NUM }
   },
   OUTPUTFILE=> 'main.pm'
 );

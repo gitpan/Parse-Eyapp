@@ -27,7 +27,7 @@ This is alpha release 1.06 of the Parse::Eyapp parser generator.
 Parse::Eyapp (Extended yapp) is a collection of modules
 that extends Francois Desarmenien Parse::Yapp 1.05.
 Eyapp extends yacc/yapp syntax with
-functionalities line named attributes,
+functionalities like named attributes,
 EBNF-like expressiones, modifiable default action,
 automatic syntax tree building,
 semi-automatic abstract syntax tree building,
@@ -39,7 +39,7 @@ REQUIREMENTS
 
 Requires perl5.6 or higher
 
-You nee the following modules:
+You need the following modules:
 
                      List::MoreUtils 
                      List::Util  
@@ -56,8 +56,7 @@ Test::Pod
 The tests related with those modules are skipped if you haven't installed
 those modules. 
 
-
-If you decide to install Test::Warn be aware that
+If you decided to install Test::Warn be aware that
 Test::Warn depends on  Array::Compare. My experience is that you must 
 install Array::Compare by hand first (i.e. perl Makefile.PL; make; make test; make install)
 and then go to install Test::Warn.

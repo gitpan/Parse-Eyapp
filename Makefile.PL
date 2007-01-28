@@ -16,7 +16,6 @@ WriteMakefile(
                    },
     'PM' => {
               'lib/Parse/Eyapp.pm' => '$(INST_LIBDIR)/Eyapp.pm',
-              'lib/Parse/eyapptut.pm' => '$(INST_LIBDIR)/eyapptut.pm',
               'lib/Parse/Eyapp/Base.pm' => '$(INST_LIBDIR)/Eyapp/Base.pm',
               'lib/Parse/Eyapp/Options.pm' => '$(INST_LIBDIR)/Eyapp/Options.pm',
               'lib/Parse/Eyapp/Driver.pm' => '$(INST_LIBDIR)/Eyapp/Driver.pm',
@@ -30,7 +29,7 @@ WriteMakefile(
               'lib/Parse/Eyapp/_TreeregexpSupport.pm' => '$(INST_LIBDIR)/Eyapp/_TreeregexpSupport.pm',
               'lib/Parse/Eyapp/Node.pm' => '$(INST_LIBDIR)/Eyapp/Node.pm',
             },
-	'EXE_FILES' => [ 'eyapp', 'treereg' ],
+	'EXE_FILES' => [ 'eyapp', 'treereg', 'eyapptut' ],
 );
 
 sub MY::postamble {
@@ -50,19 +49,29 @@ publicdist: release html pdf dist
 
 xdvi: 
 	pod2latex -full -prefile preamble.tex lib/Parse/Eyapp.pm 
-	pod2latex -full -prefile tutpreamble.tex lib/Parse/eyapptut.pm 
+	pod2latex -full -prefile tutpreamble.tex eyapptut 
 	latex Eyapp.tex; makeindex Eyapp; latex Eyapp.tex 
 	latex eyapptut.tex; makeindex eyapptut; latex eyapptut.tex 
 
 pdf: xdvi
 	dvipdfm Eyapp.dvi
 	rm -f Eyapp.toc Eyapp.log Eyapp.idx Eyapp.aux
+	mv Eyapp.pdf /home/pl/public_html/perlexamples/
+	chmod a+r /home/pl/public_html/perlexamples/Eyapp.pdf
 	dvipdfm eyapptut.dvi
 	rm -f eyapptut.toc eyapptut.log eyapptut.idx eyapptut.aux
+	mv eyapptut.pdf /home/pl/public_html/perlexamples/
+	chmod a+r /home/pl/public_html/perlexamples/eyapptut.pdf
 
 html:
 	#rm -f Eyapp.html podindex.html podtoc.html
-	mpod2html -nonavigation -nobanner -noidx -notoc eyapp treereg lib/Parse/Eyapp.pm 
-	mpod2html -nonavigation -nobanner -noidx -notoc eyapp treereg lib/Parse/eyapptut.pm 
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp treereg lib/Parse/Eyapp.pm 
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp treereg eyapptut 
+	perl -e 's/^Cannot find page .*//gi' -i.bak -p Eyapp.html 
+	perl -e 's/^Cannot find page .*//gi' -i.bak -p eyapptut.html 
+	mv Eyapp.html /home/pl/public_html/perlexamples/
+	chmod a+r /home/pl/public_html/perlexamples/Eyapp.html
+	mv eyapptut.html /home/pl/public_html/perlexamples/
+	chmod a+r /home/pl/public_html/perlexamples/eyapptut.html
 EOT
 }

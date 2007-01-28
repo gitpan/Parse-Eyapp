@@ -1,19 +1,15 @@
 #!/usr/bin/perl -w
+# File: foldand0rule9_4.pl. Compile it with 
+#          eyapp -m 'Calc' Rule9.yp; treereg -o T.pm -p 'R::' -m T Transform4
 use strict;
-# compile it with eyapp Rule9
-use Rule9;
-use Data::Dumper;
-# compile it with: 
-#          treereg -p 'Rule9::' Transform4
-use Transform4;
+use Calc;
+use T;
 
-$Data::Dumper::Indent = 1;
-my $parser = new Rule9(yyprefix => "Rule9::");
-my $t = $parser->YYParse( yylex => \&Rule9::Lexer, yyerror => \&Rule9::Error, 
-		    #yydebug =>0xFF
-		  );
+sub R::TERMINAL::info { $_[0]{attr} }
+my $parser = new Calc(yyprefix => "R::");
+my $t = $parser->YYParse( yylex => \&Calc::Lexer, yyerror => \&Calc::Error);
 print "\n***** Before ******\n";
-print Dumper($t);
-$t->s(@Transform4::all);
+print $t->str."\n";
+$t->s(@T::all);
 print "\n***** After ******\n";
-print Dumper($t);
+print $t->str."\n";

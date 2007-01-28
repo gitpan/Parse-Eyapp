@@ -2,7 +2,6 @@
 use strict;
 use Rule6;
 use Parse::Eyapp::Treeregexp;
-use Parse::Eyapp::Node;
 
 sub TERMINAL::info { $_[0]{attr} }
 
@@ -16,7 +15,7 @@ my $transform = Parse::Eyapp::Treeregexp->new(
     zero_times_whatever: TIMES(NUM($x)) and { $x->{attr} == 0 } => { $_[0] = $NUM }
   },
   SEVERITY => $severity,
-  FIRSTLINE => 15,
+  FIRSTLINE => 14,
 )->generate;
 
 $t->s(our @all);

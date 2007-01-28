@@ -1,6 +1,6 @@
-
 %{
 use Data::Dumper;
+$Data::Dumper::Indent=1;
 sub build_node { 
   my $self = shift;
   my @children = @_;
@@ -11,7 +11,8 @@ sub build_node {
   for(my $i = 0; $i < @right; $i++) {
     $_ = $right[$i];
     if ($self->YYIsterm($_)) {
-      $children[$i] = bless { token => $_, attr => $children[$i] }, __PACKAGE__.'::TERMINAL';
+      $children[$i] = bless { token => $_, attr => $children[$i] },
+                                          __PACKAGE__.'::TERMINAL';
     }
   }
   bless { 

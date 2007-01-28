@@ -397,7 +397,14 @@ sub m {
   # array context: return all matches
   local $a = 0;
   my %index = map { ("$_", $a++) } @patterns;
-  my @stack = ( { node => $self, depth => 0,  dewey => "", patterns =>[] }  );
+  my @stack = (
+    Parse::Eyapp::Node::Match->new( 
+       node => $self, 
+       depth => 0,  
+       dewey => "", 
+       patterns =>[] 
+    ) 
+  );
   my @results;
   do {
     my $mn = CORE::shift(@stack);
@@ -424,7 +431,12 @@ sub m {
           map 
             { 
               $k++; 
-              { node => $_, depth => $childdepth, dewey => "$dewey.$k", patterns => [] } 
+              Parse::Eyapp::Node::Match->new(
+                node => $_, 
+                depth => $childdepth, 
+                dewey => "$dewey.$k", 
+                patterns => [] 
+              ) 
             } $n{node}->children();
   } while (@stack);
 

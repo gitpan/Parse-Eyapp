@@ -3,6 +3,7 @@ use strict;
 use  Parse::Eyapp;
 use  Parse::Eyapp::Treeregexp;
 
+sub TERMINAL::info { $_[0]{attr} }
 my $translationscheme = q{
   %metatree
 
