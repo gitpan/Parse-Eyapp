@@ -362,8 +362,34 @@ When the program runs with input C<b*(2-2)> produces the following output:
 
 =head1 SEE ALSO
 
-L<Parse::Eyapp::Man>, L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html>
-and  L<eyapp>
+=over
+
+=item * L<Parse::Eyapp>,
+
+=item * L<eyapptut>
+
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
+L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+
+=item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
+
+=item * L<eyapp>,
+
+=item * L<treereg>,
+
+=item * L<Parse::yapp>,
+
+=item * yacc(1),
+
+=item * bison(1),
+
+=item * the classic book "Compilers: Principles, Techniques, and Tools" by Alfred V. Aho, Ravi Sethi and
+
+=item * Jeffrey D. Ullman (Addison-Wesley 1986)
+
+=item * L<Parse::RecDescent>.
+
+=back
 
 =head1 AUTHOR
 

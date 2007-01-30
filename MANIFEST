@@ -74,6 +74,7 @@ t/50SimpleChalfscope.t
 t/99Cplusplusgrammar.t
 examples/CalcwithAttributeGrammar.pl
 examples/Calc.yp
+examples/usecalc.pl
 examples/trans_scheme_simple2.pl
 examples/trans_scheme_default_action.pl
 examples/trans_scheme_simple_decls.pl
@@ -111,4 +112,8 @@ examples/Types.eyp
 examples/Trans.trg
 examples/12ts_simplify_with_s.pl
 examples/13ts_simplify_with_delete.pl
+examples/intermediateactiontree.yp
+examples/useintermediateactiontree.pl
+examples/returnnonode.yp
+examples/usereturnnonode.pl
 META.yml                                 Module meta-data (added by MakeMaker)

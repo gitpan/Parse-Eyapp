@@ -206,7 +206,7 @@ sub new_grammar {
 
 __END__
 
-=head1 Parse::Eyapp::Output
+=head1 NAME
  
 Parse::Eyapp::Output - Implements new_grammar and the dumping of Perl code for the Analysis of Eyapp grammars
  
@@ -218,6 +218,11 @@ documents:
 =over
 
 =item * L<Parse::Eyapp>,
+
+=item * L<eyapptut>
+
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
+L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 

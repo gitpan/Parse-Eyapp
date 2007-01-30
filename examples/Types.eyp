@@ -313,7 +313,7 @@ declaration:
          while (my ($id, $arrspec) = splice(@decs, 0, 2)) {
            my $name = $id->{attr}[0];
            my $type = build_type($bt, $arrspec);
-           $type{$type} = Parse::Eyapp::Node->hnew($type); # too much $type for me!
+           $type{$type} = Parse::Eyapp::Node->hnew($type); 
 
            # control duplicated declarations
            die "Duplicated declaration of $name at line $id->{attr}[1]\n" if exists($st{$name});

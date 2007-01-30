@@ -69,9 +69,15 @@ html:
 	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp treereg eyapptut 
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p Eyapp.html 
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p eyapptut.html 
+	perl -e 's/^Cannot find page .*//gi' -i.bak -p eyapp.html 
+	perl -e 's/^Cannot find page .*//gi' -i.bak -p treereg.html 
 	mv Eyapp.html /home/pl/public_html/perlexamples/
 	chmod a+r /home/pl/public_html/perlexamples/Eyapp.html
 	mv eyapptut.html /home/pl/public_html/perlexamples/
 	chmod a+r /home/pl/public_html/perlexamples/eyapptut.html
+	mv eyapp.html /home/pl/public_html/perlexamples/
+	chmod a+r /home/pl/public_html/perlexamples/eyapp.html
+	mv treereg.html /home/pl/public_html/perlexamples/
+	chmod a+r /home/pl/public_html/perlexamples/treereg.html
 EOT
 }

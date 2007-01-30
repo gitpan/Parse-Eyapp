@@ -4,9 +4,9 @@ use Rule6;
 use Shift;
 { no warnings; *TERMINAL::info = \&TERMINAL::attr; }
 
+push @SHIFTLEFT::ISA, 'Parse::Eyapp::Node';
 sub SHIFTLEFT::info { $_[0]{shift} }
 
-$Data::Dumper::Indent = 1;
 my $parser = new Rule6();
 $parser->YYData->{INPUT} = <>;
 my $t = $parser->Run;

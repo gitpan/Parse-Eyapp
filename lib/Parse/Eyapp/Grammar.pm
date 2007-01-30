@@ -471,9 +471,9 @@ sub _ReduceGrammar {
 
 1;
 
-=head1 Parse::Eyapp::Grammar
+=head1 NAME
  
-Parse::Eyapp::Grammar - Provides the methods to simplify the grammar and generate the analyzer
+Parse::Eyapp::Grammar - Methods to simplify the grammar and generate the analyzer
  
 =head1 SEE ALSO
   
@@ -482,6 +482,12 @@ No documentation here. To learn about Parse::Eyapp::Grammar see:
 =over
 
 =item * L<Parse::Eyapp>,
+
+=item * L<eyapptut>
+
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
+L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 

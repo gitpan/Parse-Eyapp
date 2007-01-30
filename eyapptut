@@ -1,9 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
 use Pod::Usage;
-use Parse::Eyapp::Scope;
-use Parse::Eyapp::Base;
-use Parse::Eyapp::_TreeregexpSupport;
 our $VERSION = $Parse::Eyapp::Driver::VERSION;
 
 pod2usage(-exitval => 1, verbose => 2);
@@ -12,12 +9,12 @@ __END__
 
 =head1 NAME
  
-Parse::Eyapp 
+eyapptut: A Parse::Eyapp Tutorial
  
  
 =head1 VERSION
  
-1.06548
+1.06550
 
 =head1 SYNOPSIS
  
@@ -110,7 +107,7 @@ Parse::Eyapp
   
 =head1 Introduction to C<Parse::Eyapp> 
 
-Parse::Eyapp (Extended yapp) is a collection of modules
+L<Parse::Eyapp> (Extended yapp) is a collection of modules
 that extends Francois Desarmenien Parse::Yapp 1.05.
 Eyapp extends yacc/yapp syntax with 
 the functionalities briefly described in this section.
@@ -128,7 +125,7 @@ Grammars can be compiled from a file or from source on the fly
 =head1 Names for attributes
 
 Attributes can be referenced by meaningful names instead
-of the classic error-prone positional approach using the B<dot notation>
+of the classic error-prone positional approach using the I<dot notation>
 like in:
 
        exp : exp.left '-' exp.right  { $left - $right }
@@ -136,10 +133,30 @@ like in:
 By qualifying the first appearance of the syntactic variable C<exp>
 with the notation C<exp.left> we can later refer inside the actions
 to the associated attribute using the lexical variable
-C<$left>.  The B<dolar notation> C<$A> can be used as an abbreviation
-of C<A.A>. For example:
+C<$left>. Thus the former code is equivalent to:
+ 
+                 exp '-' exp
+                  { 
+                    my $lhs = shift; 
+                    my ($left, $right) = @_[1, 3];
+                    $lhs->{n} = $left->{n} - $right->{n} 
+                  }
 
-       exp:  -' $exp %prec NEG { -$exp }
+
+The I<dolar notation> C<$A> can be used as an abbreviation
+of C<A.A>. For example, the code:
+
+                $VAR '=' $exp
+                  { $lhs->{n} = $sym{$VAR->{attr}}->{n} = $exp->{n} }
+
+is equivalent to:
+
+                  VAR '=' exp
+                  { 
+                    my $lhs = shift;
+                    my ($VAR, $exp) = @_[1, 3];
+                    $lhs->{n} = $sym{$VAR->{attr}}->{n} = $exp->{n} 
+                  }
 
 =head1 Lists and Optionals
 
@@ -162,15 +179,18 @@ is almost equivalent to:
           | exp           { bless { children => [ $_[1] ] }, 'EXPRESION_LIST' }
 
 
+other operators are C<*> (meaning 0 or more) and C<?> (for optionality)
 
 =head1 Default actions
 
 When no action is specified both C<yapp> and C<eyapp>
 implicitly insert the semantic action C<{ $_[1] }>. 
 In C<Parse::Eyapp> you can modify such behavior using the C<%defaultaction { Perl code }>
-directive. The Perl code that follows the directive is
+directive. The C<{ Perl code }> clause that follows the C<%defaultaction>
+directive is
 executed when reducing by any production for which no explicit
 action was specified.
+
 See an example that translates an infix expression
 like C<a=b*-3> into a postfix expression like C<a b 3 NEG * = >:
 
@@ -252,49 +272,48 @@ Explicit actions can be specified by the programmer like in
 
       |   '(' exp ')'  { $_[2] }  /* Let us simplify a bit the tree */
 
-the action receives as arguments the references to the children nodes already 
+Explicit actions receive as arguments the references to the children nodes already 
 built. The programmer can influence the shape of the tree by inserting
-this explicit actions. In the example the programmer has decided to simplify the 
+these explicit actions. In this example the programmer has decided to simplify the 
 syntax tree: the nodes associated with the parenthesis are 
 discarded and the reference to the subtree containing the proper
 expression is returned. 
-
-When a I<explicit user action> returns s.t. that is not a reference
-no child will be inserted in the father of the current
-production.
 
 =head2 Displaying Trees
 
 All the node classes build by C<%tree>
 inherit from C<Parse::Eyapp::Node> and consequently have
-acces to the methods provided in such module. Among them is the C<str> method
+access to the methods provided in such module. Among them is the C<str> method
 which dumps the tree. The I<str> method traverses the syntax tree dumping the type
 of the node being visited in a string. If the node has a method C<info> it will
 be executed and its result concatenated to the string. Thus, in the Synopsis
 example, by adding the C<info> method to the class C<TERMINAL>:
 
- sub TERMINAL::info {
-   $_[0]{attr}
- }
+                                 sub TERMINAL::info {
+                                   $_[0]{attr}
+                                 }
 
-we achieve the insertion of attributes in the string build 
+we achieve the insertion of the C<TERMINAL> attribute C<attr>
+in the string build 
 by C<str> (see the partial output of C<synopsis.pl> in section
 L</Syntactic and Semantic tokens>).
-
 The existence of some methods (like C<footnote>) and
 the values of some package variables
 influence the behavior of C<str>. Among the most
 important are:
 
-  @PREFIXES = qw(Parse::Eyapp::Node::); # Prefixes to supress 
-  $INDENT = 0; # 0 = compact, 1 = indent, 2 = indent and include Types in closing parenthesis
-  $STRSEP = ',';
-  $DELIMITER = '[';
-  $FOOTNOTE_HEADER = "\n---------------------------\n";
-  $FOOTNOTE_SEP = ")\n";
-  $FOOTNOTE_LEFT = '^{';
-  $FOOTNOTE_RIGHT = '}';
-  $LINESEP = 4;
+
+  @PREFIXES = qw(Parse::Eyapp::Node::);                              # Prefixes to supress 
+  $INDENT = 0;                                       # 0 = compact, 1 = indent, 2 = indent 
+                                                # and include Types in closing parenthesis
+  $STRSEP = ',';                             # Separator between nodes, by default a comma
+  $DELIMITER = '[';                      # The string returned by C<info> will be enclosed 
+  $FOOTNOTE_HEADER = "\n---------------------------\n"; 
+  $FOOTNOTE_SEP = ")\n"; 
+  $FOOTNOTE_LEFT = '^{';                            # Left delimiter for a footnote number
+  $FOOTNOTE_RIGHT = '}';                           # Right delimiter for a footnote number
+  $LINESEP = 4;                          # When indent=2 the enclosing parenthesis will be
+                                         # commented if more than $LINESEP apart
 
 =head2 C<TERMINAL> nodes
 
@@ -614,11 +633,83 @@ with the debugger:
  BLOCK[8:4:test]^{0}(
    CONTINUE[10,10]
 
+=head2 Returning non References Under C<%tree>
+
+When a I<explicit user action returns s.t. that is not a reference
+no node will be inserted>. This fact can be used to supress nodes
+in the AST being built. See the following example:
+
+ nereida:~/src/perl/YappWithDefaultAction/examples> sed -ne '1,11p' returnnonode.yp | cat -n
+  1  %tree
+  2  %semantic token 'a' 'b'
+  3  %%
+  4  S:  /* empty */
+  5      | S A
+  6      | S B
+  7  ;
+  8  A : 'a'
+  9  ;
+ 10  B : 'b' { }
+ 11  ;
+
+since the action at line 10 returns C<undef>
+the C<B : 'b'> subtree will not be inserted in the AST:
+
+ nereida:~/src/perl/YappWithDefaultAction/examples> usereturnnonode.pl
+ ababa
+ S_2(S_3(S_2(S_3(S_2(S_1,A_4(TERMINAL[a]))),A_4(TERMINAL[a]))),A_4(TERMINAL[a]))
+
+Observe the absence of C<B>s and C<'b'>s.
+
+=head2 Intermediate actions and C<%tree>
+
+Intermediate actions can be used to change the shape of the AST (prune it,
+decorate it, etc.) but the value returned by them is ignored. The grammar 
+below has two intermediate actions. They modify the attributes of the
+node to its left and return a reference C<$f> to such node (lines 5 and 6):
+
+ nereida:~/src/perl/YappWithDefaultAction/examples> \
+          sed -ne '1,10p' intermediateactiontree.yp | cat -n
+  1  %semantic token 'a' 'b'
+  2  %tree bypass
+  3  %%
+  4  S:    /* empty */
+  5      | S A.f { $f->{attr} = "A"; $f; } A
+  6      | S B.f { $f->{attr} = "B"; $f; } B
+  7  ;
+  8  A : %name A 'a'
+  9  ;
+ 10  B : %name B 'b'
+
+See the client program running:
+
+ nereida:~/src/perl/YappWithDefaultAction/examples> cat -n useintermediateactiontree.pl
+  1  #!/usr/bin/perl -w
+  2  use strict;
+  3  use Parse::Eyapp;
+  4  use intermediateactiontree;
+  5
+  6  { no warnings;
+  7  *A::info = *B::info = sub { $_[0]{attr} };
+  8  }
+  9
+ 10  my $parser = intermediateactiontree->new();
+ 11  my $t = $parser->Run;
+ 12  print $t->str,"\n";
+ nereida:~/src/perl/YappWithDefaultAction/examples> useintermediateactiontree.pl
+ aabbaa
+ S_2(S_4(S_2(S_1,A[A],A[a]),B[B],B[b]),A[A],A[a])
+
+The attributes of left C<A>s have been changed from C<'a'> to C<'A'>.
+However no further children have been inserted.
+
 =head2 The C<alias> clause of the C<%tree> directive
 
+Access to children in L<Parse::Eyapp> is made through the C<child> and C<children>
+methods.
 There are occasions however where access by name to the children may be preferable.
 The use of the C<alias> clause with the C<%tree> directive creates accessors
-to the children with names specified by the programmer. The dot and dolar notations
+to the children with names specified by the programmer. The I<dot and dolar notations>
 are used for this. When dealing with a production like:
   
                        A: 
@@ -851,15 +942,19 @@ The client program follows:
   4  use Shift;
   5  { no warnings; *TERMINAL::info = \&TERMINAL::attr; }
   6
-  7  sub SHIFTLEFT::info { $_[0]{shift} }
-  8
-  9  $Data::Dumper::Indent = 1;
+  7  push @SHIFTLEFT::ISA, 'Parse::Eyapp::Node';
+  8  sub SHIFTLEFT::info { $_[0]{shift} }
+  9
  10  my $parser = new Rule6();
  11  $parser->YYData->{INPUT} = <>;
  12  my $t = $parser->Run;
  13  print "***********\n",$t->str,"\n";
  14  $t->s(@Shift::all);
  15  print "***********\n",$t->str,"\n";
+
+Lines 5 and 8 provide the node classes C<TERMINAL> and C<SHIFTLEFT> of C<info>
+methods to be used by C<str> (lines 13 and 14). I<To make> C<SHIFTLEFT> I<a 
+node class it has to inherit from> C<Parse::Eyapp::Node> (line 7).
 
 Multiplications by a power of two are substituted by the corresponding shifts:
 
@@ -868,7 +963,7 @@ Multiplications by a power of two are substituted by the corresponding shifts:
  ***********
  ASSIGN(TERMINAL[a],TIMES(VAR(TERMINAL[b]),NUM(TERMINAL[8])))
  ***********
- ASSIGN(TERMINAL[a],SHIFTLEFT[3])
+ ASSIGN(TERMINAL[a],SHIFTLEFT[3](VAR(TERMINAL[b])))
 
 =head2 Regexp Treeregexps
 
@@ -1751,8 +1846,7 @@ code:
 
 =item * perldoc L<Parse::Eyapp>
 
-=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
-L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
 
 
 =item * perldoc L<eyapp>, 

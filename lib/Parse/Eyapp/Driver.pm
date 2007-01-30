@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.06548';
+$VERSION = '1.06550';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -794,9 +794,9 @@ sub _Parse {
 
 1;
 
-=head1 Parse::Eyapp::Driver
- 
-Parse::Eyapp::Driver - Provides the parser and support methods
+=head1 NAME 
+
+Parse::Eyapp::Driver - LR Parser and methods to support parsing
  
 =head1 SEE ALSO
   
@@ -805,6 +805,11 @@ No documentation here. To learn about Parse::Eyapp::Driver see:
 =over
 
 =item * L<Parse::Eyapp>,
+
+=item * L<eyapptut>
+
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
+L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 

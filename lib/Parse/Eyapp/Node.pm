@@ -1,4 +1,4 @@
-# (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon, all rights reserved.
+# (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon, all rights reserved.
 package Parse::Eyapp::Node;
 use strict;
 use Carp;
@@ -876,6 +876,11 @@ documents:
 =over
 
 =item * L<Parse::Eyapp>,
+
+=item * L<eyapptut>
+
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
+L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 

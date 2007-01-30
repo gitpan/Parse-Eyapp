@@ -194,18 +194,24 @@ sub Option {
 
 __END__
 
-=head1 Parse::Eyapp::Options
+=head1 NAME
  
-Parse::Eyapp::Options - Implements the analysis of options when parsing Eyapp grammars
+Parse::Eyapp::Options - Analysis of Options when parsing Eyapp grammars
  
 =head1 SEE ALSO
   
+Mostly legacy code.
 No documentation here. To learn about Parse::Eyapp::Options see the following
 documents:
   
 =over
 
 =item * L<Parse::Eyapp>,
+
+=item * L<eyapptut>
+
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
+L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 

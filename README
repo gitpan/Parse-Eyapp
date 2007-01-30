@@ -8,7 +8,7 @@ distribution.
 IMPORTANT NOTES
 
 The main sources of documentations are  Parse::Eyapp (Reference guide) and 
-Parse::Eyapp::eyapptut (a tutorial).
+eyapptut (a tutorial).
 Have a look at the tests, they can help you. 
 Not all the examples in the examples/ directory work.
 
@@ -28,7 +28,7 @@ Parse::Eyapp (Extended yapp) is a collection of modules
 that extends Francois Desarmenien Parse::Yapp 1.05.
 Eyapp extends yacc/yapp syntax with
 functionalities like named attributes,
-EBNF-like expressiones, modifiable default action,
+EBNF-like expressions, modifiable default action,
 automatic syntax tree building,
 semi-automatic abstract syntax tree building,
 translation schemes, tree regular expressions,
@@ -73,13 +73,16 @@ LEARNING TO USE IT
 - Make a local copy of the examples/ directory in this distribution
 - Probably it will be also a good idea to make a copy of the tests in the t/ directory.
   They also illustrate the use of Eyapp
-- Print eyapptut.pdf and Eyapp.pdf.
-- Consider saving also the files eyapp.html and eyapptut.html
+- Get the pdf files in 
+     http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf
+     http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf
+
+  Print eyapptut.pdf and Eyapp.pdf.
 - Read eyapptut.pdf first
 
 WARRANTY
 
-This software comes with absolutly NO WARRANTY of any kind. 
+This software comes with absolutely NO WARRANTY of any kind. 
 I just hope it can be useful.
 
 FEEDBACK

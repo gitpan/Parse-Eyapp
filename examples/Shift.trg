@@ -13,4 +13,3 @@ mult2shift: TIMES($e, NUM($m)) and { $power = log2($m->{attr}); (1 << $power) ==
     $_[0]->{shift} = $power;
     $_[0]->type('SHIFTLEFT');
   }
-
