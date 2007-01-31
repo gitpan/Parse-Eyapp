@@ -22,7 +22,7 @@ Parse::Eyapp  - Extensions for Parse::Yapp
  
 =head1 VERSION
  
-1.06550
+1.06552
 
 =head1 SYNOPSIS
  
@@ -125,15 +125,12 @@ translation schemes, tree regular expressions,
 tree transformations, scope analysis support,
 directed acyclic graphs and a few more.
 
-I<This is a reference manual>. 
-I<To read an introduction to> 
-L<Parse::Eyapp> I<see> L<eyapptut>.
-
 =head1 The Eyapp Language
+
+=head2 Eyapp Grammar 
 
 This section describes the syntax of the Eyapp language using its own notation.
 The grammar is compatible with yacc and yapp grammars.
-Follows the grammar accepted by C<eyapp> using its own notation.
 Semicolons have been omitted to save space.
 Between C-like comments you can find an (informal) 
 explanation of the language 
@@ -273,6 +270,67 @@ is equivalent to:
                     $lhs->{n} = $sym{$VAR->{attr}}->{n} = $exp->{n} 
                   }
 
+=head2 Default actions
+
+When no action is specified both C<yapp> and C<eyapp>
+implicitly insert the semantic action C<{ $_[1] }>. 
+In C<Parse::Eyapp> you can modify such behavior using the C<%defaultaction { Perl code }>
+directive. The C<{ Perl code }> clause that follows the C<%defaultaction>
+directive is
+executed when reducing by any production for which no explicit
+action was specified.
+
+See an example that translates an infix expression
+like C<a=b*-3> into a postfix expression like C<a b 3 NEG * = >:
+
+ # File Postfix.eyp (See the examples/ directory)
+ %right  '='
+ %left   '-' '+'
+ %left   '*' '/'
+ %left   NEG
+
+ %defaultaction { return  "$left $right $op"; }
+
+ %%
+ line: $exp  { print "$exp\n" }
+ ;
+
+ exp:        $NUM  { $NUM }
+         |   $VAR  { $VAR }
+         |   VAR.left '='.op exp.right
+         |   exp.left '+'.op exp.right
+         |   exp.left '-'.op exp.right
+         |   exp.left '*'.op exp.right
+         |   exp.left '/'.op exp.right
+         |   '-' $exp %prec NEG { "$exp NEG" }
+         |   '(' $exp ')' { $exp }
+ ;
+
+ %%
+
+ # Support subroutines as in the Synopsis example
+ ...
+
+The file containing the C<Eyapp> program must be compiled with C<eyapp>:
+
+ nereida:~/src/perl/YappWithDefaultAction/examples> eyapp Postfix.eyp
+
+Next, you have to write a client program:
+
+ nereida:~/src/perl/YappWithDefaultAction/examples> cat -n usepostfix.pl
+      1  #!/usr/bin/perl -w
+      2  use strict;
+      3  use Postfix;
+      4
+      5  my $parser = new Postfix();
+      6  $parser->Run;
+
+Now we can run the client program:
+
+ nereida:~/src/perl/YappWithDefaultAction/examples> usepostfix.pl
+ Write an expression: -(2*a-b*-3)
+ 2 a * b 3 NEG * - NEG
+
 =head2 Abstract Syntax Trees : C<%tree> and C<%name>
 
 C<Parse::Eyapp> facilitates the construction of concrete syntax trees and 
@@ -283,8 +341,12 @@ C<name>.
 By default the name of a production is the concatenation
 of the left hand side and the production number. The production number
 is the ordinal number of the production as they appear in the associated 
-C<.output> file (see option C<-v> of L<eyapp>) However, a production can be 
-I<named> using the C<%name> directive. Therefore, in the following
+C<.output> file (see option C<-v> of L<eyapp>). However, a production can be 
+I<named> using the C<%name> directive. 
+For each production rule a 
+namespace/package is created. I<The name of the production
+is the name of the associated package>.
+Therefore, in the following
 code:
 
  exp:
@@ -295,10 +357,11 @@ code:
       | %name UMINUS '-' exp %prec NEG
       |   '(' exp ')'  { $_[2] }  /* Let us simplify a bit the tree */
 
-we are explictly naming the productions. Thus, the node corresponding to the 
-production C<exp: VAR '=' exp> will be named C<ASSIGN>.
+we are explictly naming the productions. Thus, all the node instances 
+corresponding to the 
+production C<exp: VAR '=' exp> will belong to the class C<ASSIGN>.
 
-=head3 Encapsulation
+=head3 About the Encapsulation of Nodes
 
 There is no encapsulation of nodes. The user/client 
 knows that they are hashes that can be decorated with new keys/attributes.
@@ -307,6 +370,8 @@ The only reserved field is C<children> which is a reference to the
 array of children. You can always create a C<Node> class 
 I<by hand> by inheriting from C<Parse::Eyapp::Node>. See 
 section L<Separated Compilation with eyapp and treereg> for an example.
+
+=head3 TERMINAL Nodes
 
 Nodes named C<TERMINAL> are built from the
 tokens provided by the lexical analyzer. 
@@ -329,7 +394,9 @@ built. The programmer can influence the shape of the tree by inserting
 these explicit actions. In this example the programmer has decided to simplify the 
 syntax tree: the nodes associated with the parenthesis are 
 discarded and the reference to the subtree containing the proper
-expression is returned. 
+expression is returned. Such manoeuvre is called I<bypassing>.
+See section L<The  bypass clause and the %no bypass directive>
+to know more about I<automatic bypassing>
 
 =head3 Explicitly Building Nodes With C<YYBuildAST> 
 
@@ -351,15 +418,19 @@ The following example illustrates the situation:
          return $node;
        }
 
-This example defines the expression to access an array element 
+This production rule defines the expression to access an array element 
 as an identifier followed by
-a non empty list of binary expressions. The node corresponding
+a non empty list of binary expressions C< Variable: ID ('[' binary ']')+>. 
+Furthermore, the node corresponding
 to the list of indices has been named C<INDEXSPEC>. 
 
 When no explicit action is
 inserted a binary node will be built having as first child the node
 corresponding to the identifier C<$ID> and as second child the reference 
-to the list of binary expressions. However, the programmer wants to decorate
+to the list of binary expressions. The children corresponding to
+C<'['> and C<']'> are discarded since they are -by default- I<syntactic tokens>
+(see section L<Syntactic and Semantic tokens>).
+However, the programmer wants to decorate
 the node being built with a C<line> attribute holding the line number in the source
 code where the identifier being used appears. The call to the C<Parse::Eyapp::Driver>
 method C<YYBuildAST> does the job of building the node. After
@@ -436,10 +507,12 @@ See the client program running:
  aabbaa
  S_2(S_4(S_2(S_1,A[A],A[a]),B[B],B[b]),A[A],A[a])
 
-The attributes of left C<A>s have been changed from C<'a'> to C<'A'>.
+The 
+attributes 
+of left C<A>s 
+have been effectively changed by the intermediate actions
+from C<'a'> to C<'A'>.
 However no further children have been inserted.
-
-=head2 The directives C<%syntactic token> and  C<%semantic token>
 
 =head3 Syntactic and Semantic tokens
 
@@ -447,15 +520,15 @@ C<Parse::Eyapp> diferences between C<syntactic tokens>
 and C<semantic tokens>. By default all tokens
 declared using string notation (i.e. between quotes
 like C<'+'>, C<'='>, in the Synopsis example)
-are considered C<syntactic tokens>. Tokens declared by an identifier
+are considered I<syntactic tokens>. Tokens declared by an identifier
 (like C<NUM> or C<VAR> in the Synopsis example) are by default considered
-C<semantic tokens>. B<Syntactic tokens are eliminated when building the 
-syntactic tree>. Thus, the first print in the former Synopsis example:
+I<semantic tokens>. B<Syntactic tokens do not yield to nodes in the
+syntactic tree>. Thus, the first print in the former L</SYNOPSIS> example:
 
-  $parser->YYData->{INPUT} = "2*-3+b*0;--2\n"; 
-  my $t = $parser->Run;                    
-  local $Parse::Eyapp::Node::INDENT=2;
-  print "Syntax Tree:",$t->str;
+              $parser->YYData->{INPUT} = "2*-3+b*0;--2\n"; 
+              my $t = $parser->Run;                    
+              local $Parse::Eyapp::Node::INDENT=2;
+              print "Syntax Tree:",$t->str;
 
 
 gives as result the following output:
@@ -492,6 +565,13 @@ gives as result the following output:
    ) # UMINUS
  ) # EXPRESION_LIST
 
+C<TERMINAL> nodes corresponding to tokens that were defined by strings like
+C<'='>, C<'-'>, C<'+'>, C<'/'>, C<'*'>, C<'('> and C<')'>  do not 
+appear in the tree.  C<TERMINAL> nodes corresponding to tokens that were defined
+using an identifer, like C<NUM> or C<VAR> are, by default,  I<semantic tokens>
+and appear in the AST.
+
+
 =head3 Changing the Status of a Token 
 
 The new token declaration directives C<%syntactic token> and
@@ -524,13 +604,14 @@ given the grammar:
    ;
    %%
 
-the tree build for input C<abc> will be C<ABC(A(TERMINAL),B,C(TERMINAL))>.
+the tree build for input C<abc> will be 
+C<ABC(A(TERMINAL[a]),B,C(TERMINAL[c]))>.
 
 =head3 Saving the Information of Syntactic Tokens in their Father
 
 The reason for the adjective C<%syntactic> applied to a token is to 
 state that the token influences the shape of the syntax tree
-but carries no other information. When the tree is built
+but carries no other information. When the syntax tree is built
 the node corresponding to the token is discarded.
 
 Sometimes the difference between syntactic and semantic 
@@ -541,22 +622,23 @@ diagnostic. But if the node was discarded the information
 about that line number is no longer available.
 When building the syntax tree C<Parse::Eyapp> (namely
 the method C<Parse::Eyapp::YYBuildAST>) checks 
-a C<TERMINAL::save_attributes> method exists and if so
-it will be called when visiting a syntactic terminal. 
+if the method C<TERMINAL::save_attributes> exists and if so
+it will be called when dealing with a I<syntactic token>. 
 The method receives as argument - additionally
-to the reference to the C<TERMINAL> node - a reference
+to the reference to the attribute of the token as it
+is returned by the lexer - a reference
 to the node associated with the left hand side of the
 production. Here is an example (file C<examples/Types.eyp>)
 of use:
 
-  sub TERMINAL::save_attributes {
-    # $_[0] is a syntactic terminal
-    # $_[1] is the father.
-    push @{$_[1]->{lines}}, $_[0]->[1]; # save the line!
-  }
+              sub TERMINAL::save_attributes {
+                # $_[0] is a syntactic terminal
+                # $_[1] is the father.
+                push @{$_[1]->{lines}}, $_[0]->[1]; # save the line number
+              }
 
 
-=head2 The  C<bypass> clause and the C<%no bypass> directive
+=head3 The  C<bypass> clause and the C<%no bypass> directive
 
 The shape of the tree can be also modified using some C<%tree> clauses
 as C<%tree bypass> which will produce an automatic I<bypass> of any
@@ -564,7 +646,7 @@ node with only one child at tree-construction-time.
 
 A I<bypass operation> consists in I<returning the only child 
 of the node being visited to the father of the node and re-typing (re-blessing)
-the node in the name of the production> (if a name is provided). 
+the node in the name of the production> (if a name was provided). 
 
 A node may have only one child at tree-construction-time for one of
 two reasons. 
@@ -578,8 +660,9 @@ was already unary like in:
                            exp:
                                %name NUM  NUM 
 
-Here the C<NUM> node will be bypassed and the child C<TERMINAL> built
-from the information provided by the lexical analyzer will be renamed
+Here - if the C<bypass> clause is used - 
+the C<NUM> node will be bypassed and the child C<TERMINAL> built
+from the information provided by the lexical analyzer will be renamed/reblessed 
 as C<NUM>.
   
 =item *
@@ -592,8 +675,8 @@ like in:
 
 =back
 
-As consequence of the blind application of the I<bypass rule>
-undesired bypasses may occur like in
+A consequence of the global scope application of C<%tree bypass>
+is that undesired bypasses may occur like in
 
                            exp : %name UMINUS
                                  '-' $exp %prec NEG
@@ -607,7 +690,8 @@ production:
                            exp : %no bypass UMINUS
                                  '-' $exp %prec NEG
 
-The following example is the equivalent of the I<Synopsis example>
+The following example (file C<examples/bypass.pl>) 
+is the equivalent of the L</SYNOPSIS> example
 but using the C<bypass> clause instead:
 
  use Parse::Eyapp;
@@ -677,7 +761,8 @@ but using the C<bypass> clause instead:
 
  print $t->str,"\n";
 
-when running this example we obtain the following output:
+when running this example with input C<"a=2*-3+b*0\n">
+we obtain the following output:
 
  nereida:~/src/perl/YappWithDefaultAction/examples> bypass.pl
 
@@ -689,7 +774,7 @@ when running this example we obtain the following output:
 As you can see the trees are more compact when using the C<bypass> directive.
 
 
-=head2 The C<alias> clause of the C<%tree> directive
+=head3 The C<alias> clause of the C<%tree> directive
 
 Access to children in L<Parse::Eyapp> is made through the C<child> and C<children>
 methods.
@@ -887,8 +972,8 @@ order and the C<CODE> nodes are executed.
 =back
 
 This combination of bottom-up parsing with depth first traversin
-leads to a semantic behavior similar to LL and top-down parsers
-but with several differences:
+leads to a semantic behavior similar to recursive top-down parsers
+but with two advantages:
 
 =over
 
@@ -906,10 +991,10 @@ to nodes on the right side of the action like in:
 The C<%begin { code }> directive  can be used when
 building a translation scheme, i.e. when under the 
 control of the C<%metatree> directive.
-It indicates that such C<code> will be executed at tree
-construction time. Therefore the code receives as arguments
+It indicates that such C<{ code }> will be executed at I<tree
+construction time>. Therefore the code receives as arguments
 the references to the nodes of the branch than is being built.
-Usually the code assist in the construction of the tree.
+Usually I<begin code> assist in the construction of the tree.
 Line 39 of the following code shows an example.
 The action C<{ $exp }> simplifies the syntax tree
 bypassing the parenthesis node. The example also illustrates
@@ -1679,7 +1764,7 @@ As an example consider the grammar (file C<PlusList1.yp> in C<examples/>)
   ;
   %%
 
-When the parser is called with C<yyedebug> activated:
+When the parser is called with C<yydebug> activated:
 
   $self->YYParse(yylex => \&_Lexer, yyerror => \&_Error , yydebug => 0x1F);
 
@@ -2492,7 +2577,7 @@ treeregexp transformation:
       return 1;
     }
 
-=head1 TRANSFORMATIONS: Parse::Eyapp:YATW 
+=head1 Transformations Objects: Parse::Eyapp:YATW  Methods
 
 Parse::Eyapp:YATW objects represent tree transformations.
 They carry the information of what nodes match and how to modify
@@ -3013,7 +3098,7 @@ The example in the L</SYNOPSIS> section illustrates the use:
 The call at line 20 can be substituted by C<$uminus-E<gt>s($t)>
 without changes.
 
-=head1 Parse::Eyapp::Scope
+=head1 Scope Analysis with Parse::Eyapp::Scope
 
 A scope manager helps to compute the mapping function
 that maps the uses (instances) of 

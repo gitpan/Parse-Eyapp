@@ -1070,7 +1070,7 @@ sub Parse::Eyapp::Treeregexp::GLOBALCODE::translate {
          "$transform->[0]\n";
 };
 
-=head1 Parse::Eyapp::Treeregexp
+=head1 NAME
  
 Parse::Eyapp::Treeregexp - Implements the translator of Tree Regular Expresions to Perl
  

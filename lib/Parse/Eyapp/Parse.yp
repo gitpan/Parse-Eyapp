@@ -1012,7 +1012,7 @@ sub Parse {
     $parsed
 }
 
-=head1 Parse::Eyapp::Parse
+=head1 NAME
  
 Parse::Eyapp::Parse - Implements parser objects
  

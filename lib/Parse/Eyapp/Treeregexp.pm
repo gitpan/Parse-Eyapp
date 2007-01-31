@@ -1,6 +1,6 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.06550.
+#    This file was generated using Parse::Eyapp version 1.06552.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -229,7 +229,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.06550',
+    my($self)=$class->SUPER::new( yyversion => '1.06552',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'treeregexplist', '$end' ], 0 ],
@@ -1897,7 +1897,7 @@ sub Parse::Eyapp::Treeregexp::GLOBALCODE::translate {
          "$transform->[0]\n";
 };
 
-=head1 Parse::Eyapp::Treeregexp
+=head1 NAME
  
 Parse::Eyapp::Treeregexp - Implements the translator of Tree Regular Expresions to Perl
  

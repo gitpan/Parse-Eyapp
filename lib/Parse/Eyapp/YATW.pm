@@ -267,7 +267,7 @@ sub s {
 
 __END__
 
-=head1 Parse::Eyapp::YATW
+=head1 NAME
  
 Parse::Eyapp::YATW - Implements AST transformations
  
