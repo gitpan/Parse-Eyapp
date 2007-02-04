@@ -63,6 +63,7 @@ t/38tspostfix_resultisarray.t
 t/39tspostfix.t
 t/40wrongoptionforTreeregexp_new.t
 t/41indexbug.t
+t/42pod.t
 t/43dotandscalar.t
 t/44repeatedarray.t
 t/45starandarray.t
@@ -116,4 +117,6 @@ examples/intermediateactiontree.yp
 examples/useintermediateactiontree.pl
 examples/returnnonode.yp
 examples/usereturnnonode.pl
+examples/treewithnames.pl
+examples/treewithoutnames.pl
 META.yml                                 Module meta-data (added by MakeMaker)

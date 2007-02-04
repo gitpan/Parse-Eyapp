@@ -200,7 +200,7 @@ the entry for the node in the symbol table:
 
   *VARARRAY::key = *FUNCTIONCALL::key = \&VAR::key;
 
-=item  For each aditional arguments C<attr#k> an
+=item * For each aditional arguments C<attr#k> an
 entry C<$x-E<gt>{attr#k>} will be built.
 That entry references C<$symboltable{$x-E<gt>key}{attr#k}>. Therefore
 the entry for C<$x> in the symbol table must already 

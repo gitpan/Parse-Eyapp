@@ -14,7 +14,7 @@ eyapptut - A Parse::Eyapp Tutorial
  
 =head1 VERSION
  
-1.06552
+1.06555
 
 =head1 SYNOPSIS
  
@@ -817,10 +817,10 @@ Summarizing, that means that
 C<UMINUS> nodes whose only child
 is a number C<NUM> will be substituted by the  C<NUM> node but with the sign changed
 
-=item Constant folding will be applied: trees representing
+=item * Constant folding will be applied: trees representing
 constants expressions will be substituted by a C<NUM> node representing its value
  
-=item All the C<TIMES> nodes with one child holding the value 0 will be substituted
+=item * All the C<TIMES> nodes with one child holding the value 0 will be substituted
 by that child
 
 =back

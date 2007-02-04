@@ -1,7 +1,7 @@
 # Calc.yp
 %right  '='
 %left   '-' '+'
-%left   '*' ':'
+%left   '*' '/'
 %left   NEG
 %right  '^'
 %{
@@ -27,7 +27,7 @@ exp:
   | exp '+' exp         { $_[1] + $_[3] }
   | exp '-' exp         { $_[1] - $_[3] }
   | exp '*' exp         { $_[1] * $_[3] }
-  | exp ':' exp         
+  | exp '/' exp         
     {
            $_[3] and return($_[1] / $_[3]);
        $_[0]->YYData->{ERRMSG}

@@ -864,7 +864,7 @@ sub info {
 
 __END__
 
-=head1 Parse::Eyapp::Node
+=head1 NAME
  
 Parse::Eyapp::Node - Implements AST node objects and their methods
  

@@ -83,6 +83,11 @@ sub man {
 }
 __END__
 
+=head1 NAME 
+
+treereg - Compiler for Tree Regular Expressions 
+
+
 =head1 SYNOPSIS
 
   treereg [-m packagename] [[no]syntax] [[no]numbers] [-severity 0|1|2|3] \
