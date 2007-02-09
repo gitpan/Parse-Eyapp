@@ -116,7 +116,7 @@ my $p = Parse::Eyapp::Treeregexp->new( STRING => q{
          $BLOCK[0]->insert_before($WHILE, $assign);
        }
   },
-  OUTPUTFILE => 'main.pm',
+  #OUTPUTFILE => 'main.pm',
   FIRSTLINE => 104,
 );
 $p->generate();

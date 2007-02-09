@@ -138,7 +138,7 @@ EOT
 #                  );
 #  die "$warnings\nSolve Ambiguities. See file main.output\n"  if $warnings;
 #
-# Returns    : string reporting about the ambigueties and conflicts or ''
+# Returns    : string reporting about the ambiguities and conflicts or ''
 # Throws     : croaks if invalid arguments, if the grammar has errors, if can not open
 #              files or if the semantic actions have errors
 #             

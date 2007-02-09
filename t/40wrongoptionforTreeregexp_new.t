@@ -70,7 +70,7 @@ sub Run {
 }; # end grammar
 
 #$Data::Dumper::Indent = 1;
-Parse::Eyapp->new_grammar(input=>$grammar, classname=>'AB', firstline => 9, outputfile => 'AB.pm');
+Parse::Eyapp->new_grammar(input=>$grammar, classname=>'AB', firstline => 9); #, outputfile => 'AB.pm');
 my $parser = AB->new();
 my $t = $parser->Run("abc");
 #print "\n***** Before ******\n";

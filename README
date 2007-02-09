@@ -7,8 +7,7 @@ distribution.
 
 IMPORTANT NOTES
 
-The main sources of documentations are  Parse::Eyapp (Reference guide) and 
-eyapptut (a tutorial).
+The main source of documentation is  Parse::Eyapp (Reference guide).
 Have a look at the tests, they can help you. 
 Not all the examples in the examples/ directory work.
 
@@ -22,7 +21,7 @@ Any help on improving those documentations is very welcome.
 
 DESCRIPTION
 
-This is alpha release 1.06 of the Parse::Eyapp parser generator.
+This is alpha release 1.067 of the Parse::Eyapp parser generator.
 
 Parse::Eyapp (Extended yapp) is a collection of modules
 that extends Francois Desarmenien Parse::Yapp 1.05.
@@ -75,9 +74,8 @@ LEARNING TO USE IT
   They also illustrate the use of Eyapp
 - Get the pdf files in 
      http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf
-     http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf
 
-- Print eyapptut.pdf and Eyapp.pdf.
+- Print Eyapp.pdf.
 
 WARRANTY
 

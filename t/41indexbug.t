@@ -117,7 +117,7 @@ my $grammar = q{
         algebraic_transformations = constantfold zero_times times_zero comasocfold;
 
       }, 
-      OUTPUTFILE => 'main.pm',
+      #OUTPUTFILE => 'main.pm',
       SEVERITY => 0,
       NUMBERS => 0,
       );

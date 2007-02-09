@@ -1,7 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
 use Test::More;
-eval "use Test::Pod 1.00";
+eval <<EOI;
+use Test::Pod;
+EOI
 plan skip_all => "Test::Pod 1.00 required for testing POD" if $@;
 my @poddirs;
 if (-r 'lib') {

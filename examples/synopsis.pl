@@ -32,12 +32,12 @@ my $grammar = q{
   sub _Lexer {
     my($parser)=shift; # The parser object
 
-    for ($parser->YYData->{INPUT}) {
-      s/^\s+//;
+    for ($parser->YYData->{INPUT}) { # Topicalize
+      m{\G\s+}gc;
       $_ eq '' and return('',undef);
-      s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
-      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-      s/^(.)//s and return($1,$1);
+      m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
+      m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
+      m{\G(.)}gcs and return($1,$1);
     }
   }
 

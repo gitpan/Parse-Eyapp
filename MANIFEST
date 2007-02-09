@@ -72,7 +72,7 @@ t/47ruleindex.t
 t/48yyprefix.t
 t/49conflicts.t
 t/50SimpleChalfscope.t
-t/99Cplusplusgrammar.t
+t/97podcoverage.t
 examples/CalcwithAttributeGrammar.pl
 examples/Calc.yp
 examples/usecalc.pl
@@ -119,4 +119,7 @@ examples/returnnonode.yp
 examples/usereturnnonode.pl
 examples/treewithnames.pl
 examples/treewithoutnames.pl
+examples/intermediateaction2.yp
+examples/useintermediateaction2.pl
+examples/Pir.pl
 META.yml                                 Module meta-data (added by MakeMaker)

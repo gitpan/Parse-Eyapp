@@ -22,7 +22,7 @@ Parse::Eyapp  - Extensions for Parse::Yapp
  
 =head1 VERSION
  
-1.06555
+1.069
 
 =head1 SYNOPSIS
  
@@ -47,9 +47,9 @@ Parse::Eyapp  - Extensions for Parse::Yapp
 
    /* The %name directive defines the name of the class to which the node being built belongs */
    exp:
-       %name NUM  NUM            | %name VAR   VAR         | %name ASSIGN VAR '=' exp 
-     | %name PLUS exp '+' exp    | %name MINUS exp '-' exp | %name TIMES  exp '*' exp 
-     | %name DIV     exp '/' exp | %name UMINUS '-' exp %prec NEG 
+       %name NUM  NUM            | %name VAR   VAR         | %name ASSIGN VAR '=' exp
+     | %name PLUS exp '+' exp    | %name MINUS exp '-' exp | %name TIMES  exp '*' exp
+     | %name DIV     exp '/' exp | %name UMINUS '-' exp %prec NEG
      |   '(' exp ')'  { $_[2] }  /* Let us simplify a bit the tree */
    ;
 
@@ -59,12 +59,12 @@ Parse::Eyapp  - Extensions for Parse::Yapp
    sub _Lexer {
      my($parser)=shift; # The parser object
 
-     for ($parser->YYData->{INPUT}) {
-       s/^\s+//;
+     for ($parser->YYData->{INPUT}) { # Topicalize
+       m{\G\s+}gc;
        $_ eq '' and return('',undef);
-       s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
-       s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-       s/^(.)//s and return($1,$1);
+       m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
+       m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
+       m{\G(.)}gcs and return($1,$1);
      }
    }
 
@@ -77,10 +77,10 @@ Parse::Eyapp  - Extensions for Parse::Yapp
  our (@all, $uminus);
 
  Parse::Eyapp->new_grammar( # Create the parser package/class
-   input=>$grammar,    
+   input=>$grammar,
    classname=>'Calc', # The name of the package containing the parser
    firstline=>7       # String $grammar starts at line 7 (for error diagnostics)
- ); 
+ );
  my $parser = Calc->new();                # Create a parser
  $parser->YYData->{INPUT} = "2*-3+b*0;--2\n"; # Set the input
  my $t = $parser->Run;                    # Parse it!
@@ -92,11 +92,11 @@ Parse::Eyapp  - Extensions for Parse::Yapp
      { #  Example of support code
        my %Op = (PLUS=>'+', MINUS => '-', TIMES=>'*', DIV => '/');
      }
-     constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y)) 
-       => { 
+     constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y))
+       => {
          my $op = $Op{ref($bin)};
          $x->{attr} = eval  "$x->{attr} $op $y->{attr}";
-         $_[0] = $NUM[0]; 
+         $_[0] = $NUM[0];
        }
      uminus: UMINUS(NUM($x)) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
      zero_times_whatever: TIMES(NUM($x), .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
@@ -111,13 +111,14 @@ Parse::Eyapp  - Extensions for Parse::Yapp
 
  local $Parse::Eyapp::Node::INDENT=0;
  print "\nSyntax Tree after transformations:\n",$t->str,"\n";
+
   
 =head1 Introduction
 
 Parse::Eyapp (Extended yapp) is a collection of modules
 that extends Francois Desarmenien Parse::Yapp 1.05.
 Eyapp extends yacc/yapp syntax with 
-functionalities line named attributes,
+functionalities like named attributes,
 EBNF-like expressions, modifiable default action,
 automatic syntax tree building,
 semi-automatic abstract syntax tree building,
@@ -125,12 +126,37 @@ translation schemes, tree regular expressions,
 tree transformations, scope analysis support,
 directed acyclic graphs and a few more.
 
+This document is divided in three parts:
+
+=over
+
+=item *  The first part
+describes the Eyapp language. It goes from section
+L</The Eyapp Language> to section L</Parse::Eyapp::Parse objects>.
+If you are just interested in parsing and are looking 
+for a L<yacc>/L<yapp> compatible extension read this part.
+
+=item *
+The second part describes the Treeregexp language.
+It goes from section L</The Treeregexp Language>
+to section L</Tree Substitution: The s methods>. 
+Read it if you are interested in generating abstract syntax
+trees and transform them. 
+
+=item * The third part
+(section L<Scope Analysis with Parse::Eyapp::Scope>)
+describes the Eyapp interface for Scope Analysis.
+It can be useful if your application language 
+has nested scopes.
+
+=back
+
 =head1 The Eyapp Language
 
 =head2 Eyapp Grammar 
 
 This section describes the syntax of the Eyapp language using its own notation.
-The grammar is compatible with yacc and yapp grammars.
+The grammar extends L<yacc> and L<yapp> grammars.
 Semicolons have been omitted to save space.
 Between C-like comments you can find an (informal) 
 explanation of the language 
@@ -189,13 +215,42 @@ associated with the token.
   tail:  TAILCODE ?  /* TAILCODE is { Perl code ... } */
 
 The semantic of C<Eyapp> agrees with the semantic of C<yacc> and C<yapp>
-for all the common constructions. For an introduction to the extensions
-see L<eyapptut>. 
+for all the common constructions. 
 
-If you are already familiar with L<Parse::Yapp>, yacc or L<Parse::RecDescent> you'll have no
-problem understanding the former description. 
+=head2 Comments
 
-=head2 The head section
+Comments are either Perl style, from C<#>
+up to the end of line, or C style, enclosed between  C</*> and C<*/>.
+
+=head2 Syntactic Variables, Symbolic Tokens and String Literals
+
+Two kind of symbols may appear inside a Parse::Eyapp program:
+I<Non-terminal> symbols or I<syntactic variables>, 
+called also I<left-hand-side> symbols
+and I<Terminal> symbols, called
+also I<Tokens>.
+
+Tokens are the symbols the lexical analyzer function returns to the parser.
+There are two kinds: I<symbolic tokens> and I<string
+literals>.
+
+I<Syntactic variables> and I<symbolic tokens> identifiers must conform
+to the regular expression C<[A-Za-z][A-Za-z0-9_]*>.
+
+When building the syntax tree (i.e. when running under the C<%tree>
+directive) I<symbolic tokens> will be considered I<semantic tokens> (see section
+L</Syntactic and Semantic tokens>).
+
+String literals are enclosed in single quotes and can contain almost
+anything. They will be received by the parser as double-quoted strings. 
+Any special character as C<'"'>, C<'$'> and C<'@'> is escaped.
+To have a single quote inside a literal, escape it with '\'.
+
+When building the syntax tree (i.e. when running under the C<%tree>
+directive) I<string literals> will be considered I<syntactic tokens> (see section
+L</Syntactic and Semantic tokens>).
+
+=head2 The Head Section
 
 An Eyapp program has three parts: 
 
@@ -210,9 +265,12 @@ The head section contains a list of declarations
                                  headsec:  decl *
 
 There are different kinds of declarations. This reference does not 
-fully describes those declarations that are shared with L<yacc> and 
+fully describes all the declarations that are shared with L<yacc> and 
 L<yapp>. 
-In this and the incoming sections we will describe the basics
+
+=head3 Example of Head Section
+
+In this and the next sections we will describe the basics
 of the Eyapp language using the file C<examples/Calc.eyp> 
 that accompanies this distribution. This file implements a trivial 
 calculator. Here is the header section:
@@ -230,23 +288,26 @@ calculator. Here is the header section:
  10
  11  %%
 
-Lines 2-5 declare several tokens. The iusual way to declare
+=head3 Declarations and Precedence
+
+Lines 2-5 declare several tokens. The usual way to declare
 tokens is through the C<%token> directive. The declarations 
-C<%nonassco>, C<%left> and C<%right> 
+C<%nonassoc>, C<%left> and C<%right> 
 not only declare the tokens but also associate a I<priority> with them.  
 Tokens declared in the same line have the same precedence. 
 Tokens declared with these directives in lines below have more
-precedence than thos declared above. Thus, in the example
+precedence than those declared above. Thus, in the example
+above
 we are saying that C<"+"> and C<"-"> have the same precedence
-but higher precedence than C<"=">. The final effect of C<"-">
-having greater precedence than C<"="> will be that an
+but higher precedence than C<"\=">. The final effect of C<"-">
+having greater precedence than C<"\="> will be that an
 expression like:
 
                         a = 4 - 5
 
 will be interpreted as
  
-                        a = (4 -5)
+                        a = (4 - 5)
 
 and not as
 
@@ -262,6 +323,8 @@ will be interpreted as
 
                          (4 - 5) - 9
 
+=head3 Header Code
+
 Perl code surrounded by C<%{> and C<%}>
 can be inserted in this section. Such code will be inserted in the module
 generated by C<eyapp> near the beginning. Therefore, declarations like the
@@ -271,18 +334,174 @@ one of the calculator symbol table C<%s>
   8  my %s; # symbol table
   9  %}
 
-will be visible from almost any point in the parser.
+will be visible from almost any point in the file.
+
+=head3 The Start Symbol of the Grammar
+
+C<%start IDENT> declares C<IDENT> as the start symbol of 
+the grammar. When C<%start> is not
+used, the first rule in the body section will be used.
+
+=head3 Expect
+
+The C<%expect #NUMBER> directive works as in L<bison> 
+and  suppress warnings when the number of Shift/Reduce
+conflicts is exactly C<#NUMBER>. See section 
+L</Solving Ambiguities and Conflicts> to know more
+about Shift/Reduce conflicts.
+
+=head3 Type and Union
+
+C oriented declarations like C<%type> and C<%union> are
+parsed but ignored.
 
 
 =head2 The Body
 
-The body section contains the production rules describing the grammar:
+The body section contains the rules describing the grammar:
 
-  body:   rules * '%%'
-  rules:  IDENT ':' rhss ';'  
-  rhss:   (optname rhs (prec epscode)?) <+ '|'>  
+                       body:   rules * '%%'
+                       rules:  IDENT ':' rhss ';'  
+                       rhss:   (optname rhs (prec epscode)?) <+ '|'>  
 
-The body of our calculator example is:
+
+=head3 Rules
+
+A rule is made of a left-hand-side symbol (the I<syntactic variable>), 
+followed by a C<':'> and one
+or more I<right-hand-sides> (or I<productions>)
+ separated by C<'|'> and terminated by a C<';'>
+like in:
+
+                          exp: 
+                               exp '+' exp
+                            |  exp '-' exp
+                          ;
+
+A I<production> (I<right hand side>) may be empty:
+
+                          input:   
+                               /* empty */
+                            |  input line
+                          ;
+
+The former two productions can be abbreviated as
+
+                          input: 
+                               line *
+                          ;
+
+The operators C<*>, C<+> and C<?> are presented in section
+L</Lists and Optionals>.
+
+A I<syntactic variable cannot appear more than once as
+a rule name> (This differs from L<yacc>).
+
+=head3 Semantic Values and Semantic Actions
+
+A I<production A: X_1 X_2 ... X_n> can be followed by a 
+I<semantic action>. Such
+semantic action is nothing but Perl code that will be treated 
+as an anonymous subroutine. 
+
+The C<Eyapp> parser builds the syntax tree using a I<left-right
+bottom-up traverse of the syntax tree. Each times
+the Parser visits a production A: X_1 X_2 ... X_n
+to build new nodes
+the associated semantic action is called>. 
+The process of visiting the I<handle> like subtree of the
+syntax tree
+
+                                  A 
+                                  |
+                                  |--X_1
+                                  |--X_2
+                                  .
+                                  .
+                                  .
+                                  `--X_n
+
+and calling the associated 
+semantic action is known - in LR terminology - as a I<reduction
+by the production A: X_1 X_2 ... X_n>.
+
+Asociated with each symbol
+of a Parse::Eyapp grammar there is a I<Semantic Value>
+or I<Attribute>. The semantic values of terminals are provided
+by the lexical analyzer. In the calculator example,
+the semantic value associated with an expression
+is its numeric value:
+
+                       exp '+' exp { $_[1] + $_[3] }
+ 
+When the semantic action/anonymous subroutine is called,
+the arguments are as follows:
+
+=over 
+
+=item * C<$_[1]> to C<$_[n]> are the parameters just as C<$1> to C<$n> in L<yacc>,
+
+=item * C<$_[0]> is the parser object itself.
+Having C<$_[0]> beeing the parser object itself allows you to call
+parser methods. Actually L<yacc> macros have been converted into
+parser methods. See section L</Methods Available in the Generated Class>.
+
+=back 
+
+The returned value will be the attribute associated 
+with the left hand side of the production.
+
+Names can be given to the attributes using the dot notation:
+
+                     exp.left '+' exp.right { $left + $right }
+
+See section L<Names for attributes> for more details about the I<dot> and I<dollar> 
+notations.
+
+If no action is specified the default action
+                         
+                               { $_[1] }
+
+will be called instead. See section L</Default actions> to know more.
+
+=head3 Actions in Mid-Rule
+
+Actions can be inserted in the middle of a production like in:
+
+ block: '{'.bracket { $ids->begin_scope(); } declaration*.decs statement*.sts '}' { ... }
+
+A middle production action is managed by inserting a new rule in the grammar and associating
+the semantic action with it:
+
+                     Temp: /* empty */ { $ids->begin_scope(); }
+
+Middle production actions can refer to the attributes on its left. They count
+as one of the components of the production. Thus the program:
+
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '1,4p' intermediateaction2.yp
+ %%
+ S:  'a' { $_[1]x4 }.mid 'a' { print "$_[2], $mid, $_[3]\n"; }
+ ;
+ %%
+
+The auxiliar syntactica variables are named C<@#position-#order> where C<#position>
+is the position of the action in the rhs and C<order> is an ordinal number. See
+the C<.output> file for the former example:
+
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ eyapp -v intermediateaction2.yp
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '1,5p' intermediateaction2.output
+ Rules:
+ ------
+ 0:      $start -> S $end
+ 1:      S -> 'a' @1-1 'a'
+ 2:      @1-1 -> /* empty */
+
+when given input C<aa> the execution will produce as output C<aaaa, aaaa, a>.
+
+
+=head3 Example of Body Section
+
+Following with the calculator example, the body is:
 
  pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '12,48p' Calc.eyp | cat -n
   1  start:
@@ -304,36 +523,270 @@ The body of our calculator example is:
  17
  18  exp:
  19      NUM
- 20    | VAR                 { $s{$_[1]} }
- 21    | VAR '=' exp         { $s{$_[1]} = $_[3] }
- 22    | exp '+' exp         { $_[1] + $_[3] }
- 23    | exp '-' exp         { $_[1] - $_[3] }
- 24    | exp '*' exp         { $_[1] * $_[3] }
- 25    | exp '/' exp
+ 20    | $VAR                   { $s{$VAR} }
+ 21    | $VAR '=' $exp          { $s{$VAR} = $exp }
+ 22    | exp.left '+' exp.right { $left + $right }
+ 23    | exp.left '-' exp.right { $left - $right }
+ 24    | exp.left '*' exp.right { $left * $right }
+ 25    | exp.left '/' exp.right
  26      {
  27         $_[3] and return($_[1] / $_[3]);
  28         $_[0]->YYData->{ERRMSG} = "Illegal division by zero.\n";
  29         $_[0]->YYError; # Pretend that a syntactic error ocurred: _Error will be called
  30         undef
  31      }
- 32    | '-' exp %prec NEG   { -$_[2] }
- 33    | exp '^' exp         { $_[1] ** $_[3] }
- 34    | '(' exp ')'         { $_[2] }
+ 32    | '-' $exp %prec NEG     { -$exp }
+ 33    | exp.left '^' exp.right { $left ** $right }
+ 34    | '(' $exp ')'           { $exp }
  35  ;
  36
  37  %%
 
 
+
 This example does not uses any of the Eyapp extensions (with the exception of the 
-I<star list> at line 5). Please, see the L<Parse::Yapp> pages and elsewhere documentation
+I<star list> at line 5) and the dot and dollar notations. 
+Please, see the L<Parse::Yapp> pages and elsewhere documentation
 on L<yacc> and L<bison> for more information.
+
+
+=head3 Solving Ambiguities and Conflicts
+
+When Eyapp analizes a grammar like:
+
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ cat -n ambiguities.eyp
+     1  %%
+     2  exp:
+     3      NUM
+     4    | exp '-' exp
+     5  ;
+     6  %%
+
+it will produce a warning announcing the existence of 
+I<shift-reduce> conflicts:
+
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ eyapp ambiguities.eyp
+ 1 shift/reduce conflict (see .output file)
+ State 5: reduce by rule 2: exp -> exp '-' exp (default action)
+ State 5: shifts:
+   to state    3 with '-'
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ ls -ltr | tail -1
+ -rw-rw----  1 pl users   1082 2007-02-06 08:26 ambiguities.output
+
+when C<eyapp> finds warnings automatically produces a C<.output> file
+describing the conflict.
+
+What the warning is saying is that an expression like C<exp '-' exp> (rule 2) followed by a
+minus C<'-'> can be worked in more than one way. If we
+have an input like C<NUM - NUM - NUM> the activity of a LALR(1) parser
+(the family of parsers to which Eyapp belongs)
+consists of a sequence of I<shift and reduce actions>. A I<shift action>
+has as consequence the reading of the next token. A I<reduce action>
+is finding a production rule that matches and substituting 
+the rhs of the production by the lhs.  For input C<NUM - NUM - NUM>
+the activity will be as follows (the dot is used to indicate where the next 
+input token is):
+
+                           .NUM - NUM - NUM # shift
+                            NUM.- NUM - NUM # reduce exp: NUM 
+                            exp.- NUM - NUM # shift
+                            exp -.NUM - NUM # shift
+                            exp - NUM.- NUM # reduce exp: NUM
+                            exp - exp.- NUM # shift/reduce conflict
+
+up this point two different decisions can be taken: the next description can be
+
+                                  exp.- NUM # reduce by exp: exp '-' exp (rule 2)
+
+or:
+
+                            exp - exp -.NUM # shift '-' (to state 3)
+
+that is why it is called a I<shift-reduce conflict>.
+
+That is also the reason for the precedence declarations in the 
+head section. Another kind of conflicts are I<reduce-reduce conflicts>.
+They arise when more that rhs can be applied for a reduction
+action.
+
+Eyapp solves the conflicts applying the following rules:
+
+=over
+
+=item *  In a shift/reduce conflict, the default is the shift.
+
+=item * In a reduce/reduce conflict, the default is to reduce by the
+earlier grammar production (in the input sequence).
+
+=item *  The precedences and associativities are associated with tokens in
+the declarations section. This is made by a sequence of lines beginning
+with one of the directives: C<%left>, C<%right>, or C<%nonassoc>, 
+followed by a list of
+tokens. All the tokens on the same line
+have the same precedence and associativity; 
+the lines are listed in order of increasing precedence.
+
+=item * A precedence and associativity is associated with each grammar
+production; it is the precedence and associativity of the I<last token> 
+or I<literal> in the right hand side of the production.
+
+=item * The C<%prec> directive can be used when
+a rhs is involved in a conflict and has no tokens
+inside or it has but the precedence of the last token leads
+to an incorrect interpretation. A rhs can be followed by 
+an optional C<%prec token> directive
+giving the production the precedence of the C<token>
+
+                          exp:   '-' exp %prec NEG { -$_[1] }
+
+=item * If there is a shift/reduce conflict, and both the grammar production
+and the input character have precedence and associativity associated
+with them, then the conflict is solved in favor of the action (shift or
+reduce) associated with the higher precedence. If the precedences are the
+same, then the associativity is used; left associative implies reduce,
+right associative implies shift, and nonassociating implies error.
+
+=back
+
+To solve a shift-reduce conflict between a production C<A --E<gt> SOMETHING>
+and a token C<'a'> you can follow this procedure:
+
+=over
+
+=item 1. Edit the C<.output> file
+
+=item 2. Search for the state where the conflict between the production and the token
+is. In our example it looks like:
+
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '56,65p' ambiguities.output
+ State 5:
+
+        exp -> exp . '-' exp    (Rule 2)
+        exp -> exp '-' exp .    (Rule 2)
+
+        '-'     shift, and go to state 3
+
+        '-'     [reduce using rule 2 (exp)]
+        $default        reduce using rule 2 (exp)
+
+=item 3. Inside the state there has to be a production of the type C<A --E<gt> SOMETHING.> 
+(with the dot at the end)
+indicating that a reduction must take place. There has to be also another production 
+of the form C<A --E<gt> prefix . suffix>, where suffix can I<start> with the involved
+token C<'a'>. 
+
+=item 4. Decide what action shift or reduce matches the kind of trees you want.
+In this example we want C<NUM - NUM - NUM> to produce a tree like
+C<MINUS(MINUS(NUM, NUM), NUM)> and not C<NUM, MINUS(MINUS(NUM, NUM))>. We want the 
+conflict in C<exp - exp.- NUM> to be solved in favor of the reduction
+by C<exp: exp '-' exp>. 
+This is achieved by declaring C<%left '-'>. 
+
+=back
+
+=head3 Error Recovery
+
+The token name C<error> is reserved for error handling. This name can
+be used in grammar productions; it suggests places where errors are
+expected, and recovery can take place:
+
+     line:
+       '\n'         { undef }
+       | exp '\n'   { print "$_[1]\n" if defined($_[1]); $_[1] }
+       | error  '\n'
+           {
+             $_[0]->YYErrok;
+             undef
+           }
+
+
+The parser pops its stack until
+it enters a state where the token C<error> is legal. It then shifts
+the token C<error> and proceeds to discard tokens until finding 
+one that is acceptable. In the example
+all the tokens until finding a C<'\n'> will be skipped. 
+If no special error productions have been specified,
+the processing will halt.
+
+In order to prevent a cascade of error messages, the parser, after
+detecting an error, remains in error state until three tokens have been
+successfully read and shifted. If an error is detected when the parser
+is already in error state, no message is given, and the input token is
+quietly deleted. The method C<YYErrok> used in the example 
+communicates to the parser
+that a satisfactory recovery has been reached 
+and that it can safely emit new error
+messages.
+
+You cannot have a literal I<'error'> in your grammar as it would
+confuse the driver with the I<error> token. Use a symbolic token instead.
 
 =head2 The Tail
 
 The tail section contains Perl code. Usually the lexical analyzer and the
-Error management subrotuines go here:
+Error management subroutines go here:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '48,$p' Calc.eyp | cat -n
+=head3 The Lexical Analyzer
+
+The Lexical Analyzer 
+is called each time the parser needs a new token.
+It is called with only one argument (the parser object)
+and returns a pair 
+containing the next token and its associated attribute.
+
+The fact that is a method of the parser object means that 
+the parser
+methods are accesible inside the lexical analyzer.
+Specially interesting is the C<$_[0]-E<gt>YYData> 
+method which provides access to the user data area.
+
+I<When the lexical analyzer reaches the end of input, it must return the
+pair> C<('', undef)>
+
+See below how to write a lexical analyzer (file C<examples/Calc.eyp>):
+
+  1  sub make_lexer {
+  2    my $input = shift;
+  3
+  4    return sub {
+  5      my $parser = shift;
+  6
+  7      for ($$input) {
+  8        m{\G[ \t]*}gc;
+  9        m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM',$1);
+ 10        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR',$1);
+ 11        m{\G\n}gc                      and do { $lineno++; return ("\n", "\n") };
+ 12        m{\G(.)}gc                     and return ($1,$1);
+ 13
+ 14        return('',undef);
+ 15      }
+ 16    }
+ 17  }
+
+The subroutine C<make_lexer> creates the lexical analyzer as
+a closure. The lexer returned by C<make_lexer> is used by the 
+C<YYParse> method:
+
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '90,97p' Calc.eyp | cat -n
+ 1  sub Run {
+ 2      my($self)=shift;
+ 3      my $input = shift or die "No input given\n";
+ 4
+ 5      return $self->YYParse( yylex => make_lexer($input), yyerror => \&_Error,
+ 6        #yydebug =>0x1F
+ 7      );
+ 8  }
+
+
+
+=head3 The Error Report Subroutine
+
+The Error Report subroutine is also a parser method, 
+and consequently receives as parameter the parser object. 
+
+See the error report subroutine
+for the example in C<examples/Calc.eyp>:
+
   1  %%
   2
   3  my $lineno = 1;
@@ -357,49 +810,15 @@ Error management subrotuines go here:
  21  Expected one of these terminals: @expected
  22  ERRMSG
  23  }
- 24
- 25  sub echo {
- 26    my $parser = shift;
- 27
- 28    print $_[1] unless $parser->YYRecovering;
- 29    return @_;
- 30  }
- 31
- 32  sub make_lexer {
- 33    my $input = shift;
- 34
- 35    return sub {
- 36      my $parser = shift;
- 37
- 38      for ($$input) {
- 39        m{\G[ \t]*}gc;
- 40        m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return $parser->echo('NUM',$1);
- 41        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return $parser->echo('VAR',$1);
- 42        m{\G\n}gc                      and do { $lineno++; return $parser->echo("\n", "\n") };
- 43        m{\G(.)}gc                     and return $parser->echo($1,$1);
- 44
- 45        return('',undef);
- 46      }
- 47    }
- 48  }
- 49
- 50  sub Run {
- 51      my($self)=shift;
- 52      my $input = shift or die "No input given\n";
- 53
- 54      return $self->YYParse( yylex => make_lexer($input), yyerror => \&_Error,
- 55        #yydebug =>0x1F
- 56      );
- 57  }
 
-This example does not uses any of the Eyapp extensions. 
-Please, see the L<Parse::Yapp> pages and elsewhere documentation
+
+See the L<Parse::Yapp> pages and elsewhere documentation
 on L<yacc> and L<bison> for more information.
 
 =head2 Using an Eyapp Program
 
-The following is an example of program that uses the calculator expalined 
-in the two rpevious sections:
+The following is an example of a program that uses the calculator explained 
+in the two previous sections:
 
  pl@nereida:~/src/perl/YappWithDefaultAction/examples$ cat -n usecalc.pl
   1  #!/usr/bin/perl -w
@@ -418,27 +837,42 @@ in the two rpevious sections:
  14  print "========= Symbol Table ==============\n";
  15  print "$_ = $t->{$_}\n" for sort keys %$t;
 
-The output for this program is:
+The output for this program is (the input for each output
+appear as a Perl comment on the right):
 
+ pl@nereida:~/src/perl/YappWithDefaultAction/examples$ eyapp Calc.eyp
  pl@nereida:~/src/perl/YappWithDefaultAction/examples$ usecalc.pl
- a=2*3
- 6
- d=5/(a-6)
- Illegal division by zero.
- b=(a+1)/7
- 1
- c=a*3+4)
- Syntax error near input: ')' (lin num 4).
+ 6                                              # a = 2*3
+ Illegal division by zero.                      # d = 5/(a-6)
+ 1                                              # b = (a+1)/7
+
+ Syntax error near input: ')' (lin num 4).      # c=a*3+4)-5
  Expected one of these terminals: -, /, ^, *, +,
 
- a=a+1
- 7
+ 7                                              # a = a+1
  ========= Symbol Table ==============
  a = 7
  b = 1
  c = 22
 
+
+
 =head2 Lists and Optionals
+
+The elements of a rhs can be one of these:
+
+  rhselt:     
+        symbol    
+      | code    
+      | '(' optname rhs ')' 
+      | rhselt STAR               /* STAR   is (%name\s*([A-Za-z_]\w*)\s*)?\*  */
+      | rhselt '<' STAR symbol '>' 
+      | rhselt OPTION             /* OPTION is (%name\s*([A-Za-z_]\w*)\s*)?\?  */
+      | rhselt '<' PLUS symbol '>'
+      | rhselt PLUS               /* PLUS   is (%name\s*([A-Za-z_]\w*)\s*)?\+  */
+
+The C<STAR>, C<OPTION> and C<PLUS> operators provide a simple mechanism
+to express lists:
 
 =over
 
@@ -475,8 +909,15 @@ a C<rhs> expression as in:
 =head2 Names for attributes
 
 Attributes can be referenced by meaningful names instead
-of the classic error-prone positional approach using the I<dot notation>
-like in:
+of the classic error-prone positional approach using the I<dot notation>:
+
+                        rhs:  rhseltwithid *
+                        rhseltwithid : 
+                              rhselt '.' IDENT 
+                            | '$' rhselt  
+                            | rhselt
+
+for example:
 
               exp : exp.left '-' exp.right  { $left - $right }
 
@@ -629,11 +1070,11 @@ check the corresponding file C<.output>:
  11:     exp -> '-' exp
  12:     exp -> '(' exp ')'
 
-We can see now that the node C<exp_9> corresponds to the rule C<exp -E<gt> exp '*' exp>.
-Observe also that the Eyapp rule:
+We can see now that the node C<exp_9> corresponds to the production C<exp -E<gt> exp '*' exp>.
+Observe also that the Eyapp production:
 
                                 line: exp <+ ';'>
-actually produces the rules:
+actually produces the productions:
 
                         1:      PLUS-1 -> PLUS-1 ';' exp
                         2:      PLUS-1 -> exp
@@ -694,8 +1135,8 @@ section L<Separated Compilation with eyapp and treereg> for an example.
 Nodes named C<TERMINAL> are built from the
 tokens provided by the lexical analyzer. 
 C<Parse::Eyapp> follows the same protocol
-than L<Parse::Yapp> for communication between the parser and the lexer:
-A couple C<($token, $attribute)> is returned by the lexer.
+than L<Parse::Yapp> for communication between the parser and the lexical analyzer:
+A couple C<($token, $attribute)> is returned by the lexical analyzer.
 These values are stored under the keys C<token> and C<attr>.
 C<TERMINAL> nodes as all C<Parse::Eyapp::Node> nodes
 also have the attribute C<children> but is - almost always - empty.
@@ -945,7 +1386,7 @@ if the method C<TERMINAL::save_attributes> exists and if so
 it will be called when dealing with a I<syntactic token>. 
 The method receives as argument - additionally
 to the reference to the attribute of the token as it
-is returned by the lexer - a reference
+is returned by the lexical analyzer - a reference
 to the node associated with the left hand side of the
 production. Here is an example (file C<examples/Types.eyp>)
 of use:
@@ -1424,281 +1865,6 @@ translation schemes.
  100  EOR
 
 
-=head1 The Treeregexp Language
-
-A Treeregexp program is made of the repetition of three kind of 
-primitives: The treeregexp transformations, auxiliar Perl code 
-and Transformation Families.
-
-  treeregexplist:  treeregexp* 
-
-  treeregexp: 
-      IDENT ':' treereg ('=>' CODE)?  # Treeregexp 
-    | CODE                            # Auxiliar code
-    | IDENT '=' IDENT + ';'           # Transformation families
-
-Treeregexp themselves follow the rule:
-
-                  IDENT ':' treereg ('=>' CODE)?
-
-Several instances of this rule can be seen in the example in
-the L</SYNOPSIS> section.
-The identifier C<IDENT> gives the name to the rule.
-At the time of this writing (2006) there are the following kinds
-of treeregexes:
-
-  treereg: 
-        /* tree patterns with children */
-      IDENT '(' childlist ')' ('and' CODE)? 
-    | REGEXP (':' IDENT)? '(' childlist ')' ('and' CODE)? 
-    | SCALAR '(' childlist ')' ('and' CODE)?  
-    | '.' '(' childlist ')' ('and' CODE)? 
-          /* leaf tree patterns */
-    | IDENT ('and' CODE)? 
-    | REGEXP (':' IDENT)? ('and' CODE)? 
-    | '.' ('and' CODE)? 
-    | SCALAR ('and' CODE)? 
-    | ARRAY 
-    | '*' 
-
-=head2 Treeregexp rules
-
-When seen a rule like
-
-    zero_times: TIMES(NUM($x), ., .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-
-The Treeregexp translator creates a C<Parse::Eyapp:YATW> object
-that can be later referenced in the user code by the package variable
-C<$zero_times>.
-
-=head3 The treeregexp
-
-The first part of the rule C<TIMES(NUM($x), ., .)>
-indicates that for a matching to succeed the node being
-visited must be of C<type> C<TIMES>, have a left child
-of  C<type> C<NUM> and two more children.
-
-If the first part succeeded then the following part 
-takes the control to see if the I<semantic conditions>
-are satisfied.
-
-=head3 Semantic condition
-
-The second part is optional and must be prefixed by the reserved word C<and>
-followed by a Perl code manifesting the semantic conditions that must be hold
-by the node to succeed. Thus, in the example:
-
-  zero_times: TIMES(NUM($x), ., .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-
-the semantic condition C<$x-E<gt>{attr} == 0> states that the
-value of the number stored in the C<TERMINAL> node referenced
-by C<$x> must be zero.
-
-=head3 Referencing the matching nodes
-
-The node  being visited can be referenced/modified
-inside the semantic actions using C<$_[0]>. 
-
-The Treeregexp
-translator automatically creates a set of lexical variables
-for us. The scope of these variables is limited to the
-semantic condition and the transformation code. 
-
-Thus, in the example
-
-  zero_times: TIMES(NUM($x), ., .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-
-the node being visited C<$_[0]>
-can be also referenced using the lexical variable
-C<$TIMES> which is created by he Treeregexp compiler.
-In the same way a reference to the left child C<NUM> will be stored
-in the lexical variable C<$NUM> and a
-reference to the child of C<$NUM> will be stored in C<$x>.
-The semantic condition states that the attribute
-of the node associated with C<$x> must be zero.
-
-When the same type of node appears several times inside 
-the treeregexp part the associated lexical variable is 
-declared by the Treeregexp compiler as an array.
-This is the case in the C<constantfold> transformation
-in the L</SYNOPSIS> example, where there are two nodes of type C<NUM>:
-
-  constantfold: /TIMES|PLUS|DIV|MINUS/(NUM($x), ., NUM($y))
-     => {
-    $x->{attr} = eval  "$x->{attr} $W->{attr} $y->{attr}";
-    $_[0] = $NUM[0];
-  }
-
-Thus variable  C<$NUM[0]> references the node that matches the 
-first C<NUM> term in the formula and C<$NUM[1]> the one
-that matches the second.
-
-=head3 Transformation code
-
-The third part of the rule is also optional and comes prefixed by
-the big arrow C<=E<gt>>. The Perl code in this section usually 
-transforms the matching tree.
-To achieve the modification of the tree, the Treeregexp programmer
-B<must use C<$_[0]>> and not the lexical variables provided by the translator.
-Remember that in Perl C<$_[0]> is an alias of the actual parameter.
-The C<constantfold> example above B<will not work> if we rewrite the code C<$_[0] = $NUM[0]> as
-
-                            { $TIMES = $NUM }
-
-=head2 Regexp Treeregexes
-
-The previous C<constantfold> example used a classic Perl linear regexp
-to explicit that the root node of the matching subtree must match the Perl regexp.
-The general syntax for C<REGEXP> treeregexes patterns is:
-
-      treereg: REGEXP (':' IDENT)? '(' childlist ')' ('and' CODE)? 
-
-The C<REGEXP> must be specified between slashes (other delimiters
-as C<{}> are not accepted).
-It is legal to specify options after the second slash (like C<e>, C<i>, etc.).
-
-The operation of string oriented regexps is slightly modified
-when they are used inside a treeregexp:
-B<by default the option> 
-C<x> 
-B<will be assumed>.
-The treeregexp compiler will automatically insert it.
-Use the new option C<X> (upper case X) if you want to supress such behavior.
-B<There is no need also to insert> C<\b> 
-B<word anchors> to delimit identifiers:
-all the identifiers in a regexp treeregexp are automatically
-surrounded by C<\b>. Use the option C<B> (upper case B)
-to supress this behavior.
-
-The optional identifier after the C<REGEXP> indicates the name of the lexical variable
-that will be held a reference to the node whose type matches C<REGEXP>.
-Variable C<$W> (or C<@W> if there are more than one REGEXP and or dot treeregexes)
-will be used instead if no identifier is specified.
-
-
-=head2 Scalar Treeregexes
-
-A scalar treeregxp is defined writing a Perl scalar inside the treeregexp, like C<$x>
-in C<NUM($x)>. A scalar treeregxp immediately matches any node that exists
-and stores a reference to such node inside the Perl lexical scalar variable.
-The scope of the variable is limited to the semantic parts of the Treeregexp.
-Is illegal to use C<$W> or C<$W_#num> as variable names for scalar treeregexes.
-
-
-=head2 Dot Treeregexes
-
-A dot matches any node. It can be seen as an abbreviation for
-scalar treeregexes. The reference to the matching node
-is stored in the lexical variable C<$W>. 
-The variable C<@W> will be used instead
-if there are more than one REGEXP and or dot treeregexes
-
-=head2 Array Treeregexp Expressions
-
-The Treeregexp language permits expressions like:
-
-                   A(@a,B($x),@c)
-
-After the matching variable C<@A> contains the shortest prefix
-of C<$A-E<gt>children> that does not match C<B($x)>.
-The variable C<@c> contains the remaining sufix of
- C<$A-E<gt>children>. 
-
-The following example uses 
-array treereg expressions to move the assignment C<b = 5>
-out of the C<while> loop:
-
-  ..  ......................................................................
-  93  my $program = "a =1000; c = 1; while (a) { c = c*a; b = 5; a = a-1 }\n";
-  94  $parser->YYData->{INPUT} = $program;
-  95  my $t = $parser->Run;
-  96  my @output = split /\n/, $t->str;
-  97
-  98  my $p = Parse::Eyapp::Treeregexp->new( STRING => q{
-  99    moveinvariant: BLOCK(
- 100                     @prests,
- 101                     WHILE(VAR($b), BLOCK(@a, ASSIGN($x, NUM($e)), @c)),
- 102                     @possts
- 103                   )
- 104      => {
- 105           my $assign = $ASSIGN;
- 106           $BLOCK[1]->delete($ASSIGN);
- 107           $BLOCK[0]->insert_before($WHILE, $assign);
- 108         }
- 109    },
- 110    FIRSTLINE => 99,
- 111  );
- 112  $p->generate();
-
-=head2 Star Treeregexp 
-
-Deprecated. Don't use it. Is still there but not to endure.
-
-=head2 Transformation Families
-
-Transformations created by C<Parse::Eyapp::Treeregexp> can be grouped in 
-families. That is the function of the rule:
-
-                    treeregexp: IDENT '=' IDENT + ';' 
-
-
-The next example (file C<examples/TSwithtreetransformations3.eyp>)
-defines the family 
-
-     algebraic_transformations = constantfold zero_times times_zero comasocfold;
-
-Follows the code:
-
-     my $transform = Parse::Eyapp::Treeregexp->new( STRING => q{
-
-      uminus: UMINUS(., NUM($x), .) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
-      constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($z), ., NUM($y))
-         => {
-        $z->{attr} = eval  "$z->{attr} $W->{attr} $y->{attr}";
-        $_[0] = $NUM[0];
-      }
-      commutative_add: PLUS($x, ., $y, .)
-        => { my $t = $x; $_[0]->child(0, $y); $_[0]->child(2, $t)}
-      comasocfold: TIMES(DIV(NUM($x), ., $b), ., NUM($y))
-         => {
-        $x->{attr} = $x->{attr} * $y->{attr};
-        $_[0] = $DIV;
-      }
-      zero_times: TIMES(NUM($x), ., .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-      times_zero: TIMES(., ., NUM($x)) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-      algebraic_transformations = constantfold zero_times times_zero comasocfold;
-    },
-    );
-
-    $transform->generate();
-    our ($uminus);
-    $uminus->s($tree);
- 
-
-The transformations belonging to a family are usually applied 
-toghether:
-
-                $tree->s(@algebraic_transformations);
-
-
-=head2 Code Support
-
-In between Treeregexp rules and family assignments the programmer can insert 
-Perl code between curly brackets. That code usually gives support to
-the semantic conditions and transformations inside the rules.
-See for example test 14 in the C<t/> directory of the Parse::Eyapp distribution.
-
-  {
-    sub not_semantic {
-      my $self = shift;
-      return  1 if $self->{token} eq $self->{attr};
-      return 0;
-    }
-  }
-
-  delete_tokens : TERMINAL and { not_semantic($TERMINAL) } 
-                           => { $delete_tokens->delete() }
-
 =head1 Compiling with C<eyapp>
 
 =head2 Separated Compilation with C<eyapp> and C<treereg>
@@ -2016,7 +2182,7 @@ See section L</Compiling with eyapp> for an example.
 
 =item - yylex 
 
-Reference to the lexer subroutine
+Reference to the lexical analyzer subroutine
 
 =item - yyerror
 
@@ -2371,6 +2537,281 @@ objects have all the methods mentioned
 in the section "L</Methods Available in the Generated C<Class>>".
 A C<Parse::Eyapp::Parse> is nothing but a particular kind of C<Parse::Eyapp>
 parser: I<the one that parses> C<Eyapp> I<grammars>.
+
+=head1 The Treeregexp Language
+
+A Treeregexp program is made of the repetition of three kind of 
+primitives: The treeregexp transformations, auxiliar Perl code 
+and Transformation Families.
+
+  treeregexplist:  treeregexp* 
+
+  treeregexp: 
+      IDENT ':' treereg ('=>' CODE)?  # Treeregexp 
+    | CODE                            # Auxiliar code
+    | IDENT '=' IDENT + ';'           # Transformation families
+
+Treeregexp themselves follow the rule:
+
+                  IDENT ':' treereg ('=>' CODE)?
+
+Several instances of this rule can be seen in the example in
+the L</SYNOPSIS> section.
+The identifier C<IDENT> gives the name to the rule.
+At the time of this writing (2006) there are the following kinds
+of treeregexes:
+
+  treereg: 
+        /* tree patterns with children */
+      IDENT '(' childlist ')' ('and' CODE)? 
+    | REGEXP (':' IDENT)? '(' childlist ')' ('and' CODE)? 
+    | SCALAR '(' childlist ')' ('and' CODE)?  
+    | '.' '(' childlist ')' ('and' CODE)? 
+          /* leaf tree patterns */
+    | IDENT ('and' CODE)? 
+    | REGEXP (':' IDENT)? ('and' CODE)? 
+    | '.' ('and' CODE)? 
+    | SCALAR ('and' CODE)? 
+    | ARRAY 
+    | '*' 
+
+=head2 Treeregexp rules
+
+When seen a rule like
+
+    zero_times: TIMES(NUM($x), ., .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+
+The Treeregexp translator creates a C<Parse::Eyapp:YATW> object
+that can be later referenced in the user code by the package variable
+C<$zero_times>.
+
+=head3 The treeregexp
+
+The first part of the rule C<TIMES(NUM($x), ., .)>
+indicates that for a matching to succeed the node being
+visited must be of C<type> C<TIMES>, have a left child
+of  C<type> C<NUM> and two more children.
+
+If the first part succeeded then the following part 
+takes the control to see if the I<semantic conditions>
+are satisfied.
+
+=head3 Semantic condition
+
+The second part is optional and must be prefixed by the reserved word C<and>
+followed by a Perl code manifesting the semantic conditions that must be hold
+by the node to succeed. Thus, in the example:
+
+  zero_times: TIMES(NUM($x), ., .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+
+the semantic condition C<$x-E<gt>{attr} == 0> states that the
+value of the number stored in the C<TERMINAL> node referenced
+by C<$x> must be zero.
+
+=head3 Referencing the matching nodes
+
+The node  being visited can be referenced/modified
+inside the semantic actions using C<$_[0]>. 
+
+The Treeregexp
+translator automatically creates a set of lexical variables
+for us. The scope of these variables is limited to the
+semantic condition and the transformation code. 
+
+Thus, in the example
+
+  zero_times: TIMES(NUM($x), ., .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+
+the node being visited C<$_[0]>
+can be also referenced using the lexical variable
+C<$TIMES> which is created by he Treeregexp compiler.
+In the same way a reference to the left child C<NUM> will be stored
+in the lexical variable C<$NUM> and a
+reference to the child of C<$NUM> will be stored in C<$x>.
+The semantic condition states that the attribute
+of the node associated with C<$x> must be zero.
+
+When the same type of node appears several times inside 
+the treeregexp part the associated lexical variable is 
+declared by the Treeregexp compiler as an array.
+This is the case in the C<constantfold> transformation
+in the L</SYNOPSIS> example, where there are two nodes of type C<NUM>:
+
+  constantfold: /TIMES|PLUS|DIV|MINUS/(NUM($x), ., NUM($y))
+     => {
+    $x->{attr} = eval  "$x->{attr} $W->{attr} $y->{attr}";
+    $_[0] = $NUM[0];
+  }
+
+Thus variable  C<$NUM[0]> references the node that matches the 
+first C<NUM> term in the formula and C<$NUM[1]> the one
+that matches the second.
+
+=head3 Transformation code
+
+The third part of the rule is also optional and comes prefixed by
+the big arrow C<=E<gt>>. The Perl code in this section usually 
+transforms the matching tree.
+To achieve the modification of the tree, the Treeregexp programmer
+B<must use C<$_[0]>> and not the lexical variables provided by the translator.
+Remember that in Perl C<$_[0]> is an alias of the actual parameter.
+The C<constantfold> example above B<will not work> if we rewrite the code C<$_[0] = $NUM[0]> as
+
+                            { $TIMES = $NUM }
+
+=head2 Regexp Treeregexes
+
+The previous C<constantfold> example used a classic Perl linear regexp
+to explicit that the root node of the matching subtree must match the Perl regexp.
+The general syntax for C<REGEXP> treeregexes patterns is:
+
+      treereg: REGEXP (':' IDENT)? '(' childlist ')' ('and' CODE)? 
+
+The C<REGEXP> must be specified between slashes (other delimiters
+as C<{}> are not accepted).
+It is legal to specify options after the second slash (like C<e>, C<i>, etc.).
+
+The operation of string oriented regexps is slightly modified
+when they are used inside a treeregexp:
+B<by default the option> 
+C<x> 
+B<will be assumed>.
+The treeregexp compiler will automatically insert it.
+Use the new option C<X> (upper case X) if you want to supress such behavior.
+B<There is no need also to insert> C<\b> 
+B<word anchors> to delimit identifiers:
+all the identifiers in a regexp treeregexp are automatically
+surrounded by C<\b>. Use the option C<B> (upper case B)
+to supress this behavior.
+
+The optional identifier after the C<REGEXP> indicates the name of the lexical variable
+that will be held a reference to the node whose type matches C<REGEXP>.
+Variable C<$W> (or C<@W> if there are more than one REGEXP and or dot treeregexes)
+will be used instead if no identifier is specified.
+
+
+=head2 Scalar Treeregexes
+
+A scalar treeregxp is defined writing a Perl scalar inside the treeregexp, like C<$x>
+in C<NUM($x)>. A scalar treeregxp immediately matches any node that exists
+and stores a reference to such node inside the Perl lexical scalar variable.
+The scope of the variable is limited to the semantic parts of the Treeregexp.
+Is illegal to use C<$W> or C<$W_#num> as variable names for scalar treeregexes.
+
+
+=head2 Dot Treeregexes
+
+A dot matches any node. It can be seen as an abbreviation for
+scalar treeregexes. The reference to the matching node
+is stored in the lexical variable C<$W>. 
+The variable C<@W> will be used instead
+if there are more than one REGEXP and or dot treeregexes
+
+=head2 Array Treeregexp Expressions
+
+The Treeregexp language permits expressions like:
+
+                   A(@a,B($x),@c)
+
+After the matching variable C<@A> contains the shortest prefix
+of C<$A-E<gt>children> that does not match C<B($x)>.
+The variable C<@c> contains the remaining sufix of
+ C<$A-E<gt>children>. 
+
+The following example uses 
+array treereg expressions to move the assignment C<b = 5>
+out of the C<while> loop:
+
+  ..  ......................................................................
+  93  my $program = "a =1000; c = 1; while (a) { c = c*a; b = 5; a = a-1 }\n";
+  94  $parser->YYData->{INPUT} = $program;
+  95  my $t = $parser->Run;
+  96  my @output = split /\n/, $t->str;
+  97
+  98  my $p = Parse::Eyapp::Treeregexp->new( STRING => q{
+  99    moveinvariant: BLOCK(
+ 100                     @prests,
+ 101                     WHILE(VAR($b), BLOCK(@a, ASSIGN($x, NUM($e)), @c)),
+ 102                     @possts
+ 103                   )
+ 104      => {
+ 105           my $assign = $ASSIGN;
+ 106           $BLOCK[1]->delete($ASSIGN);
+ 107           $BLOCK[0]->insert_before($WHILE, $assign);
+ 108         }
+ 109    },
+ 110    FIRSTLINE => 99,
+ 111  );
+ 112  $p->generate();
+
+=head2 Star Treeregexp 
+
+Deprecated. Don't use it. Is still there but not to endure.
+
+=head2 Transformation Families
+
+Transformations created by C<Parse::Eyapp::Treeregexp> can be grouped in 
+families. That is the function of the rule:
+
+                    treeregexp: IDENT '=' IDENT + ';' 
+
+
+The next example (file C<examples/TSwithtreetransformations3.eyp>)
+defines the family 
+
+     algebraic_transformations = constantfold zero_times times_zero comasocfold;
+
+Follows the code:
+
+     my $transform = Parse::Eyapp::Treeregexp->new( STRING => q{
+
+      uminus: UMINUS(., NUM($x), .) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
+      constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($z), ., NUM($y))
+         => {
+        $z->{attr} = eval  "$z->{attr} $W->{attr} $y->{attr}";
+        $_[0] = $NUM[0];
+      }
+      commutative_add: PLUS($x, ., $y, .)
+        => { my $t = $x; $_[0]->child(0, $y); $_[0]->child(2, $t)}
+      comasocfold: TIMES(DIV(NUM($x), ., $b), ., NUM($y))
+         => {
+        $x->{attr} = $x->{attr} * $y->{attr};
+        $_[0] = $DIV;
+      }
+      zero_times: TIMES(NUM($x), ., .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+      times_zero: TIMES(., ., NUM($x)) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+      algebraic_transformations = constantfold zero_times times_zero comasocfold;
+    },
+    );
+
+    $transform->generate();
+    our ($uminus);
+    $uminus->s($tree);
+ 
+
+The transformations belonging to a family are usually applied 
+toghether:
+
+                $tree->s(@algebraic_transformations);
+
+
+=head2 Code Support
+
+In between Treeregexp rules and family assignments the programmer can insert 
+Perl code between curly brackets. That code usually gives support to
+the semantic conditions and transformations inside the rules.
+See for example test 14 in the C<t/> directory of the Parse::Eyapp distribution.
+
+  {
+    sub not_semantic {
+      my $self = shift;
+      return  1 if $self->{token} eq $self->{attr};
+      return 0;
+    }
+  }
+
+  delete_tokens : TERMINAL and { not_semantic($TERMINAL) } 
+                           => { $delete_tokens->delete() }
 
 
 =head1 Parse::Eyapp::Node Methods
@@ -3724,8 +4165,6 @@ Please report problems to Casiano Rodriguez-Leon (casiano@cpan.org).
 
 =over
 
-=item * L<eyapptut>
-
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
 
 =item *
@@ -3738,7 +4177,6 @@ perldoc L<treereg>,
 construction) by  Casiano Rodriguez-Leon. 
 Available at  L<http://nereida.deioc.ull.es/~pl/perlexamples/>
 Is the more complete and reliable source for Parse::Eyapp. However is in Spanish.
-
 
 =item *
 L<Parse::Yapp>,
