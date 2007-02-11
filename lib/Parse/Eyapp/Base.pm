@@ -17,6 +17,9 @@ our %EXPORT_TAGS = ( 'all' => [ @EXPORT_OK ] );
 sub slurp_file {
   my ($filename, $ext) = @_;
 
+    croak "Error in slurp_file opening file. Provide a filename!\n" 
+  unless defined($filename) and length($filename) > 0;
+  $ext = "" unless defined($ext);
   $filename .= ".$ext" unless (-r $filename) or ($filename =~ m{[.]$ext$});
   local $/ = undef;
   open my $FILE, $filename or croak "Can't open file $filename"; 

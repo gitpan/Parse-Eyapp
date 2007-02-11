@@ -22,7 +22,7 @@ Parse::Eyapp  - Extensions for Parse::Yapp
  
 =head1 VERSION
  
-1.069
+1.069577
 
 =head1 SYNOPSIS
  
@@ -264,7 +264,9 @@ The head section contains a list of declarations
 
                                  headsec:  decl *
 
-There are different kinds of declarations. This reference does not 
+There are different kinds of declarations. 
+
+This reference does not 
 fully describes all the declarations that are shared with L<yacc> and 
 L<yapp>. 
 
