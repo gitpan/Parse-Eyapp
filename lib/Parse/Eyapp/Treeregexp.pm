@@ -4,7 +4,7 @@
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon. Universidad de La Laguna.
-#        Don't edit this file, use source file "lib/Parse/Eyapp/Treeregexp.yp" instead.
+#        Don't edit this file, use source file "Treeregexp.yp" instead.
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
 #
@@ -293,7 +293,7 @@ sub new {
 ],
                                   yyTERMS  =>
 { '$end' => 0, '(' => 0, ')' => 0, '*' => 0, ',' => 0, '.' => 0, ':' => 0, ';' => 0, '=' => 0, '=>' => 0, 'and' => 0, ARRAY => 1, CODE => 1, IDENT => 1, REGEXP => 1, SCALAR => 1 },
-                                  yyFILENAME  => "lib/Parse/Eyapp/Treeregexp.yp",
+                                  yyFILENAME  => "Treeregexp.yp",
                                   yystates =>
 [
 	{#State 0

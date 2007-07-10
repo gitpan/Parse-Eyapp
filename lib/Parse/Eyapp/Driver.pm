@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.069577';
+$VERSION = '1.07';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -522,6 +522,7 @@ sub _DBLoad {
 	my(@drv);
 	local $/ = "\n";
 	open(DRV,"<$fname") or die "Report this as a BUG: Cannot open $fname";
+  local $_;
 	while(<DRV>) {
                 	/^\s*sub\s+_Parse\s*{\s*$/ .. /^\s*}\s*#\s*_Parse\s*$/
         	and     do {

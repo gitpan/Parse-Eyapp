@@ -1,21 +1,18 @@
-###################################################################################
+####################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.069577.
+#    This file was generated using Parse::Yapp version 1.05.
 #
-# (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
-# (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon. Universidad de La Laguna.
-#        Don't edit this file, use source file "lib/Parse/Eyapp/Parse.yp" instead.
+#        Don't edit this file, use source file instead.
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
 #
-###################################################################################
+####################################################################
 package Parse::Eyapp::Parse;
+use vars qw ( @ISA );
 use strict;
-use Parse::Eyapp::Driver;
-push @Parse::Eyapp::Parse::ISA, 'Parse::Eyapp::Driver';
-use Parse::Eyapp::Node;
 
-
+@ISA= qw ( Parse::Yapp::Driver );
+use Parse::Yapp::Driver;
 
 # (c) Copyright Casiano Rodriguez-Leon 
 # Based on the original yapp by Francois Desarmenien 1998-2001
@@ -220,93 +217,13 @@ sub symbol {
   return ['SYMB', $id];
 }
 
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-
-my $warnmessage =<< "EOFWARN";
-Warning!: Did you changed the \@Parse::Eyapp::Parse::ISA variable inside the header section of the eyapp program?
-EOFWARN
 
 sub new {
         my($class)=shift;
         ref($class)
     and $class=ref($class);
 
-    warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.069577',
-                                  yyGRAMMAR  =>
-[
-  [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
-  [ eyapp_1 => 'eyapp', [ 'head', 'body', 'tail' ], 0 ],
-  [ symbol_2 => 'symbol', [ 'LITERAL' ], 0 ],
-  [ symbol_3 => 'symbol', [ 'ident' ], 0 ],
-  [ ident_4 => 'ident', [ 'IDENT' ], 0 ],
-  [ head_5 => 'head', [ 'headsec', '%%' ], 0 ],
-  [ headsec_6 => 'headsec', [  ], 0 ],
-  [ headsec_7 => 'headsec', [ 'decls' ], 0 ],
-  [ decls_8 => 'decls', [ 'decls', 'decl' ], 0 ],
-  [ decls_9 => 'decls', [ 'decl' ], 0 ],
-  [ decl_10 => 'decl', [ '\n' ], 0 ],
-  [ decl_11 => 'decl', [ 'SEMANTIC', 'typedecl', 'symlist', '\n' ], 0 ],
-  [ decl_12 => 'decl', [ 'SYNTACTIC', 'typedecl', 'symlist', '\n' ], 0 ],
-  [ decl_13 => 'decl', [ 'TOKEN', 'typedecl', 'symlist', '\n' ], 0 ],
-  [ decl_14 => 'decl', [ 'ASSOC', 'typedecl', 'symlist', '\n' ], 0 ],
-  [ decl_15 => 'decl', [ 'START', 'ident', '\n' ], 0 ],
-  [ decl_16 => 'decl', [ 'HEADCODE', '\n' ], 0 ],
-  [ decl_17 => 'decl', [ 'UNION', 'CODE', '\n' ], 0 ],
-  [ decl_18 => 'decl', [ 'DEFAULTACTION', 'CODE', '\n' ], 0 ],
-  [ decl_19 => 'decl', [ 'TREE', '\n' ], 0 ],
-  [ decl_20 => 'decl', [ 'METATREE', '\n' ], 0 ],
-  [ decl_21 => 'decl', [ 'TYPE', 'typedecl', 'identlist', '\n' ], 0 ],
-  [ decl_22 => 'decl', [ 'EXPECT', 'NUMBER', '\n' ], 0 ],
-  [ decl_23 => 'decl', [ 'error', '\n' ], 0 ],
-  [ typedecl_24 => 'typedecl', [  ], 0 ],
-  [ typedecl_25 => 'typedecl', [ '<', 'IDENT', '>' ], 0 ],
-  [ symlist_26 => 'symlist', [ 'symlist', 'symbol' ], 0 ],
-  [ symlist_27 => 'symlist', [ 'symbol' ], 0 ],
-  [ identlist_28 => 'identlist', [ 'identlist', 'ident' ], 0 ],
-  [ identlist_29 => 'identlist', [ 'ident' ], 0 ],
-  [ body_30 => 'body', [ 'rulesec', '%%' ], 0 ],
-  [ body_31 => 'body', [ '%%' ], 0 ],
-  [ rulesec_32 => 'rulesec', [ 'rulesec', 'rules' ], 0 ],
-  [ rulesec_33 => 'rulesec', [ 'startrules' ], 0 ],
-  [ startrules_34 => 'startrules', [ 'IDENT', ':', '@34-2', 'rhss', ';' ], 0 ],
-  [ _CODE => '@34-2', [  ], 0 ],
-  [ startrules_36 => 'startrules', [ 'error', ';' ], 0 ],
-  [ rules_37 => 'rules', [ 'IDENT', ':', 'rhss', ';' ], 0 ],
-  [ rules_38 => 'rules', [ 'error', ';' ], 0 ],
-  [ rhss_39 => 'rhss', [ 'rhss', '|', 'rule' ], 0 ],
-  [ rhss_40 => 'rhss', [ 'rule' ], 0 ],
-  [ rule_41 => 'rule', [ 'optname', 'rhs', 'prec', 'epscode' ], 0 ],
-  [ rule_42 => 'rule', [ 'optname', 'rhs' ], 0 ],
-  [ rhs_43 => 'rhs', [  ], 0 ],
-  [ rhs_44 => 'rhs', [ 'rhselts' ], 0 ],
-  [ rhselts_45 => 'rhselts', [ 'rhselts', 'rhseltwithid' ], 0 ],
-  [ rhselts_46 => 'rhselts', [ 'rhseltwithid' ], 0 ],
-  [ rhseltwithid_47 => 'rhseltwithid', [ 'rhselt', '.', 'IDENT' ], 0 ],
-  [ rhseltwithid_48 => 'rhseltwithid', [ '$', 'rhselt' ], 0 ],
-  [ rhseltwithid_49 => 'rhseltwithid', [ '$', 'error' ], 0 ],
-  [ rhseltwithid_50 => 'rhseltwithid', [ 'rhselt' ], 0 ],
-  [ rhselt_51 => 'rhselt', [ 'symbol' ], 0 ],
-  [ rhselt_52 => 'rhselt', [ 'code' ], 0 ],
-  [ rhselt_53 => 'rhselt', [ '(', 'optname', 'rhs', ')' ], 0 ],
-  [ rhselt_54 => 'rhselt', [ 'rhselt', 'STAR' ], 0 ],
-  [ rhselt_55 => 'rhselt', [ 'rhselt', '<', 'STAR', 'symbol', '>' ], 0 ],
-  [ rhselt_56 => 'rhselt', [ 'rhselt', 'OPTION' ], 0 ],
-  [ rhselt_57 => 'rhselt', [ 'rhselt', '<', 'PLUS', 'symbol', '>' ], 0 ],
-  [ rhselt_58 => 'rhselt', [ 'rhselt', 'PLUS' ], 0 ],
-  [ optname_59 => 'optname', [  ], 0 ],
-  [ optname_60 => 'optname', [ 'NAME', 'IDENT' ], 0 ],
-  [ prec_61 => 'prec', [ 'PREC', 'symbol' ], 0 ],
-  [ epscode_62 => 'epscode', [  ], 0 ],
-  [ epscode_63 => 'epscode', [ 'code' ], 0 ],
-  [ code_64 => 'code', [ 'CODE' ], 0 ],
-  [ code_65 => 'code', [ 'BEGINCODE' ], 0 ],
-  [ tail_66 => 'tail', [  ], 0 ],
-  [ tail_67 => 'tail', [ 'TAILCODE' ], 0 ],
-],
-                                  yyTERMS  =>
-{ '$end' => 0, '$' => 0, '%%' => 0, '(' => 0, ')' => 0, '.' => 0, ':' => 0, ';' => 0, '<' => 0, '>' => 0, '\n' => 0, '|' => 0, ASSOC => 1, BEGINCODE => 1, CODE => 1, DEFAULTACTION => 1, EXPECT => 1, HEADCODE => 1, IDENT => 1, LITERAL => 1, METATREE => 1, NAME => 1, NUMBER => 1, OPTION => 1, PLUS => 1, PREC => 1, SEMANTIC => 1, STAR => 1, START => 1, SYNTACTIC => 1, TAILCODE => 1, TOKEN => 1, TREE => 1, TYPE => 1, UNION => 1, error => 1 },
-                                  yyFILENAME  => "lib/Parse/Eyapp/Parse.yp",
+    my($self)=$class->SUPER::new( yyversion => '1.05',
                                   yystates =>
 [
 	{#State 0
@@ -656,9 +573,9 @@ sub new {
 		}
 	},
 	{#State 53
-		DEFAULT => -35,
+		DEFAULT => -34,
 		GOTOS => {
-			'@34-2' => 70
+			'@1-2' => 70
 		}
 	},
 	{#State 54
@@ -890,7 +807,7 @@ sub new {
 		}
 	},
 	{#State 92
-		DEFAULT => -34
+		DEFAULT => -35
 	},
 	{#State 93
 		ACTIONS => {
@@ -1046,17 +963,15 @@ sub new {
 ],
                                   yyrules  =>
 [
-	[#Rule _SUPERSTART
+	[#Rule 0
 		 '$start', 2, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule eyapp_1
+	[#Rule 1
 		 'eyapp', 3, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule symbol_2
+	[#Rule 2
 		 'symbol', 1,
-sub { 
+sub {
                     my($symbol,$lineno)=@{$_[1]};
                         exists($$syms{$symbol})
                     or  do {
@@ -1066,15 +981,13 @@ sub {
                     $$semantic{$symbol} = 0 unless exists($$semantic{$symbol});
                     $_[1]
                 }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule symbol_3
+	[#Rule 3
 		 'symbol', 1, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule ident_4
+	[#Rule 4
 		 'ident', 1,
-sub { 
+sub {
                     my($symbol,$lineno)=@{$_[1]};
                         exists($$syms{$symbol})
                     or  do {
@@ -1084,35 +997,28 @@ sub {
                     $$semantic{$symbol} = 1 unless exists($$semantic{$symbol});
                     $_[1]
                 }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule head_5
+	[#Rule 5
 		 'head', 2, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule headsec_6
+	[#Rule 6
 		 'headsec', 0, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule headsec_7
+	[#Rule 7
 		 'headsec', 1, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decls_8
+	[#Rule 8
 		 'decls', 2, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decls_9
+	[#Rule 9
 		 'decls', 1, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_10
+	[#Rule 10
 		 'decl', 1, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_11
+	[#Rule 11
 		 'decl', 4,
-sub { 
+sub {
                 for (@{$_[3]}) {
                     my($symbol,$lineno)=@$_;
 
@@ -1130,11 +1036,10 @@ sub {
                 }
                 undef
             }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_12
+	[#Rule 12
 		 'decl', 4,
-sub { 
+sub {
                 for (@{$_[3]}) {
                     my($symbol,$lineno)=@$_;
 
@@ -1152,11 +1057,10 @@ sub {
                 }
                 undef
             }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_13
+	[#Rule 13
 		 'decl', 4,
-sub { 
+sub {
                 for (@{$_[3]}) {
                     my($symbol,$lineno)=@$_;
 
@@ -1173,11 +1077,10 @@ sub {
                 }
                 undef
             }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_14
+	[#Rule 14
 		 'decl', 4,
-sub { 
+sub {
                 for (@{$_[3]}) {
                     my($symbol,$lineno)=@$_;
 
@@ -1195,50 +1098,43 @@ sub {
                 ++$prec;
                 undef
             }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_15
+	[#Rule 15
 		 'decl', 3,
-sub {  $start=$_[2][0]; undef }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $start=$_[2][0]; undef }
 	],
-	[#Rule decl_16
+	[#Rule 16
 		 'decl', 2,
-sub {  push(@$head,$_[1]); undef }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { push(@$head,$_[1]); undef }
 	],
-	[#Rule decl_17
+	[#Rule 17
 		 'decl', 3,
-sub {  undef }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { undef }
 	],
-	[#Rule decl_18
+	[#Rule 18
 		 'decl', 3,
-sub {  $defaultaction = $_[2]; undef }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $defaultaction = $_[2]; undef }
 	],
-	[#Rule decl_19
+	[#Rule 19
 		 'decl', 2,
-sub {  
+sub { 
             $tree = 1;
             $bypass = ($_[1][0] =~m{bypass})? 1 : 0;
             $alias = ($_[1][0] =~m{alias})? 1 : 0;
             $defaultaction = [ ' goto &Parse::Eyapp::Driver::YYBuildAST ', $lineno[0]]; 
             undef 
           }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_20
+	[#Rule 20
 		 'decl', 2,
-sub {  
+sub { 
             $metatree = $tree = 1;
             undef 
           }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_21
+	[#Rule 21
 		 'decl', 4,
-sub { 
+sub {
                 for ( @{$_[3]} ) {
                     my($symbol,$lineno)=@$_;
 
@@ -1254,49 +1150,40 @@ sub {
                     $$nterm{$symbol}=undef;    #is a non-terminal
                 }
             }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_22
+	[#Rule 22
 		 'decl', 3,
-sub {  $expect=$_[2][0]; undef }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $expect=$_[2][0]; undef }
 	],
-	[#Rule decl_23
+	[#Rule 23
 		 'decl', 2,
-sub {  $_[0]->YYErrok }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $_[0]->YYErrok }
 	],
-	[#Rule typedecl_24
+	[#Rule 24
 		 'typedecl', 0, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule typedecl_25
+	[#Rule 25
 		 'typedecl', 3, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule symlist_26
+	[#Rule 26
 		 'symlist', 2,
-sub {  push(@{$_[1]},$_[2]); $_[1] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { push(@{$_[1]},$_[2]); $_[1] }
 	],
-	[#Rule symlist_27
+	[#Rule 27
 		 'symlist', 1,
-sub {  [ $_[1] ] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { [ $_[1] ] }
 	],
-	[#Rule identlist_28
+	[#Rule 28
 		 'identlist', 2,
-sub {  push(@{$_[1]},$_[2]); $_[1] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { push(@{$_[1]},$_[2]); $_[1] }
 	],
-	[#Rule identlist_29
+	[#Rule 29
 		 'identlist', 1,
-sub {  [ $_[1] ] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { [ $_[1] ] }
 	],
-	[#Rule body_30
+	[#Rule 30
 		 'body', 2,
-sub { 
+sub {
                 $start
             or  $start=$$rules[1][0];
 
@@ -1307,59 +1194,48 @@ sub {
             # [ left hand side,   right hand side,  precedence, rulename, code, ??prefixofcode ]
             $$rules[0]=[ '$start', [ $start, chr(0) ], undef, undef, undef,] # prefixofcode???  undef ];
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule body_31
+	[#Rule 31
 		 'body', 1,
-sub {  _SyntaxError(2,"No rules in input grammar",$_[1][1]); }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { _SyntaxError(2,"No rules in input grammar",$_[1][1]); }
 	],
-	[#Rule rulesec_32
+	[#Rule 32
 		 'rulesec', 2, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rulesec_33
+	[#Rule 33
 		 'rulesec', 1, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule startrules_34
+	[#Rule 34
+		 '@1-2', 0,
+sub { $start = $_[1][0]; }
+	],
+	[#Rule 35
 		 'startrules', 5,
-sub {  _AddRules($_[1],$_[4]); undef }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { _AddRules($_[1],$_[4]); undef }
 	],
-	[#Rule _CODE
-		 '@34-2', 0,
-sub {  $start = $_[1][0]; }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-	],
-	[#Rule startrules_36
+	[#Rule 36
 		 'startrules', 2,
-sub {  $_[0]->YYErrok }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $_[0]->YYErrok }
 	],
-	[#Rule rules_37
+	[#Rule 37
 		 'rules', 4,
-sub {  _AddRules($_[1],$_[3]); undef }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { _AddRules($_[1],$_[3]); undef }
 	],
-	[#Rule rules_38
+	[#Rule 38
 		 'rules', 2,
-sub {  $_[0]->YYErrok }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $_[0]->YYErrok }
 	],
-	[#Rule rhss_39
+	[#Rule 39
 		 'rhss', 3,
-sub {  push(@{$_[1]},$_[3]); $_[1] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { push(@{$_[1]},$_[3]); $_[1] }
 	],
-	[#Rule rhss_40
+	[#Rule 40
 		 'rhss', 1,
-sub {  [ $_[1] ] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { [ $_[1] ] }
 	],
-	[#Rule rule_41
+	[#Rule 41
 		 'rule', 4,
-sub {  
+sub { 
             my ($name, $rhs, $prec, $code) = @_[1..4];
 
             my %index = symbol_index($rhs);
@@ -1371,11 +1247,10 @@ sub {
             push(@{$rhs}, $prec, $name, $code);  # only three???? what with prefixofcode?
             $rhs
           }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rule_42
+	[#Rule 42
 		 'rule', 2,
-sub { 
+sub {
             my ($name, $rhs) = @_[1, 2];
             my $code;
 
@@ -1399,70 +1274,59 @@ sub {
 
             $rhs
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhs_43
+	[#Rule 43
 		 'rhs', 0, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhs_44
+	[#Rule 44
 		 'rhs', 1, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselts_45
+	[#Rule 45
 		 'rhselts', 2,
-sub {  
+sub { 
                 push(@{$_[1]},$_[2]); 
                 $_[1] 
               }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselts_46
+	[#Rule 46
 		 'rhselts', 1,
-sub {  [ $_[1] ] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { [ $_[1] ] }
 	],
-	[#Rule rhseltwithid_47
+	[#Rule 47
 		 'rhseltwithid', 3,
-sub { 
+sub {
           push @{$_[1][1]}, $_[3][0];
           $_[1]
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhseltwithid_48
+	[#Rule 48
 		 'rhseltwithid', 2,
-sub { 
+sub {
           # check that is an identifier
             _SyntaxError(2,"\$ is allowed for identifiers only (Use dot notation instead)",$lineno[0]) 
           if not_an_id($_[2][1][0]);
           push @{$_[2][1]}, $_[2][1][0];
           $_[2]
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhseltwithid_49
+	[#Rule 49
 		 'rhseltwithid', 2,
-sub {  _SyntaxError(2,"\$ is allowed for identifiers only",$lineno[0]) }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { _SyntaxError(2,"\$ is allowed for identifiers only",$lineno[0]) }
 	],
-	[#Rule rhseltwithid_50
+	[#Rule 50
 		 'rhseltwithid', 1, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_51
+	[#Rule 51
 		 'rhselt', 1,
-sub {  [ 'SYMB', $_[1] ] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { [ 'SYMB', $_[1] ] }
 	],
-	[#Rule rhselt_52
+	[#Rule 52
 		 'rhselt', 1,
-sub {  [ 'CODE', $_[1] ] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { [ 'CODE', $_[1] ] }
 	],
-	[#Rule rhselt_53
+	[#Rule 53
 		 'rhselt', 4,
-sub {  
+sub { 
            my ($name, $rhs) = @_[2, 3];
 
 
@@ -1483,11 +1347,10 @@ sub {
 
            [ 'SYMB', $A] 
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_54
+	[#Rule 54
 		 'rhselt', 2,
-sub {  
+sub { 
           my ($what, $val) = @{$_[1]};
           _SyntaxError(1, "Star(*) operator can't be applied to an action", $lineno[0]) 
             if $what eq 'CODE';
@@ -1502,11 +1365,10 @@ sub {
           _AddRules($A, $rhss);
           [ 'SYMB', $A]
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_55
+	[#Rule 55
 		 'rhselt', 5,
-sub {  
+sub { 
           my ($what, $val) = @{$_[1]};
           _SyntaxError(1, "Star(*) operator can't be applied to an action", $lineno[0]) 
             if $what eq 'CODE';
@@ -1530,11 +1392,10 @@ sub {
           _AddRules($A, $rhss);
           [ 'SYMB', $A ]
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_56
+	[#Rule 56
 		 'rhselt', 2,
-sub { 
+sub {
           my ($what, $val) = @{$_[1]};
           _SyntaxError(1, "Question(?) operator can't be applied to an action", $lineno[0]) 
             if $what eq 'CODE';
@@ -1549,11 +1410,10 @@ sub {
           _AddRules($A, $rhss);
           [ 'SYMB', $A]
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_57
+	[#Rule 57
 		 'rhselt', 5,
-sub {  
+sub { 
           my ($what, $val) = @{$_[1]};
           _SyntaxError(1, "Plus(+) operator can't be applied to an action", $lineno[0]) 
             if $what eq 'CODE';
@@ -1568,11 +1428,10 @@ sub {
           _AddRules($A, $rhss);
           [ 'SYMB', $A]
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_58
+	[#Rule 58
 		 'rhselt', 2,
-sub { 
+sub {
            my ($what, $val) = @{$_[1]};
            _SyntaxError(1, "Plus(+) operator can't be applied to an action", $lineno[0]) 
              if $what eq 'CODE';
@@ -1588,23 +1447,20 @@ sub {
            _AddRules($A, $rhss);
            [ 'SYMB', $A]
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule optname_59
+	[#Rule 59
 		 'optname', 0, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule optname_60
+	[#Rule 60
 		 'optname', 2,
-sub {  
+sub { 
            $_[2][2] = $_[1][0];
            $_[2] 
          }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule prec_61
+	[#Rule 61
 		 'prec', 2,
-sub { 
+sub {
                         defined($$term{$_[2][0]})
                     or  do {
                         _SyntaxError(1,"No precedence for symbol $_[2][0]",
@@ -1615,119 +1471,39 @@ sub {
                     ++$$precterm{$_[2][0]};
                     $$term{$_[2][0]}[1];
         }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule epscode_62
+	[#Rule 62
 		 'epscode', 0,
-sub {  $defaultaction }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $defaultaction }
 	],
-	[#Rule epscode_63
+	[#Rule 63
 		 'epscode', 1,
-sub {  $_[1] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $_[1] }
 	],
-	[#Rule code_64
+	[#Rule 64
 		 'code', 1,
-sub {  $_[1] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $_[1] }
 	],
-	[#Rule code_65
+	[#Rule 65
 		 'code', 1,
-sub { 
+sub {
         _SyntaxError(2, "%begin code is allowed only when metatree is active\n", $lineno[0])
           unless $metatree;
         my $code = $_[1];
         push @$code, 'BEGINCODE';
         return $code;
       }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule tail_66
+	[#Rule 66
 		 'tail', 0, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule tail_67
+	[#Rule 67
 		 'tail', 1,
-sub {  $tail=$_[1] }
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+sub { $tail=$_[1] }
 	]
 ],
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-                                  yybypass => 0,
-                                  @_,);
+                                  @_);
     bless($self,$class);
-
-    $self->make_node_classes( qw{TERMINAL _OPTIONAL _STAR_LIST _PLUS_LIST 
-         _SUPERSTART
-         eyapp_1
-         symbol_2
-         symbol_3
-         ident_4
-         head_5
-         headsec_6
-         headsec_7
-         decls_8
-         decls_9
-         decl_10
-         decl_11
-         decl_12
-         decl_13
-         decl_14
-         decl_15
-         decl_16
-         decl_17
-         decl_18
-         decl_19
-         decl_20
-         decl_21
-         decl_22
-         decl_23
-         typedecl_24
-         typedecl_25
-         symlist_26
-         symlist_27
-         identlist_28
-         identlist_29
-         body_30
-         body_31
-         rulesec_32
-         rulesec_33
-         startrules_34
-         _CODE
-         startrules_36
-         rules_37
-         rules_38
-         rhss_39
-         rhss_40
-         rule_41
-         rule_42
-         rhs_43
-         rhs_44
-         rhselts_45
-         rhselts_46
-         rhseltwithid_47
-         rhseltwithid_48
-         rhseltwithid_49
-         rhseltwithid_50
-         rhselt_51
-         rhselt_52
-         rhselt_53
-         rhselt_54
-         rhselt_55
-         rhselt_56
-         rhselt_57
-         rhselt_58
-         optname_59
-         optname_60
-         prec_61
-         epscode_62
-         epscode_63
-         code_64
-         code_65
-         tail_66
-         tail_67} );
-    $self;
 }
 
 
@@ -2163,7 +1939,5 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 =cut
 
 
-
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 
 1;

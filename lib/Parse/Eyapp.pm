@@ -17,7 +17,7 @@ __END__
 
 =head1 NAME
  
-Parse::Eyapp  - Extensions for Parse::Yapp
+Parse::Eyapp - Extensions for Parse::Yapp
  
  
 =head1 VERSION
@@ -4212,9 +4212,6 @@ Jeffrey D. Ullman (Addison-Wesley 1986)
  
 Casiano Rodriguez-Leon (casiano@ull.es)
 
-A large percentage of  code is verbatim taken from Parse::Yapp 1.05.
-The author of Parse::Yapp is Francois Desarmenien.
- 
 =head1 ACKNOWLEDGMENTS
 
 This work has been supported by CEE (FEDER) and the Spanish Ministry of
@@ -4225,6 +4222,9 @@ Support from Gobierno de Canarias was through GC02210601
 The University of La Laguna has also supported my work in many ways
 and for many years.
 
+A large percentage of  code is verbatim taken from Parse::Yapp 1.05.
+The author of Parse::Yapp is Francois Desarmenien.
+ 
 I wish to thank Francois Desarmenien for his C<Parse::Yapp> module, 
 to my students at La Laguna and to the Perl Community. Special thanks to 
 my family and Larry Wall.
