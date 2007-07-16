@@ -31,8 +31,13 @@ WriteMakefile(
             },
 	'EXE_FILES' => [ 'eyapp', 'treereg', 'eyapptut' ],
       ($] >= 5.005 ?     
-            (ABSTRACT_FROM  => 'lib/Parse/Eyapp.pm', 
-             AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>') : ()),
+            (
+               ABSTRACT_FROM  => 'lib/Parse/Eyapp.pm', 
+               AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
+               LICENSE        => 'perl'
+             ) 
+             : ()
+       ),
 );
 
 sub MY::postamble {
