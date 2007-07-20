@@ -2,8 +2,11 @@
 use strict;
 use warnings;
 #use Data::Dumper;
-use Test::More tests=>3;
-#use Test::More qw(no_plan);
+use Test::More;
+if( $] <= 5.007) { 
+  plan skip_all => 'Old Perl'; 
+}
+else { plan tests => 3; }
 use_ok qw(Parse::Eyapp) or exit;
 use_ok qw(Parse::Eyapp::Treeregexp) or exit;
 
@@ -320,14 +323,16 @@ my $p = Parse::Eyapp->new_grammar(
   firstline=>12,
 );
 
-my $expected_warnings = q{1 shift/reduce conflict (see .output file)
-State 64: reduce by rule 54: Primary -> Variable (default action)
-State 64: shifts:  
-  to state   98 with '*=' 
-  to state   99 with '-=' 
-  to state  100 with '/=' 
-  to state  101 with '+=' 
-  to state  102 with '=' 
-  to state  103 with '%=' 
-};
-is $p->Warnings, $expected_warnings, "Shift/reduce conflicts diagnosis"; 
+#my $expected_warnings = q{1 shift/reduce conflict (see .output file)
+#State 64: reduce by rule 54: Primary -> Variable (default action)
+#State 64: shifts:  
+#  to state   98 with '*=' 
+#  to state   99 with '-=' 
+#  to state  100 with '/=' 
+#  to state  101 with '+=' 
+#  to state  102 with '=' 
+#  to state  103 with '%=' 
+#};
+
+my $expected_warnings = qr{1 shift/reduce conflict};
+like $p->Warnings, $expected_warnings, "Shift/reduce conflicts diagnosis"; 

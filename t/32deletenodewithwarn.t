@@ -92,7 +92,7 @@ sub Run {
 }
 }; # end grammar
 
-our (@all,$moveinvariant);
+our ($moveinvariant);
 
 $Data::Dumper::Indent = 1;
 Parse::Eyapp->new_grammar(

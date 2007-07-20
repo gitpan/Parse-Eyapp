@@ -58,8 +58,6 @@ sub Run {
 }
 }; # end grammar
 
-our (@all, $uminus, $constantfold, $zero_times_whatever, $whatever_times_zero);
-
 #$Data::Dumper::Indent = 1;
 Parse::Eyapp->new_grammar(input=>$grammar, classname=>'AB', firstline => 9,); # outputfile => 'AB.pm');
 my $parser = AB->new();

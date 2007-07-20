@@ -60,7 +60,6 @@ sub Run {
 }
 }; # end grammar
 
-our (@all, $uminus, $constantfold, $zero_times_whatever, $whatever_times_zero);
 
 #$Data::Dumper::Indent = 1;
 Parse::Eyapp->new_grammar(input=>$grammar, classname=>'AB', firstline => 9,); # outputfile => 'AB.pm');
@@ -79,7 +78,7 @@ $p->generate();
 
 our $delete_b;
 $delete_b->s($t);
-print "\n***** After ******\n";
+#print "\n***** After ******\n";
 #print Dumper($t);
 my $expected_tree = bless( {
   'children' => [

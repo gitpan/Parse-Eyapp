@@ -3,6 +3,13 @@ use strict;
 use Data::Dumper;
 use Parse::Eyapp;
 use Parse::Eyapp::Treeregexp;
+use Test::More;
+
+if( $] <= 5.007) { 
+  plan skip_all => 'Old Perl'; 
+}
+else { plan tests => 9; }
+
 
 my $grammar = q{
   /* 
@@ -12,7 +19,7 @@ my $grammar = q{
   %{
   use strict;
   use Data::Dumper;
-  use Test::More qw(no_plan);
+  use Test::More;
   use List::Util qw(reduce);
   use List::MoreUtils qw(firstval lastval);
 
@@ -444,7 +451,7 @@ my $grammar = q{
       my $f = lastval { $_->{depth} < $d} @blocks; 
       last unless $f;
       $b->{fatherblock} = $f;
-      print "depth=$b->{depth}, node=$b, father= $b->{fatherblock}\n";
+      #print "depth=$b->{depth}, node=$b, father= $b->{fatherblock}\n";
     }
     wantarray? @b : $t;
   }
@@ -457,10 +464,10 @@ my $grammar = q{
       my ($n, $d, $f, $ch) = @$_; 
       if (defined($f)) {
         $n->{fatherblock} = $f->[0];
-        print "depth=$n->{depth}, node=$n, father= $n->{fatherblock}\n";
+#        print "depth=$n->{depth}, node=$n, father= $n->{fatherblock}\n";
       }
       else {
-        print "depth=$n->{depth}, node=$n, father= nofather\n";
+#        print "depth=$n->{depth}, node=$n, father= nofather\n";
       }
     }
     wantarray? @b : $t;
@@ -671,25 +678,26 @@ qr{Error. Variable b at line 4 declared twice},
 
    my ($forest, $t);
    my ($k, $e) = (0, 0);
+
    for  (@tests) {
      $self->YYData->{INPUT} = $_;
-     print "****************\n$_";
+#     print "****************\n$_";
      eval {
        $t = $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, #yydebug => 0x1F 
        );
      };
      if ($@) {
-       print "\n$@";
+#       print "\n$@";
        like($@, $expected_error[$e++],"Simple4 error $e");
      }
      else {
-       print $t->str."\n";
+#       print $t->str."\n";
        is($t->str, $expected_tree[$k++], "Simple scope tree $k");
        my @blocks = $SimpleTrans::blocks->m($t);
        $_->node->{fatherblock} = $_->father->{node} for (@blocks[1..$#blocks]);
        $Data::Dumper::Deepcopy = 1;
        #print Dumper $t;
-       print $_->str."\n" for @blocks;
+#       print $_->str."\n" for @blocks;
        push @$forest, $t;
      }
    }
@@ -718,8 +726,6 @@ Parse::Eyapp::Treeregexp->new( STRING => q{
   },
   PACKAGE => 'SimpleTrans'
 )->generate();
-
-our @b = our ($is_bin, $zero_times_whatever, $whatever_times_zero);
 
 
 # Syntax analysis

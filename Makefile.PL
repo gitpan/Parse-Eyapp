@@ -30,7 +30,7 @@ WriteMakefile(
               'lib/Parse/Eyapp/Node.pm' => '$(INST_LIBDIR)/Eyapp/Node.pm',
             },
 	'EXE_FILES' => [ 'eyapp', 'treereg', 'eyapptut' ],
-      ($] >= 5.005 ?     
+      ($] >= 5.007 ?     
             (
                ABSTRACT_FROM  => 'lib/Parse/Eyapp.pm', 
                AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',

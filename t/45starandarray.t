@@ -94,8 +94,6 @@ sub Run {
 }
 }; # end grammar
 
-our (@all,$moveinvariant, $condition, $assign, $before, $after);
-
 # $Data::Dumper::Indent = 1;
 Parse::Eyapp->new_grammar(
   input=>$grammar, 

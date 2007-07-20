@@ -82,7 +82,8 @@ Parse::Eyapp::Treeregexp->new( STRING => q{
   whatever_times_zero: TIMES(., NUM($x)) and { $x->{attr} == 0 }
 })->generate();
 
-our @b = our ($is_bin, $zero_times_whatever, $whatever_times_zero);
+our ($is_bin, $zero_times_whatever, $whatever_times_zero);
+our @b = ($is_bin, $zero_times_whatever, $whatever_times_zero);
 
 sub Rule6::test {
   my $parser = shift;

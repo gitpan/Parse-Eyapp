@@ -104,8 +104,6 @@ sub not_useful {
   return 0;
 }
 
-our (@all, $uminus);
-
 Parse::Eyapp->new_grammar(
   input=>$translationscheme,
   classname=>'Calc', 

@@ -75,8 +75,6 @@ sub is_syntactic_terminal {
   and ($self->{token} eq $self->{attr});
 }
 
-our (@all, $uminus);
-
 Parse::Eyapp->new_grammar(
   input=>$translationscheme,
   classname=>'Calc', 
