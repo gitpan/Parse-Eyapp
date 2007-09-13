@@ -39,10 +39,10 @@ if warnings are issued.
 
 =item I<-s>
 
-Create a standalone module in which the driver is included.
-Note that if you have more than one parser module called from
-a program, to have it standalone, you need this option only
-for one of your parser module.
+Create a standalone module in which the parsing driver is included.
+However, if your program makes use of the abstract syntax tree transformations
+(C<%tree>, %<metatree>, tree transformations, etc. you need to make explicit
+use of C<Parse::Eyapp::Node>).
 
 =item I<-n>
 

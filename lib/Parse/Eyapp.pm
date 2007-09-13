@@ -22,7 +22,7 @@ Parse::Eyapp - Extensions for Parse::Yapp
  
 =head1 VERSION
  
-1.069577
+1.074
 
 =head1 SYNOPSIS
  

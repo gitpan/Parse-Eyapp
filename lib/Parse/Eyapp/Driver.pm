@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.073';
+$VERSION = '1.074';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -858,4 +858,7 @@ modify it under the same terms as Perl itself. See L<perlartistic>.
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+=cut
+
 

@@ -44,6 +44,7 @@ sub Output {
     my($head,$states,$rules,$tail,$driver, $bypass, $accessors);
     my($version)=$Parse::Eyapp::Driver::VERSION;
     my($datapos);
+    my $makenodeclasses = '';
     my($text)=$self->Option('template') ||<<'EOT';
 ###################################################################################
 #
@@ -58,9 +59,8 @@ sub Output {
 ###################################################################################
 package <<$package>>;
 use strict;
-use Parse::Eyapp::Driver;
+
 push @<<$package>>::ISA, 'Parse::Eyapp::Driver';
-use Parse::Eyapp::Node;
 
 <<$driver>>
 
@@ -92,7 +92,7 @@ sub new {
                                   @_,);
     bless($self,$class);
 
-    $self->make_node_classes(<<$PACKAGES>>);
+    <<$makenodeclasses>>
     $self;
 }
 
@@ -119,8 +119,16 @@ EOT
   $TERMS = $self->Terms();
   $FILENAME = '"'.$self->Option('inputfile').'"';
 
-		$self->Option('standalone')
-	and	$driver=_CopyDriver();
+	if ($self->Option('standalone')) {
+		$driver=_CopyDriver();
+  }
+  else {
+    $driver = qq{
+    use Parse::Eyapp::Driver; 
+    use Parse::Eyapp::Node; 
+    };
+    $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
+  }
 
 	$text=~s/<<(\$.+)>>/$1/gee;
 
