@@ -7,6 +7,7 @@ lib/Parse/Eyapp/Makefile
 lib/Parse/Eyapp/Parse.yp
 lib/Parse/Eyapp/Treeregexp.yp
 lib/Parse/Eyapp/Driver.pm
+lib/Parse/Eyapp/Driver.pod
 lib/Parse/Eyapp/Grammar.pm
 lib/Parse/Eyapp/Lalr.pm
 lib/Parse/Eyapp/Node.pm

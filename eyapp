@@ -41,8 +41,8 @@ if warnings are issued.
 
 Create a standalone module in which the parsing driver is included.
 However, if your program makes use of the abstract syntax tree transformations
-(C<%tree>, %<metatree>, tree transformations, etc. you need to make explicit
-use of C<Parse::Eyapp::Node>).
+(C<%tree>, C<%metatree>, tree transformations, etc.) you need to make explicit
+use of C<Parse::Eyapp::Node>.
 
 =item I<-n>
 
