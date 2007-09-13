@@ -4108,13 +4108,6 @@ Also:
 =over
 
 =item *
-This distribution is an alpha version. 
-A release will be in CPAN by February 2007.
-Hopefully, at that time the interface will freeze or -at least-
-changes in the API will be minor. In the meanwhile 
-it will be likely to change.
-
-=item *
 The way Parse::Eyapp parses Perl code is verbatim the way it does Parse::Yapp 1.05.
 Quoting Francois Desarmenien L<Parse::Yapp> documentation:
 
@@ -4146,21 +4139,16 @@ Parse::Eyapp to live with this limitation.
 
 The same limitation may appear inside header code (code between C<%{> and C<%}>)
 
-=item * 
-
-English is not 
-my native language. For sure this text has
-lexical, syntactic and semantic errors. 
-I'll be most gratefull to know about 
-any typos, grammar mistakes, 
-ways to rewrite paragraphs and misconceptions
-you have found. 
-
 =item *
+The C<-s> option of L<eyapp> produces a standalone parser. If you don't use 
+the methods to manipulate the syntax tree that will suffice and you don't have to load 
+C<Parse::Eyapp>. 
+However the standalone
+version will not work if you want to 
+build the AST using C<%tree> or C<%metatree> or make use of any sort of tree
+transformations (using for example C<Parse::Eyapp::Treeregexp>).
 
-There are unknown bugs. 
-Please report problems to Casiano Rodriguez-Leon (casiano@cpan.org).
- 
+
 =back
 
 =head1 SEE ALSO
