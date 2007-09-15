@@ -4140,13 +4140,13 @@ Parse::Eyapp to live with this limitation.
 The same limitation may appear inside header code (code between C<%{> and C<%}>)
 
 =item *
-The C<-s> option of L<eyapp> produces a standalone parser. If you don't use 
-the methods to manipulate the syntax tree that will suffice and you don't have to load 
-C<Parse::Eyapp>. 
-However the standalone
-version will not work if you want to 
-build the AST using C<%tree> or C<%metatree> or make use of any sort of tree
-transformations (using for example C<Parse::Eyapp::Treeregexp>).
+The C<-s> option of L<eyapp> produces a standalone parser. 
+The modules including the LALR driver (C<Parse::Eyapp::Driver>),
+and those for AST manipulations (<Parse::Eyapp::Node> and
+<Parse::Eyapp::YATW>)) are included - almost verbatim - 
+inside the generated module.
+Don't use this option 
+if you have more than one parser module called from your program.
 
 
 =back

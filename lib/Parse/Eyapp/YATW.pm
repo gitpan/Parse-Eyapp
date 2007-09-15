@@ -6,9 +6,27 @@ use Carp;
 use Data::Dumper;
 use List::Util qw(first);
 use List::MoreUtils qw(lastval);
-use Parse::Eyapp::Base qw( valid_keys invalid_keys );
+#use Parse::Eyapp::Base qw( valid_keys invalid_keys );
+
+sub valid_keys {
+  my %valid_args = @_;
+
+  my @valid_args = keys(%valid_args); 
+  local $" = ", "; 
+  return "@valid_args" 
+}
+
+sub invalid_keys {
+  my $valid_args = shift;
+  my $args = shift;
+
+  return (first { !exists($valid_args->{$_}) } keys(%$args));
+}
+
 
 our $VERSION = $Parse::Eyapp::Driver::VERSION;
+
+our $FILENAME=__FILE__;
 
 # TODO: Check args. Typical args:
 # 'CHANGES' => 0,
@@ -265,8 +283,6 @@ sub s {
 
 1;
 
-__END__
-
 =head1 NAME
  
 Parse::Eyapp::YATW - Implements AST transformations
@@ -331,5 +347,7 @@ modify it under the same terms as Perl itself. See L<perlartistic>.
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+=cut
 
 

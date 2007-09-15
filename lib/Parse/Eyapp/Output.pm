@@ -22,13 +22,18 @@ use strict;
 
 use Carp;
 
-sub _CopyDriver {
-	my($text)='#Included Parse/Eyapp/Driver.pm file'.('-' x 40)."\n";
-		open(DRV,$Parse::Eyapp::Driver::FILENAME)
-	or	die "BUG: could not open $Parse::Eyapp::Driver::FILENAME";
-	$text.="{\n".join('',<DRV>)."}\n";
+####################################################################
+# Returns    : The string '{\n file contents }\n'  with pre and post comments
+# Parameters : a file name
+sub _CopyModule {
+  my $file = shift;
+
+	my $text ="\n{ ###########Included $file file\n";
+
+  open(DRV,$file) or	die "BUG: could not open $file";
+	$text.= join('',<DRV>);
 	close(DRV);
-	$text.='#End of include'.('-' x 50)."\n";
+	$text.="\n} ###########End of include $file file\n";
 }
 
 # Compute line numbers for the outputfile. Need for debugging
@@ -120,12 +125,16 @@ EOT
   $FILENAME = '"'.$self->Option('inputfile').'"';
 
 	if ($self->Option('standalone')) {
-		$driver=_CopyDriver();
+		$driver =_CopyModule($Parse::Eyapp::Driver::FILENAME);
+    $driver .= _CopyModule($Parse::Eyapp::Node::FILENAME);
+    $driver =~ s/\n\s*use Parse::Eyapp::YATW;\n//g;
+    $driver .= _CopyModule($Parse::Eyapp::YATW::FILENAME);
+    $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
   }
   else {
     $driver = qq{
-    use Parse::Eyapp::Driver; 
-    use Parse::Eyapp::Node; 
+use Parse::Eyapp::Driver; 
+use Parse::Eyapp::Node; 
     };
     $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
   }

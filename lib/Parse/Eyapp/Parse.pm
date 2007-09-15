@@ -1,6 +1,6 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.076.
+#    This file was generated using Parse::Eyapp version 1.077.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -15,8 +15,8 @@ use strict;
 push @Parse::Eyapp::Parse::ISA, 'Parse::Eyapp::Driver';
 
 
-    use Parse::Eyapp::Driver; 
-    use Parse::Eyapp::Node; 
+use Parse::Eyapp::Driver; 
+use Parse::Eyapp::Node; 
     
 
 # (c) Copyright Casiano Rodriguez-Leon 
@@ -234,7 +234,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.076',
+    my($self)=$class->SUPER::new( yyversion => '1.077',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],

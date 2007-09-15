@@ -3,13 +3,14 @@ package Parse::Eyapp::Node;
 use strict;
 use Carp;
 use Parse::Eyapp::YATW;
-use base qw(Exporter);
+#use base qw(Exporter);
 use List::MoreUtils qw(lastval);
 use List::Util qw(first);
 use Data::Dumper;
 
-our @EXPORT_OK = qw(new);
+#our @EXPORT_OK = qw(new);
 
+our $FILENAME=__FILE__;
 
 ####################################################################
 # Usage      : 
@@ -862,7 +863,6 @@ sub info {
 
 1;
 
-__END__
 
 =head1 NAME
  
@@ -928,4 +928,7 @@ modify it under the same terms as Perl itself. See L<perlartistic>.
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+=cut
+
 
