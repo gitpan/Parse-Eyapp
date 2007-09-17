@@ -132,10 +132,15 @@ EOT
     $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
   }
   else {
-    $driver = qq{
-use Parse::Eyapp::Driver; 
-use Parse::Eyapp::Node; 
-    };
+    $driver = q{
+BEGIN {
+  # This strange way to load the modules is to guarantee compatibility when
+  # using several standalone and non-standalone Eyapp parsers
+
+  require Parse::Eyapp::Driver unless Parse::Eyapp::Driver->can('YYParse');
+  require Parse::Eyapp::Node unless Parse::Eyapp::Node->can('hnew'); 
+}
+    }; # end string $driver
     $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
   }
 
@@ -236,10 +241,11 @@ documents:
 
 =item * L<Parse::Eyapp>,
 
-=item * L<eyapptut>
+=item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
+(An Introduction to Compiler Construction in seven pages)> in
 
-=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
-L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
+
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 

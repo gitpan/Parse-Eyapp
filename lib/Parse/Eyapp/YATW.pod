@@ -1,17 +1,24 @@
-=head1 NAME 
-
-Parse::Eyapp::Driver - LR Parser and methods to support parsing
+=head1 NAME
+ 
+Parse::Eyapp::YATW - Implements AST transformations
  
 =head1 SEE ALSO
   
-No documentation here. To learn about Parse::Eyapp::Driver see:
-
+No documentation here. To learn about Parse::Eyapp::YATW see the following
+documents:
+  
 =over
 
 =item * L<Parse::Eyapp>,
 
-=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
-L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+=item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
+(An Introduction to Compiler Construction in seven pages)> in
+
+=item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
+(An Introduction to Compiler Construction in seven pages)> in
+
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
+
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 
@@ -25,7 +32,7 @@ L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
 
 =item * bison(1),
 
-=item * the classic book "Compilers: Principles, Techniques, and Tools" by Alfred V. Aho, Ravi Sethi and
+=item * The classic book "Compilers: Principles, Techniques, and Tools" by Alfred V. Aho, Ravi Sethi and
 
 =item * Jeffrey D. Ullman (Addison-Wesley 1986)
 

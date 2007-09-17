@@ -86,8 +86,6 @@ No documentation here. To learn about Parse::Eyapp::Base see:
 
 =item * L<Parse::Eyapp>,
 
-=item * L<eyapptut>
-
 =item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
 L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
 

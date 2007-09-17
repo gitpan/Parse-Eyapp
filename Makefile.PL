@@ -53,6 +53,7 @@ coverage:
 publicdist: release html pdf dist
 	chmod a+r Parse-Eyapp-*.tar.gz
 	cp Parse-Eyapp-*.tar.gz /home/pl/public_html/perlexamples/Parse-Eyapp.tar.gz
+	chmod a+r /home/pl/public_html/perlexamples/Parse-Eyapp.tar.gz
 
 xdvi: 
 	pod2latex -full -prefile preamble.tex lib/Parse/Eyapp.pm 

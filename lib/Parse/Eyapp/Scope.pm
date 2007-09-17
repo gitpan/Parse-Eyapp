@@ -296,10 +296,11 @@ defined.
 
 =item * L<Parse::Eyapp>,
 
-=item * L<eyapptut>
+=item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
+(An Introduction to Compiler Construction in seven pages)> in
 
-=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
-L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
+
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 

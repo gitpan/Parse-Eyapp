@@ -4157,6 +4157,10 @@ if you have more than one parser module called from your program.
 
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
 
+=item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
+(An Introduction to Compiler Construction in seven pages)> in
+L<http://nereida.deioc.ull.es/~pl/eyapsimple/> 
+
 =item *
 perldoc L<eyapp>, 
 
