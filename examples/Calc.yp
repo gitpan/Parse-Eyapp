@@ -9,14 +9,17 @@ my %s;
 %}
 
 %%
+start: input { [ $_[1], \%s] }
+;
+
 input:  
-    #empty      { [] }
+    /* empty */     { [] }
   | input line  { push(@{$_[1]},$_[2]) if defined($_[2]); $_[1] }
 ;
 
 line:       
   '\n'         { undef }
-  | exp '\n'   { $_[1] }
+  | exp '\n'   { print "$_[1]\n"; $_[1] }
   | error '\n' { $_[0]->YYErrok; undef }
 ;
 
@@ -59,6 +62,7 @@ sub _Lexer {
     my($parser)=shift;
 
         $parser->YYData->{INPUT}
+    or $parser->YYData->{INPUT} = <STDIN>
     or  return('',undef);
 
     $parser->YYData->{INPUT}=~s/^[ \t]//;

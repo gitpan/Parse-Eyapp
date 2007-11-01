@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.081';
+$VERSION = '1.082';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -640,7 +640,13 @@ sub _Parse {
 
 #DBG>			$debug & 0x04
 #DBG>		and	$act
-#DBG>		and	print STDERR "Reduce using rule ".-$act." ($lhs,$len): ";
+#DBG>		#and	print STDERR "Reduce using rule ".-$act." ($lhs,$len): "; # old Parse::Yapp line
+#DBG>		and	do { my @rhs = @{$self->{GRAMMAR}->[-$act]->[2]};
+#DBG>            @rhs = ( '/* empty */' ) unless @rhs;
+#DBG>            my $rhs = "@rhs";
+#DBG>            $rhs = substr($rhs, 0, 30).'...' if length($rhs) > 30; # chomp if too large
+#DBG>            print STDERR "Reduce using rule ".-$act." ($lhs --> $rhs): "; 
+#DBG>          };
 
                 $act
             or  $self->YYAccept();

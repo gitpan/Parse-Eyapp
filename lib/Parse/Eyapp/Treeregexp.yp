@@ -330,7 +330,7 @@ sub _Lexer {
     $tokenbegin = $tokenend;
 
         $input=~/\G(and)/gc
-    and return($1, $1);
+    and return($1, [$1, $tokenbegin]);
 
         $input=~/\G([A-Za-z_][A-Za-z0-9_]*)/gc
     and do {

@@ -2257,7 +2257,9 @@ When the parser is called with C<yydebug> activated:
 
 the output reports about the parser activities:
 
-  > use_pluslist1.pl
+
+  $ eyapp -v PlusList1.yp
+  $ use_pluslist1.pl
   ----------------------------------------
   In state 0:
   Stack:[0]
@@ -2268,12 +2270,12 @@ the output reports about the parser activities:
   In state 2:
   Stack:[0,2]
   Don't need token.
-  Reduce using rule 2 (PLUS-1,1): Back to state 0, then go to state 3.
+  Reduce using rule 2 (PLUS-1 --> c): Back to state 0, then go to state 3.
   ----------------------------------------
   In state 3:
   Stack:[0,3]
   Need token. Got ><
-  Reduce using rule 3 (S,1): S -> 'c'+
+  Reduce using rule 3 (S --> PLUS-1): S -> 'c'+
   Back to state 0, then go to state 1.
   ----------------------------------------
   In state 1:
@@ -2284,6 +2286,16 @@ the output reports about the parser activities:
   Stack:[0,1,4]
   Don't need token.
   Accept.
+
+To check the numbers of the production rules see the C<.output> file:
+
+  $ sed -ne '/Rules/,/^$/p' PlusList1.output
+  Rules:
+  ------
+  0:      $start -> S $end
+  1:      PLUS-1 -> PLUS-1 'c'
+  2:      PLUS-1 -> 'c'
+  3:      S -> PLUS-1
 
 
 =head2 
