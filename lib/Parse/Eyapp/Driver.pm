@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.082';
+$VERSION = '1.084';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -180,6 +180,7 @@ sub YYIssemantic {
   my $self = shift;
   my $symbol = shift;
 
+  $self->{TERMS}->{$symbol} = shift if @_;
   return ($self->{TERMS}->{$symbol});
 }
 
@@ -215,6 +216,7 @@ sub YYBypass {
 sub YYBypassrule {
   my $self = shift;
 
+  $self->{GRAMMAR}->[$self->{CURRENT_RULE}][3] = $_[0] if @_;
   return $self->{GRAMMAR}->[$self->{CURRENT_RULE}][3];
 }
 
@@ -294,8 +296,7 @@ sub YYBuildAST {
     }
 
     if ($self->YYIsterm($_)) {
-      next unless UNIVERSAL::can($PREFIX."TERMINAL", "save_attributes");
-      TERMINAL::save_attributes($ch, $node);
+      TERMINAL::save_attributes($ch, $node) if UNIVERSAL::can($PREFIX."TERMINAL", "save_attributes");
       next;
     }
 
@@ -404,6 +405,18 @@ sub YYActionforT_TX1X2 {
     next unless ref($ch);
     push @{$head->{children}}, $ch;
   }
+
+  # November 2007. Not really inside. Unsafe. This is a test
+#  if (@{$head->{children}} == 1) {
+#    $head = $head->{children}[0]; 
+#    # Re-bless unless is "an automatically named node", but the characterization of this is 
+#    my $name = $self->YYName();
+#    my $class = "$PREFIX$name";
+#    my $lhs = $self->YYLhs;
+#    bless $head, $class unless $name =~ /${lhs}_\d+$/; # lazy, weak (and wicked).
+#    return $head;
+#  }
+
   return $head;
 }
 

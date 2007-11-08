@@ -1,4 +1,3 @@
-- yydebug: print the production intead of its number when debugging
 - Convert "local $_ " bug into a test!!!!
 - Distribution
   * Automatic code generation IBURS

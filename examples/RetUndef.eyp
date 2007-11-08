@@ -1,0 +1,91 @@
+/* File RetUndef.eyp */
+
+%tree
+%{
+  use Data::Dumper;
+  my %s; # symbol table
+%}
+
+%%
+P: 
+  %name PROG
+    $DS $SS  
+      { 
+        print Dumper($DS);
+        $SS->{symboltable} = \%s;
+        return $SS; 
+      }
+;
+
+SS: 
+   %name ST
+     S
+ | %name STS
+     SS S
+;
+
+DS: 
+   %name DEC
+     D
+       {}
+ | %name DECS
+     DS  D
+       {}
+;
+
+D : %name INTDEC
+    'int' $ID     
+       { 
+         die "Error: $ID declared twice\n" if exists($s{$ID});
+         $s{$ID} = 'int';    
+       }
+  | %name STRDEC
+    'string' $ID  
+      { 
+        die "Error: $ID declared twice\n" if exists($s{$ID});
+        $s{$ID} = 'string'; 
+      }
+;
+
+S: %name EXP
+    $ID
+      {
+        die "Error: $ID not declared\n" unless exists($s{$ID});
+        goto &Parse::Eyapp::Driver::YYBuildAST; # build the node
+      }
+;
+
+%%
+
+sub _Error {
+        exists $_[0]->YYData->{ERRMSG}
+    and do {
+        print $_[0]->YYData->{ERRMSG};
+        delete $_[0]->YYData->{ERRMSG};
+        return;
+    };
+    print "Syntax error.\n";
+}
+
+sub _Lexer {
+    my($parser)=shift;
+
+        $parser->YYData->{INPUT}
+    or  $parser->YYData->{INPUT} = <STDIN>;
+
+    for ($parser->YYData->{INPUT}) {
+        s/^[ \t\n]//;
+        length($_) or return('',undef);
+        s/^(int|string)// and return ($1, $1);
+        s/^([a-zA-Z_]\w*)// and return ('ID', $1);
+        s/^(.)//s and return($1,$1);
+    }
+}
+
+sub Run {
+    my($self)=shift;
+    return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, 
+                    # yydebug => 0x1F 
+    );
+}
+

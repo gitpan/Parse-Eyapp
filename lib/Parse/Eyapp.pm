@@ -3,7 +3,7 @@
 #
 #
 package Parse::Eyapp;
-
+use 5.00600;
 use strict;
 our @ISA = qw(Parse::Eyapp::Output);
 use Parse::Eyapp::Output;

@@ -125,4 +125,6 @@ examples/treewithoutnames.pl
 examples/intermediateaction2.yp
 examples/useintermediateaction2.pl
 examples/Pir.pl
+examples/useretundef.pl
+examples/RetUndef.eyp
 META.yml                                 Module meta-data (added by MakeMaker)

@@ -1,13 +1,18 @@
 %tree
 %semantic token 'a' 'b'
 %%
-S:  /* empty */
-    | S A
-    | S B
+S:    %name EMPTY
+        /* empty */
+    | %name AES 
+        S A
+    | %name BES 
+        S B
 ;
-A : 'a' 
+A : %name A 
+      'a' 
 ;
-B : 'b' { }
+B : %name B
+      'b' { }
 ;
 %%
 
