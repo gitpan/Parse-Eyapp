@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.084';
+$VERSION = '1.085';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -188,7 +188,9 @@ sub YYIssemantic {
 sub YYName {
   my $self = shift;
 
-  return $self->{GRAMMAR}->[$self->{CURRENT_RULE}]->[0];
+  my $current_rule = $self->{GRAMMAR}->[$self->{CURRENT_RULE}];
+  $current_rule->[0] = shift if @_;
+  return $current_rule->[0];
 }
 
 sub YYPrefix {
