@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.085';
+$VERSION = '1.086';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -382,7 +382,9 @@ sub YYBuildTS {
   $node;
 }
 
-# for lists
+# For * and + lists 
+# S2 -> S2 X         { push @$_[1] the node associated with X; $_[1] }
+# S2 -> /* empty */  { a node with empty children }
 sub YYActionforT_TX1X2 {
   my $self = shift;
   my $head = shift;
@@ -407,17 +409,6 @@ sub YYActionforT_TX1X2 {
     next unless ref($ch);
     push @{$head->{children}}, $ch;
   }
-
-  # November 2007. Not really inside. Unsafe. This is a test
-#  if (@{$head->{children}} == 1) {
-#    $head = $head->{children}[0]; 
-#    # Re-bless unless is "an automatically named node", but the characterization of this is 
-#    my $name = $self->YYName();
-#    my $class = "$PREFIX$name";
-#    my $lhs = $self->YYLhs;
-#    bless $head, $class unless $name =~ /${lhs}_\d+$/; # lazy, weak (and wicked).
-#    return $head;
-#  }
 
   return $head;
 }

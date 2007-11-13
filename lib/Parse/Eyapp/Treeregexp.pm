@@ -1,6 +1,6 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.085.
+#    This file was generated using Parse::Eyapp version 1.086.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -236,7 +236,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.085',
+    my($self)=$class->SUPER::new( yyversion => '1.086',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'treeregexplist', '$end' ], 0 ],
@@ -244,44 +244,44 @@ sub new {
   [ _STAR_LIST_1 => 'STAR-1', [  ], 0 ],
   [ treeregexplist_3 => 'treeregexplist', [ 'STAR-1' ], 0 ],
   [ _PAREN => 'PAREN-2', [ '=>', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-3', [ 'PAREN-2' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-3', [  ], 0 ],
-  [ _PLUS_LIST => 'PLUS-4', [ 'PLUS-4', 'IDENT' ], 0 ],
-  [ _PLUS_LIST => 'PLUS-4', [ 'IDENT' ], 0 ],
+  [ _OPTIONAL_3 => 'OPTIONAL-3', [ 'PAREN-2' ], 0 ],
+  [ _OPTIONAL_3 => 'OPTIONAL-3', [  ], 0 ],
+  [ _PLUS_LIST_4 => 'PLUS-4', [ 'PLUS-4', 'IDENT' ], 0 ],
+  [ _PLUS_LIST_4 => 'PLUS-4', [ 'IDENT' ], 0 ],
   [ treeregexp_9 => 'treeregexp', [ 'IDENT', ':', 'treereg', 'OPTIONAL-3' ], 0 ],
   [ treeregexp_10 => 'treeregexp', [ 'CODE' ], 0 ],
   [ treeregexp_11 => 'treeregexp', [ 'IDENT', '=', 'PLUS-4', ';' ], 0 ],
   [ treeregexp_12 => 'treeregexp', [ 'REGEXP' ], 0 ],
   [ _PAREN => 'PAREN-5', [ 'and', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-6', [ 'PAREN-5' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-6', [  ], 0 ],
+  [ _OPTIONAL_6 => 'OPTIONAL-6', [ 'PAREN-5' ], 0 ],
+  [ _OPTIONAL_6 => 'OPTIONAL-6', [  ], 0 ],
   [ _PAREN => 'PAREN-7', [ ':', 'IDENT' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-8', [ 'PAREN-7' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-8', [  ], 0 ],
+  [ _OPTIONAL_8 => 'OPTIONAL-8', [ 'PAREN-7' ], 0 ],
+  [ _OPTIONAL_8 => 'OPTIONAL-8', [  ], 0 ],
   [ _PAREN => 'PAREN-9', [ 'and', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-10', [ 'PAREN-9' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-10', [  ], 0 ],
+  [ _OPTIONAL_10 => 'OPTIONAL-10', [ 'PAREN-9' ], 0 ],
+  [ _OPTIONAL_10 => 'OPTIONAL-10', [  ], 0 ],
   [ _PAREN => 'PAREN-11', [ 'and', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-12', [ 'PAREN-11' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-12', [  ], 0 ],
+  [ _OPTIONAL_12 => 'OPTIONAL-12', [ 'PAREN-11' ], 0 ],
+  [ _OPTIONAL_12 => 'OPTIONAL-12', [  ], 0 ],
   [ _PAREN => 'PAREN-13', [ 'and', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-14', [ 'PAREN-13' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-14', [  ], 0 ],
+  [ _OPTIONAL_14 => 'OPTIONAL-14', [ 'PAREN-13' ], 0 ],
+  [ _OPTIONAL_14 => 'OPTIONAL-14', [  ], 0 ],
   [ _PAREN => 'PAREN-15', [ 'and', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-16', [ 'PAREN-15' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-16', [  ], 0 ],
+  [ _OPTIONAL_16 => 'OPTIONAL-16', [ 'PAREN-15' ], 0 ],
+  [ _OPTIONAL_16 => 'OPTIONAL-16', [  ], 0 ],
   [ _PAREN => 'PAREN-17', [ ':', 'IDENT' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-18', [ 'PAREN-17' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-18', [  ], 0 ],
+  [ _OPTIONAL_18 => 'OPTIONAL-18', [ 'PAREN-17' ], 0 ],
+  [ _OPTIONAL_18 => 'OPTIONAL-18', [  ], 0 ],
   [ _PAREN => 'PAREN-19', [ 'and', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-20', [ 'PAREN-19' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-20', [  ], 0 ],
+  [ _OPTIONAL_20 => 'OPTIONAL-20', [ 'PAREN-19' ], 0 ],
+  [ _OPTIONAL_20 => 'OPTIONAL-20', [  ], 0 ],
   [ _PAREN => 'PAREN-21', [ 'and', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-22', [ 'PAREN-21' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-22', [  ], 0 ],
+  [ _OPTIONAL_22 => 'OPTIONAL-22', [ 'PAREN-21' ], 0 ],
+  [ _OPTIONAL_22 => 'OPTIONAL-22', [  ], 0 ],
   [ _PAREN => 'PAREN-23', [ 'and', 'CODE' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-24', [ 'PAREN-23' ], 0 ],
-  [ _OPTIONAL => 'OPTIONAL-24', [  ], 0 ],
+  [ _OPTIONAL_24 => 'OPTIONAL-24', [ 'PAREN-23' ], 0 ],
+  [ _OPTIONAL_24 => 'OPTIONAL-24', [  ], 0 ],
   [ treereg_43 => 'treereg', [ 'IDENT', '(', 'childlist', ')', 'OPTIONAL-6' ], 0 ],
   [ treereg_44 => 'treereg', [ 'REGEXP', 'OPTIONAL-8', '(', 'childlist', ')', 'OPTIONAL-10' ], 0 ],
   [ treereg_45 => 'treereg', [ 'SCALAR', '(', 'childlist', ')', 'OPTIONAL-12' ], 0 ],
@@ -783,22 +783,22 @@ sub {  $_[1]->{children} }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_3
 		 'OPTIONAL-3', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_3
 		 'OPTIONAL-3', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _PLUS_LIST
+	[#Rule _PLUS_LIST_4
 		 'PLUS-4', 2,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _PLUS_LIST
+	[#Rule _PLUS_LIST_4
 		 'PLUS-4', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -842,12 +842,12 @@ sub {
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_6
 		 'OPTIONAL-6', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_6
 		 'OPTIONAL-6', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -857,12 +857,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_8
 		 'OPTIONAL-8', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_8
 		 'OPTIONAL-8', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -872,12 +872,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_10
 		 'OPTIONAL-10', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_10
 		 'OPTIONAL-10', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -887,12 +887,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_12
 		 'OPTIONAL-12', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_12
 		 'OPTIONAL-12', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -902,12 +902,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_14
 		 'OPTIONAL-14', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_14
 		 'OPTIONAL-14', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -917,12 +917,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_16
 		 'OPTIONAL-16', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_16
 		 'OPTIONAL-16', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -932,12 +932,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_18
 		 'OPTIONAL-18', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_18
 		 'OPTIONAL-18', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -947,12 +947,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_20
 		 'OPTIONAL-20', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_20
 		 'OPTIONAL-20', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -962,12 +962,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_22
 		 'OPTIONAL-22', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_22
 		 'OPTIONAL-22', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -977,12 +977,12 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_24
 		 'OPTIONAL-24', 1,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_single }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule _OPTIONAL
+	[#Rule _OPTIONAL_24
 		 'OPTIONAL-24', 0,
 sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -1118,10 +1118,22 @@ sub {
          _STAR_LIST_1
          treeregexplist_3
          _PAREN
+         _OPTIONAL_3
+         _PLUS_LIST_4
          treeregexp_9
          treeregexp_10
          treeregexp_11
          treeregexp_12
+         _OPTIONAL_6
+         _OPTIONAL_8
+         _OPTIONAL_10
+         _OPTIONAL_12
+         _OPTIONAL_14
+         _OPTIONAL_16
+         _OPTIONAL_18
+         _OPTIONAL_20
+         _OPTIONAL_22
+         _OPTIONAL_24
          treereg_43
          treereg_44
          treereg_45
