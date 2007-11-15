@@ -1,9 +1,12 @@
 %semantic token 'a' 'b'
 %tree bypass
 %%
-S:    /* empty */
-    | S A.f { $f->{attr} = "A"; $f; } A
-    | S B.f { $f->{attr} = "B"; $f; } B
+S:    %name EMPTY
+       /* empty */
+    | %name SA
+       S A.f { $f->{attr} = "A"; $f; } A
+    | %name SB
+       S B.f { $f->{attr} = "B"; $f; } B
 ;
 A : %name A 'a' 
 ;
@@ -42,5 +45,3 @@ sub Run {
     );
 }
 
-#my($calc)=new Calc;
-#$calc->Run;

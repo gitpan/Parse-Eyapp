@@ -1,9 +1,9 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.086.
+#    This file was generated using Parse::Eyapp version 1.087.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
-# (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon. Universidad de La Laguna.
+# (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon. Universidad de La Laguna.
 #        Don't edit this file, use source file "lib/Parse/Eyapp/Parse.yp" instead.
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
@@ -42,7 +42,9 @@ my ($defaultaction);
 my $filename;
 my $tree = 0; # true if %tree or %metatree
 my $metatree = 0;
+my $flatlists = 0; # true if flat list semantic for * + and ? operators
 my $bypass = 0;
+my $buildingtree = 0;
 my $alias = 0;
 my $accessors = ''; # code generated for named accessors when %tree or %metatree is active
 
@@ -239,7 +241,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.086',
+    my($self)=$class->SUPER::new( yyversion => '1.087',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
@@ -1227,7 +1229,7 @@ sub {  $defaultaction = $_[2]; undef }
 	[#Rule decl_19
 		 'decl', 2,
 sub {  
-            $tree = 1;
+            $tree = $buildingtree = 1;
             $bypass = ($_[1][0] =~m{bypass})? 1 : 0;
             $alias = ($_[1][0] =~m{alias})? 1 : 0;
             $defaultaction = [ ' goto &Parse::Eyapp::Driver::YYBuildAST ', $lineno[0]]; 
@@ -1238,7 +1240,7 @@ sub {
 	[#Rule decl_20
 		 'decl', 2,
 sub {  
-            $metatree = $tree = 1;
+            $metatree = $tree = $buildingtree = 1;
             undef 
           }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -1474,7 +1476,7 @@ sub {
 
 
            my $code = $defaultaction && [ @$defaultaction ];
-           $code =[ ' goto &Parse::Eyapp::Driver::YYBuildAST ', $lineno[0]] unless $metatree;
+           $code =[ ' goto &Parse::Eyapp::Driver::YYActionforParenthesis', $lineno[0]] unless $metatree;
 
              defined($rhs)
            and $rhs->[-1][0] eq 'CODE'
@@ -1662,6 +1664,7 @@ sub {  $tail=$_[1] }
 ],
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
                                   yybypass => 0,
+                                  yybuildingtree => 0,
                                   @_,);
     bless($self,$class);
 
@@ -1895,6 +1898,9 @@ sub _Lexer {
             $$input=~/\G%metatree/gc
         and return('METATREE',[ undef, $lineno[0] ]);
 
+            $$input=~/\G%flatlists/gc
+        and return('FLATLISTS',[ undef, $lineno[0] ]);
+
             $$input=~/\G%name\s+semantic\s+actions/gc
         and return('NAMESEMANTICS',[ undef, $lineno[0] ]);
 
@@ -2077,10 +2083,10 @@ sub Parse {
 
     @$parsed{ 'HEAD', 'TAIL', 'RULES', 'NTERM', 'TERM',
               'NULL', 'PREC', 'SYMS',  'START', 'EXPECT', 
-              'SEMANTIC', 'BYPASS', 'ACCESSORS' }
+              'SEMANTIC', 'BYPASS', 'ACCESSORS', 'BUILDINGTREE' }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
                $nullable, $precterm, $syms, $start, $expect, 
-               $semantic, $bypass, $accessors);
+               $semantic, $bypass, $accessors, $buildingtree);
 
     undef($input);
     undef($lexlevel);
@@ -2104,6 +2110,7 @@ sub Parse {
     undef($expect);
     undef($defaultaction);
     undef($semantic);
+    undef($buildingtree);
 
     $parsed
 }

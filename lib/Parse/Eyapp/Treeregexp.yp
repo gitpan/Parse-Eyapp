@@ -619,7 +619,8 @@ sub has_array_prefix {
 
     my $parser = Parse::Eyapp::Treeregparser->new();
     my $t = $parser->YYParse( yylex => \&Parse::Eyapp::Treeregparser::_Lexer, 
-                              yyerror => \&Parse::Eyapp::Treeregparser::_Error );
+                              yyerror => \&Parse::Eyapp::Treeregparser::_Error,
+                              yybuildingtree => 1);
 
     # Traverse the tree generating the pattern-action subroutine
     my ($names, @names, %family); # Names of the generated subroutines

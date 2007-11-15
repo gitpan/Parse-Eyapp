@@ -1,9 +1,9 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.086.
+#    This file was generated using Parse::Eyapp version 1.087.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
-# (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon. Universidad de La Laguna.
+# (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon. Universidad de La Laguna.
 #        Don't edit this file, use source file "lib/Parse/Eyapp/Treeregexp.yp" instead.
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
@@ -236,7 +236,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.086',
+    my($self)=$class->SUPER::new( yyversion => '1.087',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'treeregexplist', '$end' ], 0 ],
@@ -780,7 +780,7 @@ sub {  $_[1]->{children} }
 	],
 	[#Rule _PAREN
 		 'PAREN-2', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_3
@@ -839,7 +839,7 @@ sub {
 	],
 	[#Rule _PAREN
 		 'PAREN-5', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_6
@@ -854,7 +854,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-7', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_8
@@ -869,7 +869,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-9', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_10
@@ -884,7 +884,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-11', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_12
@@ -899,7 +899,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-13', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_14
@@ -914,7 +914,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-15', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_16
@@ -929,7 +929,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-17', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_18
@@ -944,7 +944,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-19', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_20
@@ -959,7 +959,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-21', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_22
@@ -974,7 +974,7 @@ sub {  goto &Parse::Eyapp::Driver::YYActionforT_empty }
 	],
 	[#Rule _PAREN
 		 'PAREN-23', 2,
-sub {  goto &Parse::Eyapp::Driver::YYBuildAST }
+sub {  goto &Parse::Eyapp::Driver::YYActionforParenthesis}
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _OPTIONAL_24
@@ -1110,6 +1110,7 @@ sub {
 ],
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
                                   yybypass => 0,
+                                  yybuildingtree => 0,
                                   @_,);
     bless($self,$class);
 
@@ -1465,7 +1466,8 @@ sub has_array_prefix {
 
     my $parser = Parse::Eyapp::Treeregparser->new();
     my $t = $parser->YYParse( yylex => \&Parse::Eyapp::Treeregparser::_Lexer, 
-                              yyerror => \&Parse::Eyapp::Treeregparser::_Error );
+                              yyerror => \&Parse::Eyapp::Treeregparser::_Error,
+                              yybuildingtree => 1);
 
     # Traverse the tree generating the pattern-action subroutine
     my ($names, @names, %family); # Names of the generated subroutines

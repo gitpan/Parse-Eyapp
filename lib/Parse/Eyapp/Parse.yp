@@ -18,7 +18,9 @@ my ($defaultaction);
 my $filename;
 my $tree = 0; # true if %tree or %metatree
 my $metatree = 0;
+my $flatlists = 0; # true if flat list semantic for * + and ? operators
 my $bypass = 0;
+my $buildingtree = 0;
 my $alias = 0;
 my $accessors = ''; # code generated for named accessors when %tree or %metatree is active
 
@@ -333,7 +335,7 @@ decl:  '\n'                 #default action
     |   DEFAULTACTION CODE '\n'         { $defaultaction = $_[2]; undef } 
     |   TREE '\n'    
           { 
-            $tree = 1;
+            $tree = $buildingtree = 1;
             $bypass = ($_[1][0] =~m{bypass})? 1 : 0;
             $alias = ($_[1][0] =~m{alias})? 1 : 0;
             $defaultaction = [ ' goto &Parse::Eyapp::Driver::YYBuildAST ', $lineno[0]]; 
@@ -341,7 +343,7 @@ decl:  '\n'                 #default action
           } 
     |   METATREE '\n'    
           { 
-            $metatree = $tree = 1;
+            $metatree = $tree = $buildingtree = 1;
             undef 
           } 
     |   TYPE typedecl identlist '\n'
@@ -489,7 +491,7 @@ rhselt:     symbol    { [ 'SYMB', $_[1] ] }
 
 
            my $code = $defaultaction && [ @$defaultaction ];
-           $code =[ ' goto &Parse::Eyapp::Driver::YYBuildAST ', $lineno[0]] unless $metatree;
+           $code =[ ' goto &Parse::Eyapp::Driver::YYActionforParenthesis', $lineno[0]] unless $metatree;
 
              defined($rhs)
            and $rhs->[-1][0] eq 'CODE'
@@ -799,6 +801,9 @@ sub _Lexer {
             $$input=~/\G%metatree/gc
         and return('METATREE',[ undef, $lineno[0] ]);
 
+            $$input=~/\G%flatlists/gc
+        and return('FLATLISTS',[ undef, $lineno[0] ]);
+
             $$input=~/\G%name\s+semantic\s+actions/gc
         and return('NAMESEMANTICS',[ undef, $lineno[0] ]);
 
@@ -981,10 +986,10 @@ sub Parse {
 
     @$parsed{ 'HEAD', 'TAIL', 'RULES', 'NTERM', 'TERM',
               'NULL', 'PREC', 'SYMS',  'START', 'EXPECT', 
-              'SEMANTIC', 'BYPASS', 'ACCESSORS' }
+              'SEMANTIC', 'BYPASS', 'ACCESSORS', 'BUILDINGTREE' }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
                $nullable, $precterm, $syms, $start, $expect, 
-               $semantic, $bypass, $accessors);
+               $semantic, $bypass, $accessors, $buildingtree);
 
     undef($input);
     undef($lexlevel);
@@ -1008,6 +1013,7 @@ sub Parse {
     undef($expect);
     undef($defaultaction);
     undef($semantic);
+    undef($buildingtree);
 
     $parsed
 }

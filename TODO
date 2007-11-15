@@ -1,3 +1,7 @@
+- * + ? operators.
+   - Flatlists
+       + %flat lists directive
+       + Do tests
 - Convert "local $_ " bug into a test!!!!
 - Distribution
   * Automatic code generation IBURS

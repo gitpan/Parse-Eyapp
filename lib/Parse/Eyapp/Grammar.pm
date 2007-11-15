@@ -30,7 +30,8 @@ sub new {
 
     $values = $parser->Parse($self->Option('input'), 
                              $self->Option('firstline'), # Line where the grammar source starts
-                             $self->Option('inputfile')  # The file or program containing the grammar
+                             $self->Option('inputfile'),  # The file or program containing the grammar
+                             #$self->Option('buildingtree')  # If building AST
                             );
 
     undef($parser);
@@ -138,6 +139,12 @@ sub Bypass {
   my($self)=shift;
     
   return  $$self{GRAMMAR}{BYPASS}
+}
+
+sub Buildingtree {
+  my($self)=shift;
+    
+  return  $$self{GRAMMAR}{BUILDINGTREE}
 }
 
 #####################################
@@ -418,6 +425,7 @@ sub _ReduceGrammar {
                    # Casiano modifications
                    SEMANTIC       => $values->{SEMANTIC}, # added to simplify AST
                    BYPASS         => $values->{BYPASS},   # added to simplify AST
+                   BUILDINGTREE   => $values->{BUILDINGTREE},   # influences the semantic of lists * + ?
                    ACCESSORS      => $values->{ACCESSORS}, # getter-setter for %tree and %metatree
                  };
     my($rules,$nterm,$term) =  @$values {'RULES', 'NTERM', 'TERM'};

@@ -10,13 +10,13 @@
 
 package Parse::Eyapp::Driver;
 
-require 5.004;
+require 5.006;
 
 use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.086';
+$VERSION = '1.087';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -31,6 +31,7 @@ my(%params)=(YYLEX => 'CODE', 'YYERROR' => 'CODE', YYVERSION => '',
        YYBYPASS   => '',
 	     YYGRAMMAR  => 'ARRAY', 
 	     YYTERMS    => 'HASH',
+	     YYBUILDINGTREE  => '',
 	     ); 
 my (%newparams) = (%params, YYPREFIX => '',);
 
@@ -229,6 +230,19 @@ sub YYFirstline {
   $self->{FIRSTLINE};
 }
 
+# Influences the behavior of YYActionforT_X1X2
+# YYActionforT_single and YYActionforT_empty
+# If true these methods will build simple lists of attributes 
+# for the lists operators X*, X+ and X? and parenthesis (X Y)
+# Otherwise the classic node construction for the
+# syntax tree is used
+sub YYBuildingTree {
+  my $self = shift;
+
+  $self->{BUILDINGTREE} = $_[0] if @_;
+  $self->{BUILDINGTREE};
+}
+
 sub BeANode {
   my $class = shift;
 
@@ -382,10 +396,7 @@ sub YYBuildTS {
   $node;
 }
 
-# For * and + lists 
-# S2 -> S2 X         { push @$_[1] the node associated with X; $_[1] }
-# S2 -> /* empty */  { a node with empty children }
-sub YYActionforT_TX1X2 {
+sub YYActionforT_TX1X2_tree {
   my $self = shift;
   my $head = shift;
   my $PREFIX = $self->YYPrefix();
@@ -413,7 +424,29 @@ sub YYActionforT_TX1X2 {
   return $head;
 }
 
-sub YYActionforT_empty {
+# For * and + lists 
+# S2 -> S2 X         { push @$_[1] the node associated with X; $_[1] }
+# S2 -> /* empty */  { a node with empty children }
+sub YYActionforT_TX1X2 {
+  goto &YYActionforT_TX1X2_tree if $_[0]->YYBuildingTree;
+
+  my $self = shift;
+  my $head = shift;
+
+  push @$head, @_;
+  return $head;
+}
+
+sub YYActionforParenthesis {
+  goto &YYBuildAST if $_[0]->YYBuildingTree;
+
+  my $self = shift;
+
+  return [ @_ ];
+}
+
+
+sub YYActionforT_empty_tree {
   my $self = shift;
   my $PREFIX = $self->YYPrefix();
   my $name = $self->YYName();
@@ -425,7 +458,13 @@ sub YYActionforT_empty {
   $node;
 }
 
-sub YYActionforT_single {
+sub YYActionforT_empty {
+  goto &YYActionforT_empty_tree  if $_[0]->YYBuildingTree;
+
+  [];
+}
+
+sub YYActionforT_single_tree {
   my $self = shift;
   my $PREFIX = $self->YYPrefix();
   my $name = $self->YYName();
@@ -455,6 +494,13 @@ sub YYActionforT_single {
   my $node = bless { children => \@t }, $class;
   #BeANode($class);
   $node;
+}
+
+sub YYActionforT_single {
+  goto &YYActionforT_single_tree  if $_[0]->YYBuildingTree;
+
+  my $self = shift;
+  [ @_ ];
 }
 
 ### end Casiano methods

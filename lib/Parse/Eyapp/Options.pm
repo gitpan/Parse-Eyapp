@@ -47,6 +47,10 @@ my(%known_options)= (
         0       =>  "Don't create a standalone parser (Perl and C++)",
         1       =>  "Create a standalone parser"
     },
+    buildingtree   =>  {
+        0       =>  "Not building AST",
+        1       =>  "Building AST"
+    },
     input       =>  {
         ''      =>  "Input text of grammar"
     },
@@ -62,6 +66,7 @@ my(%default_options)= (
     inputfile => undef,
     classname   => 'Parser',
     standalone => 0,
+    buildingtree => 1,
     input => undef,
     template => undef,
     shebang => undef,
