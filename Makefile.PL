@@ -32,7 +32,7 @@ WriteMakefile(
 	'EXE_FILES' => [ 'eyapp', 'treereg' ],
       ($] >= 5.005 ?     
             (
-               ABSTRACT_FROM  => 'lib/Parse/Eyapp.pm', 
+               ABSTRACT_FROM  => 'lib/Parse/Eyapp.pod', 
                AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
              ) 
              : ()
@@ -45,6 +45,9 @@ release: lib/Parse/Eyapp/Parse.yp
 	PERL5LIB=lib; eyapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
 	PERL5LIB=lib; $(PERL) -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
 
+doc:tt2/Eyapp.tt2 
+	cd tt2; tpage  Eyapp.tt2 > ../lib/Parse/Eyapp.pod
+
 coverage:
 	cover -delete
 	make HARNESS_PERL_SWITCHES=-MDevel::Cover test
@@ -56,7 +59,7 @@ publicdist: release html pdf dist
 	chmod a+r /home/pl/public_html/perlexamples/Parse-Eyapp.tar.gz
 
 xdvi: 
-	pod2latex -full -prefile preamble.tex lib/Parse/Eyapp.pm 
+	pod2latex -full -prefile preamble.tex lib/Parse/Eyapp.pod
 	latex Eyapp.tex; makeindex Eyapp; latex Eyapp.tex 
 
 pdf: xdvi
@@ -67,7 +70,7 @@ pdf: xdvi
 
 html:
 	#rm -f Eyapp.html podindex.html podtoc.html
-	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp treereg lib/Parse/Eyapp.pm 
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp treereg lib/Parse/Eyapp.pod
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p Eyapp.html 
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p eyapp.html 
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p treereg.html 

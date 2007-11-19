@@ -22,6 +22,7 @@ lib/Parse/Eyapp/YATW.pod
 lib/Parse/Eyapp/Scope.pm
 lib/Parse/Eyapp/Base.pm
 lib/Parse/Eyapp.pm
+lib/Parse/Eyapp.pod
 eyapp
 treereg
 preamble.tex
@@ -100,7 +101,9 @@ examples/Rule6.yp
 examples/foldrule6.pl
 examples/userule6andtransform.pl
 examples/Lhs1.yp
+examples/Lhs.eyp
 examples/uselhs1.pl
+examples/uselhs.pl
 examples/Rule3.yp
 examples/userule3.pl
 examples/PlusList1.yp
@@ -127,4 +130,6 @@ examples/useintermediateaction2.pl
 examples/Pir.pl
 examples/useretundef.pl
 examples/RetUndef.eyp
+examples/ListWithRefs.eyp
+examples/use_listwithrefs.pl
 META.yml                                 Module meta-data (added by MakeMaker)

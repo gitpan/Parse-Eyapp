@@ -15,15 +15,31 @@ my $grammar = q{
   %tree           # Let us build an abstract syntax tree ...
 
   %%
-  line: exp <%name EXPRESION_LIST + ';'>  { $_[1] } /* list of expressions separated by ';' */
+  line: 
+      exp <%name EXPRESION_LIST + ';'>  
+        { $_[1] } /* list of expressions separated by ';' */
   ;
 
   /* The %name directive defines the name of the class to which the node being built belongs */
   exp:
-      %name NUM  NUM            | %name VAR   VAR         | %name ASSIGN VAR '=' exp 
-    | %name PLUS exp '+' exp    | %name MINUS exp '-' exp | %name TIMES  exp '*' exp 
-    | %name DIV     exp '/' exp | %name UMINUS '-' exp %prec NEG 
-    |   '(' exp ')'  { $_[2] }  /* Let us simplify a bit the tree */
+      %name NUM  
+      NUM            
+    | %name VAR   
+      VAR         
+    | %name ASSIGN 
+      VAR '=' exp 
+    | %name PLUS 
+      exp '+' exp    
+    | %name MINUS 
+      exp '-' exp 
+    | %name TIMES  
+      exp '*' exp 
+    | %name DIV     
+      exp '/' exp 
+    | %name UMINUS 
+      '-' exp %prec NEG 
+    | '(' exp ')'  
+        { $_[2] }  /* Let us simplify a bit the tree */
   ;
 
   %%
@@ -39,6 +55,7 @@ my $grammar = q{
       m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
       m{\G(.)}gcs and return($1,$1);
     }
+    return('',undef);
   }
 
   sub Run {
