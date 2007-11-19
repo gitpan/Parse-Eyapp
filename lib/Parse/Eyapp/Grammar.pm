@@ -79,9 +79,9 @@ sub classname {
   $name = "_SUPERSTART" if ($lhs =~ /\$start/ and !defined($name));
   $name = "_CODE" if ($lhs =~ /\@(\d+)-(\d+)/ and !defined($name));
   $name = "_PAREN" if ($lhs =~ /PAREN-(\d+)/ and !defined($name));
-  $name = "_STAR_LIST_$1" if ($lhs =~ /STAR-(\d+)/ and !defined($name));
-  $name = "_PLUS_LIST_$1" if ($lhs =~ /PLUS-(\d+)/ and !defined($name));
-  $name = "_OPTIONAL_$1" if ($lhs =~ /OPTIONAL-(\d+)/ and !defined($name));
+  $name = "_STAR_LIST" if ($lhs =~ /STAR-(\d+)/ and !defined($name));
+  $name = "_PLUS_LIST" if ($lhs =~ /PLUS-(\d+)/ and !defined($name));
+  $name = "_OPTIONAL" if ($lhs =~ /OPTIONAL-(\d+)/ and !defined($name));
   $name = "$lhs"."_$index" unless $name;
 
   return $name;

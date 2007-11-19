@@ -11,7 +11,9 @@ use Data::Dumper;
 our %sym; # symbol table
 %}
 
-%defaultaction { $lhs->{n} = eval " $left->{n} $_[2]->{attr} $right->{n} " }
+%defaultaction { 
+   $lhs->{n} = eval " $left->{n} $_[2]->{attr} $right->{n} " 
+}
 
 %metatree
 
@@ -34,7 +36,8 @@ exp:
               exp.left '*' exp.right  
         |   %name DIV 
               exp.left '/' exp.right  
-        |   %name NUM   $NUM          
+        |   %name NUM   
+              $NUM          
                 { $lhs->{n} = $NUM->{attr} }
         |   '(' $exp ')'  %begin { $exp }       
         |   %name VAR
@@ -56,14 +59,13 @@ sub _Lexer {
     my($parser)=shift;
 
     for ($parser->YYData->{INPUT}) {
-        defined($_) or  return('',undef);
-
-        s/^\s*//;
+        s/^\s+//;
+        $_ or  return('',undef);
         s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
         s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
         s/^(.)// and return($1,$1);
-        s/^\s*//;
     }
+    return('',undef);
 }
 
 sub Run {
@@ -72,9 +74,8 @@ sub Run {
 }
 }; # end translation scheme
 
-$Data::Dumper::Indent = 1;
-$Data::Dumper::Terse = 1;
-$Data::Dumper::Deepcopy  = 1;
+sub TERMINAL::info { $_[0]->attr }
+
 my $p = Parse::Eyapp->new_grammar(
   input=>$translationscheme,
   classname=>'main',
@@ -86,9 +87,16 @@ print "Write a sequence of arithmetic expressions: " if is_interactive();
 $parser->YYData->{INPUT} = <>;
 my $t = $parser->Run() or die "Syntax Error analyzing input";
 $t->translation_scheme;
-my $treestring = Dumper($t);
+
+$Parse::Eyapp::Node::INDENT = 2;
+my $treestring = $t->str;
+
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Terse = 1;
+$Data::Dumper::Deepcopy  = 1;
 our %sym;
 my $symboltable = Dumper(\%sym);
+
 print <<"EOR";
 ***********Tree*************
 $treestring

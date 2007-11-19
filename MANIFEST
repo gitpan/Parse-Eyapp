@@ -75,9 +75,11 @@ t/47ruleindex.t
 t/48yyprefix.t
 t/49conflicts.t
 t/50SimpleChalfscope.t
-t/97podcoverage.t
+#t/97podcoverage.t
 #t/99Cplusplusgrammar.t
 examples/CalcwithAttributeGrammar.pl
+examples/CalcSimple.eyp
+examples/usecalcsimple.pl
 examples/Calc.yp
 examples/usecalc.pl
 examples/trans_scheme_simple2.pl
