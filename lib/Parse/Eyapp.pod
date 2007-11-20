@@ -157,6 +157,17 @@ hand side (I<rhs>) are usually separated by an arrow like in:
 
                                     exp -> VAR = exp
 
+A note: the production rule
+
+                        line: exp <+ ';'>
+
+is not really a production rule but an abbreviation for two productions. It stands for:
+
+                        line : exp
+                             | line ';' exp
+                        ;
+
+
 A I<terminal> or I<token> never appears on the left hand side of a production rule.
 The phrases of the language are those obtained 
 succesively applying the production rules of the grammar until no more rules can be applied.
@@ -211,17 +222,6 @@ Normally, when a scalar C<m{}g> match fails, the match position is reset and
 C<\G> will start matching at the beginning of the string.
 The C<c> option causes the match position to be retained following an unsuccessful match.
 The couple C<('',undef)> signals the end of the input.
-
-
-A note: the production rule
-
-                        line: exp <+ ';'>
-
-is not really a production rule but an abbreviation. It stands for:
-
-                        line : exp
-                             | line exp
-                        ;
 
 C<Parse::Eyapp> can analyze your grammar and produce a parser from your grammar.
 Actually C<Parse::Eyapp> is a I<translation scheme> analyzer. A I<translation scheme> 
@@ -337,7 +337,7 @@ can be displayed using the method C<str>:
                     local $Parse::Eyapp::Node::INDENT=2;
                     print "Syntax Tree:",$t->str;
 
-The following is a description of the syntax tree for the 
+The following is the description of the syntax tree produced by the call C<$t-E<gt>str> for the 
 list of expressions C<"2*-3+b*0;--2\n";>:
 
   pl@nereida:~/LEyapp/examples$ synopsis.pl
@@ -371,6 +371,17 @@ list of expressions C<"2*-3+b*0;--2\n";>:
       ) # UMINUS
     ) # UMINUS
   ) # EXPRESION_LIST
+
+Did you notice that the C<TERMINAL> nodes appear I<decorated> with its attribute?
+This is because each time the C<Parse::Eyapp::Node> method C<str>
+visits a node checks if the node has a method C<info> (i.e. C<$node-E<gt>can(info)>).
+If so, the C<info> method is called and the string returned is concatenated
+in the description string. This is the reason for these three lines at the beginning of the
+L<SYNOPSIS> example:
+
+                    sub TERMINAL::info {
+                      $_[0]{attr}
+                    }
 
 C<Parse::Eyapp> not only gives support to parsing
 but to later phases of the translation process: 
@@ -410,6 +421,44 @@ The transformation C<constantfold> produces
 I<constant folding> i.e. trees of expressions
 like C<3*2+4> are reduced to the tree for C<10> 
 
+      { #  Example of support code
+        my %Op = (PLUS=>'+', MINUS => '-', TIMES=>'*', DIV => '/');
+      }
+      constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y))
+        => {
+          my $op = $Op{ref($bin)};
+          $x->{attr} = eval  "$x->{attr} $op $y->{attr}";
+          $_[0] = $NUM[0];
+        }
+
+Here C<constantfold> is the name of the transformation. 
+The treeregexp compiler will produce an object C<$constantfold>
+implementing the transformation. After the name
+comes the tree pattern: 
+
+          /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y))
+
+It matches any subtree rooted in any node belonging to one of 
+these classes: C<TIMES> or C<PLUS> or C<DIV> or C<MINUS> that has
+two children belonging to the C<NUM> class. The Perl code after the big arrow
+is executed on any matching subtree. We can refer to the root of the subtree
+using the variable C<$bin>. We can also refer to the child of the first C<NUM> node
+using C<$x>. In the same way C<$y> refers to the child of the second C<NUM>
+node. Since there are two C<NUM> nodes in the pattern, we refer to them inside
+the transformation part using the array C<@NUM>:
+
+                         $_[0] = $NUM[0];
+
+The action uses and C<eval> and the hash C<%Op> to compute the 
+corresponding reduction of the two nodes. The hash C<%Op> was defined in a previous
+section containing support code. You can insert in any place of a treeregexp 
+program such support code by surrounding it with curly brackets.
+The subtree that matched (that is in C<$_[0]>) is substituted
+by its left child:
+
+                         $_[0] = $NUM[0];
+
+
 =item * 
 
 The transformations C<zero_times_whatever>
@@ -420,10 +469,30 @@ Trees for expressions like C<(a+b)*0>
 or C<0*(b-4)>  are reduced 
 to the tree for 0.
 
+  zero_times_whatever: TIMES(NUM($x), .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+
+Here C<zero_times_whatever> is the name of the transformation.
+The pattern C<TIMES(NUM($x), .)> matches any C<TIMES> node 
+with two children and whose first child belongs to the C<NUM>
+class. The dot matches any subtree, indicating that we don't care what
+sort of tree the right child is. The third component
+
+                   { $x->{attr} == 0 }
+
+is the semantic pattern. If both the shape pattern and the semantic pattern
+apply the action after the arrow is applied. The subtrees
+is substituted by its left child.
+
 =item *
 
 The transformation C<uminus> simplifies
 the tree for unary minus of constant expressions.
+
+      uminus: UMINUS(NUM($x)) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
+
+It matches trees rooted in a C<UMINUS> node whose only child is a C<NUM> node.
+In such case the sign of the number that is the attribute of the C<TERMINAL> node 
+is changed and the tree is substituted by its single child.
 
 =back
 
@@ -610,7 +679,7 @@ When building the syntax tree (i.e. when running under the C<%tree>
 directive) I<string literals> will be considered I<syntactic tokens> (see section
 L</Syntactic and Semantic tokens>).
 
-=head2 The Head Section
+=head2 Parts of an C<eyapp> Program
 
 An Eyapp program has three parts called head, body and tail: 
 
@@ -620,6 +689,8 @@ Each part is separated from the former by the symbol C<%%>:
 
                                  head: headsec '%%'
                                  body: rulesec '%%'
+
+=head2 The Head Section
 
 The head section contains a list of declarations 
 
@@ -3410,38 +3481,47 @@ To shift to a new state consuming one token (and pushing
 the current state in the stack) or to reduce by some
 production rule. In the last case the parser pops
 from its stack as many states as symbols are on the right hand side
-of the production rule. Here is a Perl pseudocode
+of the production rule. Here is a Perl/C like pseudocode
 summarizing the activity of C<YYParse>:
 
- push(@stack, $s0);
- $b = yylex(); # Get the first token
- FOREVER: {
-   $s = top(0); 
-   $a = $b;
-   switch ($action[$s->state][$a]) {
-     case "shift t" : 
-       $t->{state} = t;
-       $t->{attr}  = $a->{attr};
-       push($t); 
-       $b = yylex(); # Call the lexical analyzer
-       break;
-     case "reduce A->alpha" : 
-       # Call the semantic action with the attributes of the rhs as args
-       my $semantic  = $Semantic{A ->alpha};
-       $r->{attr} = $semantic->(top(|alpha|-1)->attr, ... , top(0)->attr); 
+     1   my $parser = shift; # The parser object
+     2   push(@stack, $parser->{startstate});
+     3   $b = $parser->YYLexer(); # Get the first token
+     4   FOREVER: {
+     5     $s = top(0);  # Get the state on top of the stack
+     6     $a = $b;
+     7     switch ($parser->action[$s->state][$a]) {
+     8       case "shift t" : 
+     9         my $t;
+    10         $t->{state} = t;
+    11         $t->{attr}  = $a->{attr};
+    12         push($t); 
+    13         $b = $parser->YYLexer(); # Call the lexical analyzer
+    14         break;
+    15       case "reduce A->alpha" : 
+    16         # Call the semantic action with the attributes of the rhs as args
+    17         my $semantic  = $parser->Semantic{A ->alpha}; # The semantic action
+    18         my $r;
+    19         $r->{attr} = $semantic->($parser, top(|alpha|-1)->attr, ... , top(0)->attr); 
+    20  
+    21         # Pop as many states as symbols on the rhs of A->alpha
+    22         pop(|alpha|);  
+    23  
+    24         # Goto next state 
+    25         $r->{state} = goto[top(0)][A]; 
+    26         push($r); 
+    27         break;
+    28       case "accept" : return (1); 
+    29       default : $parser->YYError("syntax error"); 
+    30     }
+    31     redo FOREVER;
+    32   }
 
-       # Pop as many states as symbols on the rhs of A->alpha
-       pop(|alpha|);  
-
-       # Goto next state 
-       $r->{state} = goto[top(0)][A]; 
-       push($r); 
-       break;
-     case "accept" : return (1); 
-     default : yyerror("syntax error"); 
-   }
-   redo FOREVER;
- }
+Here C<|alpha|> stands for the length of C<alpha>. Function C<top(k)> returns
+the state in position C<k> from the top of the stack, i.e. the state at depth C<k>.
+Function C<pop(k)> extracts C<k> states from the stack. The call C<$state-E<gt>attr>
+returns the attribute associated with C<$state>. The call C<$parser-E<gt>Semantic{A -E<gt>alpha}>
+returns the semantic action associated with production C<A -E<gt>alpha>.
 
 
 =head2 Errors Inside Semantic Actions
@@ -6266,6 +6346,12 @@ L<Language::AttributeGrammar>
 
 =item *
 L<Parse::RecDescent>.
+
+=item *
+L<HOP::Parser>
+
+=item *
+L<HOP::Lexer>
 
 =back
 
