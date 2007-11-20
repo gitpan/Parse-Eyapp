@@ -58,7 +58,7 @@ publicdist: release html pdf dist
 	cp Parse-Eyapp-*.tar.gz /home/pl/public_html/perlexamples/Parse-Eyapp.tar.gz
 	chmod a+r /home/pl/public_html/perlexamples/Parse-Eyapp.tar.gz
 
-xdvi: 
+xdvi: doc
 	pod2latex -full -prefile preamble.tex lib/Parse/Eyapp.pod
 	latex Eyapp.tex; makeindex Eyapp; latex Eyapp.tex 
 
@@ -68,7 +68,7 @@ pdf: xdvi
 	mv Eyapp.pdf /home/pl/public_html/perlexamples/
 	chmod a+r /home/pl/public_html/perlexamples/Eyapp.pdf
 
-html:
+html: doc
 	#rm -f Eyapp.html podindex.html podtoc.html
 	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp treereg lib/Parse/Eyapp.pod
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p Eyapp.html 

@@ -81,6 +81,11 @@ examples/CalcwithAttributeGrammar.pl
 examples/CalcSimple.eyp
 examples/usecalcsimple.pl
 examples/Calc.yp
+examples/Debug1.eyp
+examples/Debug2.eyp
+examples/Debug.eyp
+examples/usedebug1.pl
+examples/usedebug2.pl
 examples/usecalc.pl
 examples/trans_scheme_simple2.pl
 examples/trans_scheme_default_action.pl
