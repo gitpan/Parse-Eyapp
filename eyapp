@@ -43,9 +43,7 @@ Create a standalone module in which the parsing driver is included.
 The modules including the LALR driver (C<Parse::Eyapp::Driver>),
 and those for AST manipulations (<Parse::Eyapp::Node> and
 <Parse::Eyapp::YATW>)) are included - almost verbatim - 
-inside the generated module.
-Don't use this option 
-if you have more than one parser module called from your program.
+inside the generated module. 
 
 =item I<-n>
 
