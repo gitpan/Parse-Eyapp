@@ -15,11 +15,14 @@ lib/Parse/Eyapp/Node.pod
 lib/Parse/Eyapp/Options.pm
 lib/Parse/Eyapp/Output.pm
 lib/Parse/Eyapp/Parse.pm
+lib/Parse/Eyapp/Parse.pod
 lib/Parse/Eyapp/Treeregexp.pm
+lib/Parse/Eyapp/Treeregexp.pod
 lib/Parse/Eyapp/_TreeregexpSupport.pm
 lib/Parse/Eyapp/YATW.pm
 lib/Parse/Eyapp/YATW.pod
 lib/Parse/Eyapp/Scope.pm
+lib/Parse/Eyapp/Scope.pod
 lib/Parse/Eyapp/Base.pm
 lib/Parse/Eyapp.pm
 lib/Parse/Eyapp.pod
@@ -81,6 +84,9 @@ examples/CalcwithAttributeGrammar.pl
 examples/CalcSimple.eyp
 examples/usecalcsimple.pl
 examples/Calc.yp
+examples/CalcUsingTail.eyp
+examples/Tail.pm
+examples/Tail2.pm
 examples/Debug1.eyp
 examples/Debug2.eyp
 examples/Debug.eyp

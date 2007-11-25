@@ -22,8 +22,8 @@ sub is_foldable {
 }
 
 my $parser = new Rule6();
-$parser->YYData->{INPUT} = "2*3";
-my $t = $parser->Run;
+my $input = "2*3";
+my $t = $parser->Run(\$input);
 &set_terminfo;
 print "\n***** Before ******\n";
 print $t->str;

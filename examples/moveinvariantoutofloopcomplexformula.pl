@@ -9,6 +9,9 @@ my $grammar = q{
   %left   '*' '/'
   %left   NEG
   %tree
+  %{
+  use Tail2; # See file examples/Tail2.pm in the distribution
+  %}
 
   %%
   block:  exp <%name BLOCK + ';'> { $_[1] } 
@@ -36,47 +39,6 @@ my $grammar = q{
   ;
 
   %%
-
-  sub _Error {
-          exists $_[0]->YYData->{ERRMSG}
-      and do {
-          print $_[0]->YYData->{ERRMSG};
-          delete $_[0]->YYData->{ERRMSG};
-          return;
-      };
-      print "Syntax error.\n";
-  }
-
-  sub _Lexer {
-      my($parser)=shift;
-
-          $parser->YYData->{INPUT}
-      or  do {
-        local $/ = undef;
-        $parser->YYData->{INPUT} = <STDIN>
-      }
-      or  return('',undef);
-
-      $parser->YYData->{INPUT}=~s/^\s+//;
-
-      for ($parser->YYData->{INPUT}) {
-          s/^([0-9]+(?:\.[0-9]+)?)//
-                  and return('NUM',$1);
-          s/^while//
-                  and return('while', 'while');
-          s/^([A-Za-z][A-Za-z0-9_]*)//
-                  and return('VAR',$1);
-          s/^(.)//s
-                  and return($1,$1);
-      }
-  }
-
-  sub Run {
-      my($self)=shift;
-      $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, 
-                      #yydebug =>0xFF
-                    );
-  }
 }; # end grammar
 
 sub TERMINAL::info { $_[0]{attr} }
@@ -91,8 +53,7 @@ Parse::Eyapp->new_grammar(
 );
 my $parser = Rule6->new();
 my $program = "a =1000; c = 1; while (a) { c = c*a; b = 5; a = a-1 }\n";
-$parser->YYData->{INPUT} = $program;
-my $t = $parser->Run;
+my $t = $parser->Run(\$program);
 my @output = split /\n/, $t->str;
 
 my $p = Parse::Eyapp::Treeregexp->new( STRING => q{
@@ -107,7 +68,6 @@ my $p = Parse::Eyapp::Treeregexp->new( STRING => q{
          $BLOCK[0]->insert_before($WHILE, $assign);
        }
   },
-  FIRSTLINE => 99,
 );
 $p->generate();
 $moveinvariant->s($t);

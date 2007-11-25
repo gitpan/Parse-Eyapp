@@ -47,6 +47,12 @@ release: lib/Parse/Eyapp/Parse.yp
 
 doc:tt2/Eyapp.tt2 
 	cd tt2; tpage  Eyapp.tt2 > ../lib/Parse/Eyapp.pod
+	cd tt2; tpage  Treeregexp.tt2 > ../lib/Parse/Eyapp/Treeregexp.pod
+	cd tt2; tpage  Scope.tt2 > ../lib/Parse/Eyapp/Scope.pod
+	cd tt2; tpage  Node.tt2 > ../lib/Parse/Eyapp/Node.pod
+	cd tt2; tpage  YATW.tt2 > ../lib/Parse/Eyapp/YATW.pod
+	cd tt2; tpage  Driver.tt2 > ../lib/Parse/Eyapp/Driver.pod
+	cd tt2; tpage  Parse.tt2 > ../lib/Parse/Eyapp/Parse.pod
 
 coverage:
 	cover -delete
@@ -70,7 +76,14 @@ pdf: xdvi
 
 html: doc
 	#rm -f Eyapp.html podindex.html podtoc.html
-	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp treereg lib/Parse/Eyapp.pod
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp treereg \
+                          lib/Parse/Eyapp.pod \
+													lib/Parse/Eyapp/Treeregexp.pod  \
+                          lib/Parse/Eyapp/Scope.pod \
+													lib/Parse/Eyapp/Node.pod \
+                          lib/Parse/Eyapp/Driver.pod \
+                          lib/Parse/Eyapp/YATW.pod\
+                          lib/Parse/Eyapp/Parse.pod
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p Eyapp.html 
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p eyapp.html 
 	perl -e 's/^Cannot find page .*//gi' -i.bak -p treereg.html 
