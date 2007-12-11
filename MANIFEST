@@ -90,6 +90,7 @@ examples/Tail2.pm
 examples/Debug1.eyp
 examples/Debug2.eyp
 examples/Debug.eyp
+examples/equal.pl
 examples/usedebug1.pl
 examples/usedebug2.pl
 examples/usecalc.pl

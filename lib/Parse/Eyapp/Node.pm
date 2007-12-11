@@ -4,7 +4,7 @@ use strict;
 use Carp;
 use Parse::Eyapp::YATW;
 #use base qw(Exporter);
-use List::MoreUtils qw(lastval);
+use List::MoreUtils qw(firstval lastval);
 use List::Util qw(first);
 use Data::Dumper;
 
@@ -757,19 +757,82 @@ sub translation_scheme {
   }
 }
 
- sub type {
-   my $type = ref($_[0]);
+sub type {
+ my $type = ref($_[0]);
 
-   if ($type) {
-     if (defined($_[1])) {
-       $type = $_[1];
-       Parse::Eyapp::Driver::BeANode($type);
-       bless $_[0], $type;
-     }
-     return $type 
+ if ($type) {
+   if (defined($_[1])) {
+     $type = $_[1];
+     Parse::Eyapp::Driver::BeANode($type);
+     bless $_[0], $type;
    }
-   return 'Parse::Eyapp::Node::STRING';
+   return $type 
  }
+ return 'Parse::Eyapp::Node::STRING';
+}
+
+{ # Tree "fuzzy" equality
+
+####################################################################
+# Usage      : $t1->equal($t2, n => sub { return $_[0] == $_[1] })
+# Purpose    : Checks the equality between two AST
+# Returns    : 1 if equal, 0 if not 'equal'
+# Parameters : Two Parse::Eyapp:Node nodes and a hash of comparison handlers.
+#              The keys of the hash are the attributes of the nodes. The value is
+#              a comparator function. The comparator for key $k receives the attribute
+#              for the nodes being visited and rmust return true if they are considered similar
+# Throws     : exceptions if the parameters aren't Parse::Eyapp::Nodes
+
+  my %handler;
+
+  # True if the two trees look similar
+  sub equal {
+      croak "Parse::Eyapp::Node::equal error. Expected a Parse::Eyapp::Node\n" 
+    unless (UNIVERSAL::isa($_[0], 'Parse::Eyapp::Node') && UNIVERSAL::isa($_[0], 'Parse::Eyapp::Node'));
+
+    %handler = splice(@_, 2);
+    my $key = '';
+    defined($key=firstval {!UNIVERSAL::isa($handler{$_},'CODE') } keys %handler) 
+    and 
+      croak "Parse::Eyapp::Node::equal error. Expected a CODE ref for attribute $key\n";
+    goto &_equal;
+  }
+
+  sub _equal {
+    my $tree1 = CORE::shift;
+    my $tree2 = CORE::shift;
+
+    # Same type
+    return 0 unless $tree1->type eq $tree2->type;
+
+    # Check attributes via handlers
+    for (keys %handler) {
+      # Check for existence
+      return 0 if (exists($tree1->{$_}) && !exists($tree2->{$_}));
+      return 0 if (exists($tree2->{$_}) && !exists($tree1->{$_}));
+
+      # Check for definition
+      return 0 if (defined($tree1->{$_}) && !defined($tree2->{$_}));
+      return 0 if (defined($tree2->{$_}) && !defined($tree1->{$_}));
+
+      # Check for equality
+      return 0 unless $handler{$_}->($tree1->{$_}, $tree2->{$_});
+    }
+
+    # Same number of children
+    my @children1 = $tree1->children;
+    my @children2 = $tree2->children;
+    return 0 unless @children1 == @children2;
+
+    # Children must be similar
+    for (@children1) {
+      my $ch2 = CORE::shift @children2;
+      return 0 unless equal($_, $ch2);
+    }
+    return 1;
+  }
+}
+
 1;
 
 package Parse::Eyapp::Node::Match;

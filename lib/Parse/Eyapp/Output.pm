@@ -40,16 +40,54 @@ sub _CopyModule {
 our $pattern = '################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################';
 
 sub Output {
-    my($self)=shift;
+  my($self)=shift;
 
-    $self->Options(@_);
+  $self->Options(@_);
 
-    my ($GRAMMAR, $TERMS, $FILENAME, $PACKAGES); # Cas
-    my($package)=$self->Option('classname');
-    my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree);
-    my($version)=$Parse::Eyapp::Driver::VERSION;
-    my($datapos);
-    my $makenodeclasses = '';
+  my ($GRAMMAR, $TERMS, $FILENAME, $PACKAGES); # Cas
+  my($package)=$self->Option('classname');
+  my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree);
+  my($version)=$Parse::Eyapp::Driver::VERSION;
+  my($datapos);
+  my $makenodeclasses = '';
+	$driver='';
+
+      defined($package)
+  or $package='Parse::Eyapp::Default'; # may be the caller package?
+
+	$head= $self->Head();
+	$rules=$self->RulesTable();
+	$states=$self->DfaTable();
+	$tail= $self->Tail();
+	#local $Data::Dumper::Purity = 1;
+
+  ($GRAMMAR, $PACKAGES) = $self->Rules();
+  $bypass = $self->Bypass;
+  $buildingtree = $self->Buildingtree;
+  $accessors = $self->Accessors;
+  $TERMS = $self->Terms();
+  $FILENAME = '"'.$self->Option('inputfile').'"';
+
+	if ($self->Option('standalone')) {
+		$driver =_CopyModule($Parse::Eyapp::Driver::FILENAME);
+    $driver .= _CopyModule($Parse::Eyapp::Node::FILENAME);
+    $driver =~ s/\n\s*use Parse::Eyapp::YATW;\n//g;
+    $driver .= _CopyModule($Parse::Eyapp::YATW::FILENAME);
+    $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
+  }
+  else {
+    $driver = q{
+BEGIN {
+  # This strange way to load the modules is to guarantee compatibility when
+  # using several standalone and non-standalone Eyapp parsers
+
+  require Parse::Eyapp::Driver unless Parse::Eyapp::Driver->can('YYParse');
+  require Parse::Eyapp::Node unless Parse::Eyapp::Node->can('hnew'); 
+}
+    }; # end string $driver
+    $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
+  }
+
     my($text)=$self->Option('template') ||<<'EOT';
 ###################################################################################
 #
@@ -107,44 +145,6 @@ sub new {
 <<$accessors>>
 1;
 EOT
-
-	$driver='';
-
-      defined($package)
-  or $package='Parse::Eyapp::Default'; # may be the caller package?
-
-	$head= $self->Head();
-	$rules=$self->RulesTable();
-	$states=$self->DfaTable();
-	$tail= $self->Tail();
-	#local $Data::Dumper::Purity = 1;
-
-  ($GRAMMAR, $PACKAGES) = $self->Rules();
-  $bypass = $self->Bypass;
-  $buildingtree = $self->Buildingtree;
-  $accessors = $self->Accessors;
-  $TERMS = $self->Terms();
-  $FILENAME = '"'.$self->Option('inputfile').'"';
-
-	if ($self->Option('standalone')) {
-		$driver =_CopyModule($Parse::Eyapp::Driver::FILENAME);
-    $driver .= _CopyModule($Parse::Eyapp::Node::FILENAME);
-    $driver =~ s/\n\s*use Parse::Eyapp::YATW;\n//g;
-    $driver .= _CopyModule($Parse::Eyapp::YATW::FILENAME);
-    $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
-  }
-  else {
-    $driver = q{
-BEGIN {
-  # This strange way to load the modules is to guarantee compatibility when
-  # using several standalone and non-standalone Eyapp parsers
-
-  require Parse::Eyapp::Driver unless Parse::Eyapp::Driver->can('YYParse');
-  require Parse::Eyapp::Node unless Parse::Eyapp::Node->can('hnew'); 
-}
-    }; # end string $driver
-    $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
-  }
 
 	$text=~s/<<(\$.+)>>/$1/gee;
 

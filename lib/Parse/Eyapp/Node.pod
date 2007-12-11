@@ -970,6 +970,79 @@ The source program for the example was:
      2    return 2*a;
      3  }
 
+=head2 $node->equal
+
+A call  C<$tree1-E<gt>equal($tree2)>  
+compare the two trees C<$tree1> and C<$tree2>. 
+Two trees are considered equal if their root nodes belong to the same class,
+they have the same number of children and the children are (recursively) equal.
+
+Additionally to the two trees the programmer can specify
+pairs C<attribute_key =E<gt> equality_handler>:
+
+  $tree1->equal($tree2, attr1 => \&handler1, attr2 => \&handler2, ...)
+
+In such case 
+the definition of equality is more restrictive:
+Two trees are considered equal if 
+
+=over 2
+
+=item * Their root nodes belong to the same class,
+
+=item * They have the same number of children 
+
+=item * For each of the specified attributes occur
+that for both nodes the existence and definition of the key
+is the same
+
+=item * Assuming the key exists and is defined for both 
+nodes, the equality handlers return
+true for each of its attributes and 
+
+=item * The children are (recursively) equal.
+
+=back
+
+An attribute handler receives as arguments the values of the attributes
+of the two nodes being compared and must return true if, and only if,
+these two attributes are considered equal. Follows an example:
+
+  pl@nereida:~/LEyapp/examples$ cat equal.pl
+  #!/usr/bin/perl -w
+  use strict;
+  use Parse::Eyapp::Node;
+
+  my $string1 = shift || 'ASSIGN(VAR(TERMINAL))';
+  my $string2 = shift || 'ASSIGN(VAR(TERMINAL))';
+  my $t1 = Parse::Eyapp::Node->new($string1, sub { my $i = 0; $_->{n} = $i++ for @_ });
+  my $t2 = Parse::Eyapp::Node->new($string2);
+
+  # Without attributes
+  if ($t1->equal($t2)) {
+    print "\nNot considering attributes: Equal\n";
+  }
+  else {
+    print "\nNot considering attributes: Not Equal\n";
+  }
+
+  # Equality with attributes
+  if ($t1->equal($t2, n => sub { return $_[0] == $_[1] })) {
+    print "\nConsidering attributes: Equal\n";
+  }
+  else {
+    print "\nConsidering attributes: Not Equal\n";
+  }
+
+When the former program is run without arguments produces the following
+output:
+
+  pl@nereida:~/LEyapp/examples$ equal.pl
+
+  Not considering attributes: Equal
+
+  Considering attributes: Not Equal
+
 
 =head2  $node->delete
 
