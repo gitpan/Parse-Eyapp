@@ -35,20 +35,17 @@ sub begin_scope {
 
   # Set the mark for next scope to the level of the stack of instances
   $self->{SCOPE_MARK} = @{$self->{PENDING_DECL}};
-  # Save current mark in the stack of marks
+
+  # Save current mark in the stack of marks: it is an index
   push @{$self->{SCOPE_STACK}}, $self->{SCOPE_MARK};
   $self->{DEPTH}++; # new scope, new depth
 }
 
 ####################################################################
 # Usage      : ($nondec, $declared) = $ids->end_scope($program->{symboltable}, $program, 'type');
-# Purpose    : ????
-# Returns    : ????
-# Parameters : ????
-# Throws     : no exceptions
-# Comments   : none
-# See Also   : n/a
-# To Do      : nothing
+#              ($nondec, $declared) = $ids->end_scope($while);
+#              ($nondec, $declared) = $ids->end_scope($symbol_table, 'label');
+#
 sub end_scope {
   my $self = shift; # The scope object
 
@@ -56,6 +53,7 @@ sub end_scope {
   my $block; # The node owning the current scope
   # first arg can be the "block node" in which case the s.t. is omitted
   if (UNIVERSAL::isa($_[0], 'Parse::Eyapp::Node')) {
+    # The call has the form: ($nondec, $declared) = $ids->end_scope($while);
     $block = shift; 
   }
   elsif (UNIVERSAL::isa($_[0], 'HASH')) {
@@ -79,6 +77,8 @@ sub end_scope {
   my @instances = splice @{$self->{PENDING_DECL}}, $scope;
 
   if (defined($st)) {
+
+    #  Partitions @instance based on the return value of BLOCK
     my ($nodeclared, $declared) = part { exists $st->{$_->key} } @instances;
 
     $declared   = [] unless $declared;
@@ -90,10 +90,18 @@ sub end_scope {
     # Set the scope attribute for those instances that were declared
     for my $i (@$declared) {
       next unless UNIVERSAL::isa($i, 'HASH');
-      $i->{$self->{SCOPE_NAME}} = $block;
+      $i->{$self->{SCOPE_NAME}} = $block if defined($block);
       if (UNIVERSAL::can($i, 'key')) {
-        $i->{$self->{ENTRY_NAME}} = $st->{$i->key};
-        $i->{$_} = $st->{$i->key}{$_} for @_;
+        my $key = $i->key;
+        $i->{$self->{ENTRY_NAME}} = $st->{$key};
+        for (@_) {
+          # $_ must be a string and a key of %$st
+          if (ref($_)) {
+            warn "end_scope warning! expecting a string key for symbol table entry $key not a reference\n"; 
+          }
+          next unless exists $st->{$key}{$_};
+          $i->{$_} = $st->{$key}{$_};
+        }
       }
     }
     

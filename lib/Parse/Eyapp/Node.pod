@@ -1000,7 +1000,7 @@ is the same
 nodes, the equality handlers return
 true for each of its attributes and 
 
-=item * The children are (recursively) equal.
+=item * The respective children are (recursively) equal.
 
 =back
 

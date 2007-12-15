@@ -5416,7 +5416,7 @@ is the same
 nodes, the equality handlers return
 true for each of its attributes and 
 
-=item * The children are (recursively) equal.
+=item * The respective children are (recursively) equal.
 
 =back
 
@@ -6288,12 +6288,14 @@ at the appropriate time.
 
 =head2 $scope->end_scope
 
-There are two ways of calling C<$scope-E<gt>end_scope>.
+There are three ways of calling C<$scope-E<gt>end_scope>.
 The first one is for Scope Analysis Problems where
 a symbol table is needed (for example in I<identifier scope analysis>
-and I<label scope analysis>.
+and I<label scope analysis> and there is a C<Parse::Eyapp::Node> node 
+that owns the scope.
 
-=head3 $scope->end_scope with first Arg a Symbol Table
+=head3 $scope->end_scope with first Arg a Symbol Table and Second 
+Argument a Node
 
 For each I<ocurring instance> of an object C<$x>
 that occurred since the last call to  L<begin_scope|/$scope-E<gt>begin_scope>
@@ -6324,9 +6326,12 @@ the entry for the node in the symbol table:
 
 =item * For each aditional arguments C<attr#k> an
 entry C<$x-E<gt>{attr#k>} will be built.
-That entry references C<$symboltable{$x-E<gt>key}{attr#k}>. Therefore
+That entry references C<$symboltable{$x-E<gt>key}{attr#k}>. 
+Therefore
 the entry for C<$x> in the symbol table must already 
 have a field named C<attr#k>.
+If the hash referenced by C<$symboltable{$x-E<gt>key}> does not
+have a key C<attr#k> no reference is built.
 
 =back
 
@@ -6339,6 +6344,36 @@ that were defined in this scope.
 In a scalar context returns the first of these two.
 An instance C<$x> is I<defined> if, and only if, 
 C<exists $symboltable{$_-E<gt>key}>.
+
+
+=head3 $scope->end_scope with first Arg a Symbol Table and Remaining Arguments strings
+
+For each I<ocurring instance> of an object C<$x>
+that occurred since the last call to  L<begin_scope|/$scope-E<gt>begin_scope>
+the call to 
+
+  $scope->end_scope(\%symboltable, 'attr1', 'attr2', ... )
+
+decorates the I<ocurring instance> C<$x> with several attributes: 
+
+=over
+
+=item * An entry C<$x-E<gt>{ENTRY_NAME}> is built. That
+entry references C<$symboltable{$x-E<gt>key}> (to have a
+faster access from the instance to the attributes of the object).
+The instantiated nodes must have a C<$x-E<gt>key> method which provides
+the entry for the node in the symbol table.
+
+=item * For each aditional arguments C<attr#k> an
+entry C<$x-E<gt>{attr#k>} will be built.
+That entry references C<$symboltable{$x-E<gt>key}{attr#k}>. 
+Therefore
+the entry for C<$x> in the symbol table must already 
+have a field named C<attr#k>.
+If the hash referenced by C<$symboltable{$x-E<gt>key}> does not
+have a key C<attr#k> no reference is built.
+
+=back
 
 =head3 $scope->end_scope for Simple Scope Analysis
 
