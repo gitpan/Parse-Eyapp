@@ -787,8 +787,7 @@ sub type {
 
   # True if the two trees look similar
   sub equal {
-      croak "Parse::Eyapp::Node::equal error. Expected a Parse::Eyapp::Node\n" 
-    unless (UNIVERSAL::isa($_[0], 'Parse::Eyapp::Node') && UNIVERSAL::isa($_[0], 'Parse::Eyapp::Node'));
+    croak "Parse::Eyapp::Node::equal error. Expected two syntax trees \n" unless (@_ > 1);
 
     %handler = splice(@_, 2);
     my $key = '';
@@ -803,7 +802,7 @@ sub type {
     my $tree2 = CORE::shift;
 
     # Same type
-    return 0 unless $tree1->type eq $tree2->type;
+    return 0 unless ref($tree1) eq ref($tree2);
 
     # Check attributes via handlers
     for (keys %handler) {
@@ -820,14 +819,14 @@ sub type {
     }
 
     # Same number of children
-    my @children1 = $tree1->children;
-    my @children2 = $tree2->children;
+    my @children1 = @{$tree1->{children}};
+    my @children2 = @{$tree2->{children}};
     return 0 unless @children1 == @children2;
 
     # Children must be similar
     for (@children1) {
       my $ch2 = CORE::shift @children2;
-      return 0 unless equal($_, $ch2);
+      return 0 unless _equal($_, $ch2);
     }
     return 1;
   }

@@ -45,7 +45,7 @@ sub make_lexer {
 
 sub Run {
     my($self)=shift;
-    my $input = shift or die "No input given\n";
+    my $input = shift or die "Run error: No input given\n";
 
     return $self->YYParse( 
       yylex => make_lexer($input), 
