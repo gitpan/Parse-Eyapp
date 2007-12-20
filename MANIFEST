@@ -80,6 +80,8 @@ t/49conflicts.t
 t/50SimpleChalfscope.t
 #t/97podcoverage.t
 #t/99Cplusplusgrammar.t
+examples/testequal.pl
+examples/equal.pl
 examples/CalcwithAttributeGrammar.pl
 examples/CalcSimple.eyp
 examples/usecalcsimple.pl

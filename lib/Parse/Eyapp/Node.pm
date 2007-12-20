@@ -423,7 +423,7 @@ sub m {
       my $f = lastval { $dewey =~ m{^$_->{dewey}}} @results;
       $mn->{father} = $f;
       # ... and children
-      unshift @{$f->{children}}, $mn if defined($f);
+      push @{$f->{children}}, $mn if defined($f);
       CORE::push @results, $mn;
     }
     my $childdepth = $n{depth}+1;

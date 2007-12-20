@@ -5459,6 +5459,174 @@ output:
 
   Considering attributes: Not Equal
 
+=head3 Using C<equal> During Testing
+
+During the development of your compiler you add new stages
+to the existing ones. The consequence is that the AST is decorated
+with new attributes. Unfortunately, this implies that tests you wrote using 
+C<is_deeply> and comparisons against formerly correct abstract syntax trees are no longer valid.
+This is due to the fact that C<is_deeply> requires both tree structures to be
+equivalent in every detail and that our new code produces a tree with new attributes.
+
+Instead of C<is_deeply> use the C<equal> method to check for partial equivalence between
+abstract syntax trees. You can follow these steps:
+
+=over 2
+
+=item * Dump the tree for the source inserting C<Data::Dumper> statements 
+
+=item * Carefully check that the tree is really correct
+
+=item * Decide which attributes will be used for comparison
+
+=item * Write the code for the expected value
+editing the output produced by C<Data::Dumper>
+
+=item * Write the handlers for the attributes you decided.
+Write the comparison using C<equal>.
+
+=back
+
+Tests using this methodology will not fail even if later code decorating 
+the AST with new attributes is introduced.
+See an example:
+
+  pl@nereida:~/LEyapp/examples$ cat -n testequal.pl
+     1  #!/usr/bin/perl -w
+     2  use strict;
+     3  use Parse::Eyapp::Node;
+     4  use Data::Dumper;
+     5  use Data::Compare;
+     6
+     7  my $debugging = 0;
+     8
+     9  my $handler = sub {
+    10    print Dumper($_[0], $_[1]) if $debugging;
+    11    Compare($_[0], $_[1])
+    12  };
+    13
+    14  my $t1 = bless( {
+    15                   'types' => {
+    16                                'CHAR' => bless( { 'children' => [] }, 'CHAR' ),
+    17                                'VOID' => bless( { 'children' => [] }, 'VOID' ),
+    18                                'INT' => bless( { 'children' => [] }, 'INT' ),
+    19                                'F(X_0(),INT)' => bless( {
+    20                                   'children' => [
+    21                                      bless( { 'children' => [] }, 'X_0' ),
+    22                                      bless( { 'children' => [] }, 'INT' ) ]
+    23                                 }, 'F' )
+    24                              },
+    25                   'symboltable' => { 'f' => { 'type' => 'F(X_0(),INT)', 'line' => 1 } },
+    26                   'lines' => 2,
+    27                   'children' => [
+    28                                   bless( {
+    29                                            'symboltable' => {},
+    30                                            'fatherblock' => {},
+    31                                            'children' => [],
+    32                                            'depth' => 1,
+    33                                            'parameters' => [],
+    34                                            'function_name' => [ 'f', 1 ],
+    35                                            'symboltableLabel' => {},
+    36                                            'line' => 1
+    37                                          }, 'FUNCTION' )
+    38                                 ],
+    39                   'depth' => 0,
+    40                   'line' => 1
+    41                 }, 'PROGRAM' );
+    42  $t1->{'children'}[0]{'fatherblock'} = $t1;
+    43
+    44  # Tree similar to $t1 but without some attributes (line, depth, etc.)
+    45  my $t2 = bless( {
+    46                   'types' => {
+    47                                'CHAR' => bless( { 'children' => [] }, 'CHAR' ),
+    48                                'VOID' => bless( { 'children' => [] }, 'VOID' ),
+    49                                'INT' => bless( { 'children' => [] }, 'INT' ),
+    50                                'F(X_0(),INT)' => bless( {
+    51                                   'children' => [
+    52                                      bless( { 'children' => [] }, 'X_0' ),
+    53                                      bless( { 'children' => [] }, 'INT' ) ]
+    54                                 }, 'F' )
+    55                              },
+    56                   'symboltable' => { 'f' => { 'type' => 'F(X_0(),INT)', 'line' => 1 } },
+    57                   'children' => [
+    58                                   bless( {
+    59                                            'symboltable' => {},
+    60                                            'fatherblock' => {},
+    61                                            'children' => [],
+    62                                            'parameters' => [],
+    63                                            'function_name' => [ 'f', 1 ],
+    64                                          }, 'FUNCTION' )
+    65                                 ],
+    66                 }, 'PROGRAM' );
+    67  $t2->{'children'}[0]{'fatherblock'} = $t2;
+    68
+    69  # Tree similar to $t1 but without some attributes (line, depth, etc.)
+    70  # and without the symboltable and types attributes used in the comparison
+    71  my $t3 = bless( {
+    72                   'types' => {
+    73                                'CHAR' => bless( { 'children' => [] }, 'CHAR' ),
+    74                                'VOID' => bless( { 'children' => [] }, 'VOID' ),
+    75                                'INT' => bless( { 'children' => [] }, 'INT' ),
+    76                                'F(X_0(),INT)' => bless( {
+    77                                   'children' => [
+    78                                      bless( { 'children' => [] }, 'X_0' ),
+    79                                      bless( { 'children' => [] }, 'INT' ) ]
+    80                                 }, 'F' )
+    81                              },
+    82                   'children' => [
+    83                                   bless( {
+    84                                            'symboltable' => {},
+    85                                            'fatherblock' => {},
+    86                                            'children' => [],
+    87                                            'parameters' => [],
+    88                                            'function_name' => [ 'f', 1 ],
+    89                                          }, 'FUNCTION' )
+    90                                 ],
+    91                 }, 'PROGRAM' );
+    92
+    93  $t3->{'children'}[0]{'fatherblock'} = $t2;
+    94
+    95  # Without attributes
+    96  if (Parse::Eyapp::Node::equal($t1, $t2)) {
+    97    print "\nNot considering attributes: Equal\n";
+    98  }
+    99  else {
+   100    print "\nNot considering attributes: Not Equal\n";
+   101  }
+   102
+   103  # Equality with attributes
+   104  if (Parse::Eyapp::Node::equal(
+   105        $t1, $t2,
+   106        symboltable => $handler,
+   107        types => $handler,
+   108      )
+   109     ) {
+   110        print "\nConsidering attributes: Equal\n";
+   111  }
+   112  else {
+   113    print "\nConsidering attributes: Not Equal\n";
+   114  }
+   115
+   116  # Equality with attributes
+   117  if (Parse::Eyapp::Node::equal(
+   118        $t1, $t3,
+   119        symboltable => $handler,
+   120        types => $handler,
+   121      )
+   122     ) {
+   123        print "\nConsidering attributes: Equal\n";
+   124  }
+   125  else {
+   126    print "\nConsidering attributes: Not Equal\n";
+   127  }
+
+The code defining tree C<$t1> was obtained from an output using C<Data::Dumper>.
+The code for trees C<$t2> and C<$t3> was written using cut-and-paste from C<$t1>.
+They have the same shape than C<$t1> but differ in their attributes. Tree C<$t2>
+shares with C<$t1> the attributes C<symboltable> and C<types> used in the comparison
+and so C<equal> returns C<true> when compared. Since C<$t3> differs from C<$t1>
+in the attributes C<symboltable> and C<types> the call to C<equal> returns C<false>.
+
 
 =head2  $node->delete
 

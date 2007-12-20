@@ -117,7 +117,7 @@ sub m {
       my $f = lastval { $dewey =~ m{^$_->{dewey}}} @results;
       $n->{father} = $f;
       # ... and children
-      unshift @{$f->{children}}, $n if defined($f);
+      push @{$f->{children}}, $n if defined($f);
       push @results, $n;
     }
     my $k = 0;
