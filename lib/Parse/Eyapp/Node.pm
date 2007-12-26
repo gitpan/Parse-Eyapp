@@ -271,6 +271,7 @@ sub hnew {
   return _new($blesser, @_);
 }
 
+# Regexp for a full Perl identifier
 sub _new {
   my $blesser = CORE::shift;
   my $class = CORE::shift;
@@ -285,24 +286,24 @@ sub _new {
   my (@stack, @index, @results, %results, @place, $open);
   while ($_) {
     #skip white spaces
-    s{\A\s*}{};
+    s{\A\s+}{};
 
     # If is a leaf is followed by parenthesis or comma or an ID
-    s{\A([A-Za-z_][A-Za-z0-9_]*)\s*([),])} 
+    s{\A([A-Za-z_][A-Za-z0-9_:]*)\s*([),])} 
      {$1()$2} # ... then add an empty pair of parenthesis
       and do { 
         next; 
        };
 
     # If is a leaf is followed by an ID
-    s{\A([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_])} 
+    s{\A([A-Za-z_][A-Za-z0-9_:]*)\s+([A-Za-z_])} 
      {$1()$2} # ... then add an empty pair of parenthesis
       and do { 
         next; 
        };
 
     # If is a leaf at the end
-    s{\A([A-Za-z_][A-Za-z0-9_]*)\s*$} 
+    s{\A([A-Za-z_][A-Za-z0-9_:]*)\s*$} 
      {$1()} # ... then add an empty pair of parenthesis
       and do { 
         $classes{$1} = 1;
@@ -310,7 +311,7 @@ sub _new {
        };
 
     # Is an identifier
-    s{\A([A-Za-z_][A-Za-z0-9_]*)}{} 
+    s{\A([A-Za-z_][A-Za-z0-9_:]*)}{} 
       and do { 
         $classes{$1} = 1;
         CORE::push @stack, $1; 
@@ -323,6 +324,9 @@ sub _new {
         my $pos = scalar(@stack);
         CORE::push @index, $pos; 
         $place[$pos] = $open++;
+
+        # Warning! I don't know what I am doing
+        next;
       };
 
     # Skip commas
@@ -335,7 +339,7 @@ sub _new {
         my @children = splice(@stack, $begin);
         my $class = pop @stack;
         croak "Syntax error! Any couple of parenthesis must be preceded by an identifier"
-          unless (defined($class) and $class =~ m{^[a-zA-Z_]\w*$});
+          unless (defined($class) and $class =~ m{^[a-zA-Z_][\w:]*$});
 
         $b = $blesser->($class, @children);
 
@@ -345,7 +349,7 @@ sub _new {
         next; 
     }; 
 
-    croak "Error building tree $_[0]." unless s{\A\s*}{};
+    croak "Error building Parse::Eyapp::Node tree at '$_'." unless s{\A\s+}{};
   } # while
   croak "Syntax error! Open parenthesis has no right partner!" if @index;
   { 

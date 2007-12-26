@@ -831,6 +831,57 @@ about Shift/Reduce conflicts.
 C oriented declarations like C<%type> and C<%union> are
 parsed but ignored.
 
+=head3 The C<%strict> Directive
+
+By default, identifiers appearing in the rule section
+will be classified as terminal if they don't appear 
+in the left hand side of any production rules.
+
+The directive C<%strict> forces the declaration of all tokens. 
+The following C<eyapp> program issues a warning:
+
+  pl@nereida:~/LEyapp/examples$ cat -n bugyapp2.eyp
+       1  %strict
+       2  %%
+       3  expr: NUM;
+       4  %%
+  pl@nereida:~/LEyapp/examples$ eyapp bugyapp2.eyp
+  Warning! Non declared token NUM at line 3 of bugyapp2.eyp
+
+To keep silent the compiler declare all tokens using
+one of the token declaration directives (C<%token>, C<%left>, etc.)
+
+  pl@nereida:~/LEyapp/examples$ cat -n bugyapp3.eyp
+       1  %strict
+       2  %token NUM
+       3  %%
+       4  expr: NUM;
+       5  %%
+  pl@nereida:~/LEyapp/examples$ eyapp bugyapp3.eyp
+  pl@nereida:~/LEyapp/examples$   
+
+It is a good practice to use C<%strict> at the beginning of your grammar.
+
+=head3 Default Action Directive
+
+In C<Parse::Eyapp> you can modify the default action using the C<%defaultaction { Perl code }>
+directive. See section
+L<Default actions>.
+
+=head3 Tree Construction Directives
+
+C<Parse::Eyapp> facilitates the construction of concrete syntax trees and 
+abstract syntax trees (abbreviated AST from now on) through the C<%tree>
+C<%metatree> directives. See sections
+L<Abstract Syntax Trees : %tree and %name>
+and
+L<Translation Schemes and the %metatree directive>. 
+
+=head3 Syntactic and Semantic Tokens
+
+The new token declaration directives C<%syntactic token> and
+C<%semantic token> can change the way C<eyapp> builds the abstract syntax tree.
+See section L<Syntactic and Semantic tokens>.
 
 =head2 The Body
 
@@ -3030,7 +3081,13 @@ of a small calculator:
 =head1 Debugging C<Parse::Eyapp> Programs
 
 The sources of error when programming 
-with C<eyapp> are many and various. In this
+with C<eyapp> are many and various. 
+Some of them are minor, as having a 
+nonterminal without production rules or a terminal
+that is never produced by the lexical analyzer. These kind of errors
+can be catched with the help of the C<%strict> directive.
+
+In this
 section we will discuss three main kind 
 of errors that correspond to three development
 stages:

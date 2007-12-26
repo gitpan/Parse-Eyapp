@@ -23,6 +23,9 @@ my $bypass = 0;
 my $buildingtree = 0;
 my $alias = 0;
 my $accessors = ''; # code generated for named accessors when %tree or %metatree is active
+my $strict = 0; # When true, all tokens must be declared or a warning will be issued
+
+my %nondeclared; # Potential non declared token identifiers appearing in the program
 
 sub not_an_id {
   my $id = shift;
@@ -221,8 +224,10 @@ symbol: LITERAL {
                     or  do {
                         $$syms{$symbol} = $lineno;
                         $$term{$symbol} = undef;
+
+                        # Warning! 
+                        $$semantic{$symbol} = 0 unless exists($$semantic{$symbol});
                     };
-                    $$semantic{$symbol} = 0 unless exists($$semantic{$symbol});
                     $_[1]
                 }
     |   ident   #default action
@@ -234,8 +239,12 @@ ident:  IDENT   {
                     or  do {
                         $$syms{$symbol} = $lineno;
                         $$term{$symbol} = undef;
+
+                        # Warning! 
+                        $$semantic{$symbol} = 1 unless exists($$semantic{$symbol});
+                        # Not declared identifier?
+                        $nondeclared{$symbol} = 1 unless (exists($$nterm{$symbol}) or $$term{$symbol});
                     };
-                    $$semantic{$symbol} = 1 unless exists($$semantic{$symbol});
                     $_[1]
                 }
 ;
@@ -346,6 +355,11 @@ decl:  '\n'                 #default action
             $metatree = $tree = $buildingtree = 1;
             undef 
           } 
+    |   STRICT '\n'    
+          { 
+            $strict = 1;
+            undef 
+          } 
     |   TYPE typedecl identlist '\n'
             {
                 for ( @{$_[3]} ) {
@@ -390,6 +404,13 @@ body:
             or  _SyntaxError(2,"Start symbol $start not found ".
                                 "in rules section",$_[2][1]);
 
+            # # If exists an @identifiers that is not a nterm and not a term is a warn
+            if ($strict) {
+              for (keys %nondeclared) {
+                  warn "Warning! Non declared token $_ at line $$syms{$_} of $filename\n" 
+                unless ($$term{$_} || exists($$nterm{$_}));
+              }
+            }
             # [ left hand side,   right hand side,  precedence, rulename, code, ??prefixofcode ]
             $$rules[0]=[ '$start', [ $start, chr(0) ], undef, undef, undef,] # prefixofcode???  undef ];
         }
@@ -777,6 +798,9 @@ sub _Lexer {
             $$input=~/\G%(token)/gc
         and return('TOKEN',[ undef, $lineno[0] ]);
 
+            $$input=~/\G%(strict)/gc
+        and return('STRICT',[ undef, $lineno[0] ]);
+
             $$input=~/\G%(semantic\s+token)/gc
         and return('SEMANTIC',[ undef, $lineno[0] ]);
 
@@ -800,12 +824,6 @@ sub _Lexer {
 
             $$input=~/\G%metatree/gc
         and return('METATREE',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%flatlists/gc
-        and return('FLATLISTS',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%name\s+semantic\s+actions/gc
-        and return('NAMESEMANTICS',[ undef, $lineno[0] ]);
 
             $$input=~/\G([0-9]+)/gc
         and return('NUMBER',[ $1, $lineno[0] ]);

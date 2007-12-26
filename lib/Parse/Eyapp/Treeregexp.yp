@@ -200,6 +200,8 @@ sub new_array_star {
 }
 %}
 
+%token CODE IDENT ARRAY REGEXP SCALAR
+
 %%
 treeregexplist:  
     treeregexp* 

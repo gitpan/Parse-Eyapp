@@ -1,3 +1,8 @@
+- There is a bug with Parse::Eyapp::Node ->new family of constructs. They don't work with full names: TYPEVAR::ALPHA
+  * Probably s.t. like
+     TUTU(TITI({ $[0]->{chu} = 4 }) {$_[0]->{k} = "hello"})
+    will be better to initialize the attributes
+- %strict (all the tokens must be declared)
 - * + ? operators.
    - Flatlists
        + %flat lists directive
