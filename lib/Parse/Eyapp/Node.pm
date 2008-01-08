@@ -574,9 +574,10 @@ sub unshift {
 
 sub push {
   my $self = CORE::shift; # The tree object
-  my $node = CORE::shift; # node to insert
+  #my $node = CORE::shift; # node to insert
 
-  CORE::push @{$self->{children}}, $node;
+  #CORE::push @{$self->{children}}, $node;
+  CORE::push @{$self->{children}}, @_;
 }
 
 sub insert_before {
@@ -679,6 +680,7 @@ our $FOOTNOTE_SEP = ")\n";
 our $FOOTNOTE_LEFT = '^{';
 our $FOOTNOTE_RIGHT = '}';
 our $LINESEP = 4;
+our $CLASS_HANDLER = sub { type($_[0]) }; # What to print to identify the node
 
 my %match_del = (
   '[' => ']',
@@ -695,10 +697,13 @@ sub str {
 
   my @terms;
 
+  # Consume arg only if called as a class method Parse::Eyap::Node->str($node1, $node2, ...)
   CORE::shift unless ref($_[0]);
+
   for (@_) {
     $footnote_label = 0;
     $footnotes = '';
+    # Set delimiters for semantic values
     if (defined($DELIMITER) and exists($match_del{$DELIMITER})) {
       $pair = $match_del{$DELIMITER};
     }
@@ -718,7 +723,7 @@ sub _str {
   my @t;
 
   my $fn = $footnote_label;
-  if (UNIVERSAL::can($self, 'footnote')) {
+  if ($INDENT >= 0 && UNIVERSAL::can($self, 'footnote')) {
     $footnotes .= $FOOTNOTE_HEADER.$footnote_label++.$FOOTNOTE_SEP.$self->footnote;
   }
 
@@ -727,18 +732,18 @@ sub _str {
     CORE::push @t, Parse::Eyapp::Node::_str($_, $indent+2) if defined($_);
   }
   local $" = $STRSEP;
-  my $class = type($self);
+  my $class = $CLASS_HANDLER->($self);
   $class =~ s/^$_// for @PREFIXES; 
-  $class .= $DELIMITER.$self->info.$pair if UNIVERSAL::can($self, 'info');
-  if (UNIVERSAL::can($self, 'footnote')) {
+  $class .= $DELIMITER.$self->info.$pair if ($INDENT >= 0 && UNIVERSAL::can($self, 'info'));
+  if ($INDENT >= 0 && UNIVERSAL::can($self, 'footnote')) {
    $class .= $FOOTNOTE_LEFT.$fn.$FOOTNOTE_RIGHT;
   }
 
-  if ($INDENT) {
+  if ($INDENT > 0) {
     my $w = " "x$indent;
     $class = "\n$w$class";
     $class .= "(@t\n$w)" if @children;
-    $class .= " # ".type($self) if ($INDENT > 1) and ($class =~ tr/\n/\n/>$LINESEP);
+    $class .= " # ".$CLASS_HANDLER->($self) if ($INDENT > 1) and ($class =~ tr/\n/\n/>$LINESEP);
   }
   else {
     $class .= "(@t)" if @children;

@@ -856,7 +856,11 @@ with the debugger:
 
 The C<str> method returns a string representation of the tree. 
 The I<str> method traverses the syntax tree dumping the type
-of the node being visited in a string. If the node being visited
+of the node being visited in a string. To be specific
+the value returned by the function referenced by C<$CLASS_HANDLER> 
+will be dumped. The default value fo such function is to return the type
+of the node.
+If the node being visited
 has a method C<info> it will
 be executed and its result inserted between C<$DELIMITER>s
 into the string. Thus, in the L</SYNOPSIS>
@@ -875,7 +879,8 @@ influence the behavior of C<str>. Among the most
 important are:
 
   @PREFIXES = qw(Parse::Eyapp::Node::);                                 # Prefixes to supress 
-  $INDENT = 0; # 0 = compact, 1 = indent, 2 = indent and include Types in closing parenthesis
+  $INDENT = 0; # -1 compact, no info, no footnotes 
+               # 0 = compact, 1 = indent, 2 = indent and include Types in closing parenthesis
   $STRSEP = ',';                                # Separator between nodes, by default a comma
   $DELIMITER = '[';                         # The string returned by C<info> will be enclosed 
   $FOOTNOTE_HEADER = "\n---------------------------\n"; 
@@ -884,6 +889,44 @@ important are:
   $FOOTNOTE_RIGHT = '}';                              # Right delimiter for a footnote number
   $LINESEP = 4;                             # When indent=2 the enclosing parenthesis will be
                                             # commented if more than $LINESEP apart
+  $CLASS_HANDLER = sub { type($_[0]) }; # What to print to identify the node
+
+Footnotes and attribute info will not be inserted when C<$INDENT> 
+is -1. A compact representation will be obtained. Such representation 
+can be feed to C<new> or C<hnew> to obtain a copy of the tree. 
+See the following session with the debugger:
+
+  pl@nereida:~/LEyapp$ perl -MParse::Eyapp::Node -wde 0
+  main::(-e:1):   0
+    DB<1> $x = Parse::Eyapp::Node->new('A(B(C,D),D)', sub { $_->{order} = $i++ for @_; })
+    DB<2> *A::info = *B::info = *C::info = *D::info = sub { shift()->{order} }
+    DB<3> p $x->str
+  A[0](B[1](C[2],D[3]),D[4])
+    DB<4> $Parse::Eyapp::Node::INDENT=-1
+    DB<5> p $x->str
+  A(B(C,D),D)
+    DB<6> x Parse::Eyapp::Node->hnew($x->str)
+  0  A=HASH(0x8574704)
+     'children' => ARRAY(0x85745d8)
+        0  B=HASH(0x857468c)
+           'children' => ARRAY(0x8574608)
+              0  C=HASH(0x85745b4)
+                 'children' => ARRAY(0x8509670)
+                      empty array
+              1  D=HASH(0x8574638)
+                 'children' => ARRAY(0x857450c)
+                      empty array
+        1  D=HASH(0x8574638)
+           -> REUSED_ADDRESS
+  1  B=HASH(0x857468c)
+     -> REUSED_ADDRESS
+  2  C=HASH(0x85745b4)
+     -> REUSED_ADDRESS
+  3  D=HASH(0x8574638)
+     -> REUSED_ADDRESS
+  4  D=HASH(0x8574638)
+     -> REUSED_ADDRESS
+
 
 The following list defines the C<$DELIMITER>s you can choose for 
 attribute representation:

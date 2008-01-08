@@ -44,6 +44,7 @@ return <<'EOT';
 release: lib/Parse/Eyapp/Parse.yp
 	PERL5LIB=lib; eyapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
 	PERL5LIB=lib; $(PERL) -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
+	rm -fR Parse-Eyapp-*.tar.gz
 
 doc:tt2/Eyapp.tt2 
 	cd tt2; tpage  Eyapp.tt2 > ../lib/Parse/Eyapp.pod

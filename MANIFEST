@@ -24,6 +24,8 @@ lib/Parse/Eyapp/YATW.pod
 lib/Parse/Eyapp/Scope.pm
 lib/Parse/Eyapp/Scope.pod
 lib/Parse/Eyapp/Base.pm
+#lib/Parse/Eyapp/Unify.pm
+#lib/Parse/Eyapp/Unify.pod
 lib/Parse/Eyapp.pm
 lib/Parse/Eyapp.pod
 eyapp
@@ -69,7 +71,7 @@ t/38tspostfix_resultisarray.t
 t/39tspostfix.t
 t/40wrongoptionforTreeregexp_new.t
 t/41indexbug.t
-t/42pod.t
+#t/42pod.t
 t/43dotandscalar.t
 t/44repeatedarray.t
 t/45starandarray.t

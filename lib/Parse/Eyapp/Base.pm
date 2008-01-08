@@ -5,7 +5,15 @@ use Carp;
 use List::Util qw(first);
 
 use base qw(Exporter);
-our @EXPORT_OK = qw(compute_lines slurp_file valid_keys invalid_keys write_file);
+our @EXPORT_OK = qw(
+  compute_lines 
+  slurp_file 
+  valid_keys 
+  invalid_keys 
+  write_file 
+  insert_function 
+  insert_method
+);
 our %EXPORT_TAGS = ( 'all' => [ @EXPORT_OK ] );
 
 ####################################################################
@@ -71,6 +79,38 @@ sub compute_lines {
                 }
               }eg;
 }
+
+sub insert_function {
+  no warnings;
+  no strict;
+
+  my $code = pop;
+    croak "Error in insert_function: last arg must be a CODE ref\n"
+  unless ref($code) eq 'CODE';
+
+  for (@_) {
+    croak "Error in insert_method: Illegal method name $_\n" unless /^[\w:]+$/;
+    *{$_} = $code;
+  }
+}
+
+sub insert_method {
+  no warnings;
+  no strict;
+
+  my $code = pop;
+    croak "Error in insert_method: last arg must be a CODE ref\n"
+  unless ref($code) eq 'CODE';
+
+  my $name = pop;
+  croak "Error in insert_method: Illegal method name $_\n" unless $name =~/^\w+$/;
+
+  for (@_) {
+    croak "Error in insert_method: Illegal method name $_\n" unless /^[\w:]+$/;
+    *{$_."::".$name} = $code;
+  }
+}
+
 
 1;
 
