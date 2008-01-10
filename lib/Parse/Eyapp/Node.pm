@@ -265,6 +265,24 @@ sub _bless {
   return $b;
 }
 
+sub hexpand {
+  my $class = CORE::shift;
+
+  my $handler = CORE::pop if ref($_[-1]) eq 'CODE';
+  my $n = m_bless(@_);
+
+  my $newnodeclass = CORE::shift;
+
+  no strict 'refs';
+  push @{$newnodeclass."::ISA"}, 'Parse::Eyapp::Node' unless $newnodeclass->isa('Parse::Eyapp::Node');
+
+  if (defined($handler) and UNIVERSAL::isa($handler, "CODE")) {
+    $handler->($n);
+  }
+
+  $n;
+}
+
 sub hnew {
   my $blesser = \&m_bless;
 
@@ -672,7 +690,7 @@ sub insert_after {
 # Returns    : Returns a string describing the Parse::Eyapp::Node as a term
 #              i.e., s.t. like: 'PROGRAM(FUNCTION(RETURN(TERMINAL,VAR(TERMINAL))))'
 our @PREFIXES = qw(Parse::Eyapp::Node::);
-our $INDENT = 0; # 0 = compact, 1 = indent, 2 = indent and include Types in closing parenthesis
+our $INDENT = 0; # -1 new 0 = compact, 1 = indent, 2 = indent and include Types in closing parenthesis
 our $STRSEP = ',';
 our $DELIMITER = '[';
 our $FOOTNOTE_HEADER = "\n---------------------------\n";
@@ -722,9 +740,11 @@ sub _str {
   my @children = Parse::Eyapp::Node::children($self);
   my @t;
 
+  my $res;
   my $fn = $footnote_label;
   if ($INDENT >= 0 && UNIVERSAL::can($self, 'footnote')) {
-    $footnotes .= $FOOTNOTE_HEADER.$footnote_label++.$FOOTNOTE_SEP.$self->footnote;
+    $res = $self->footnote; 
+    $footnotes .= $FOOTNOTE_HEADER.$footnote_label++.$FOOTNOTE_SEP.$res if $res;
   }
 
   # recursively visit nodes
@@ -734,8 +754,10 @@ sub _str {
   local $" = $STRSEP;
   my $class = $CLASS_HANDLER->($self);
   $class =~ s/^$_// for @PREFIXES; 
-  $class .= $DELIMITER.$self->info.$pair if ($INDENT >= 0 && UNIVERSAL::can($self, 'info'));
-  if ($INDENT >= 0 && UNIVERSAL::can($self, 'footnote')) {
+  my $information;
+  $information = $self->info if ($INDENT >= 0 && UNIVERSAL::can($self, 'info'));
+  $class .= $DELIMITER.$information.$pair if $information;
+  if ($INDENT >= 0 &&  $res) {
    $class .= $FOOTNOTE_LEFT.$fn.$FOOTNOTE_RIGHT;
   }
 

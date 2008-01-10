@@ -5165,6 +5165,71 @@ when dealing with optimizations like I<common subexpressions>
 or during I<type checking>. 
 See file C<examples/Types.eyp> for a more comprehensive example.
 
+=head2 Expanding Directed Acyclic Graphs with C<Parse::Eyapp::Node-E<gt>hexpand>
+
+Calls to C<Parse::Eyapp::Node-E<gt>hexpand> have the syntax
+
+    $z = Parse::Eyapp::Node->hexpand('CLASS', @children, \&handler)
+
+Creates a dag of type C<'CLASS'> with children C<@children> in a way compatible with
+C<hew>. The last 
+optional argument can be a reference to a sub.  Such sub will be called after the
+creation of the DAG with a reference to the root of the DAG as single argument.
+The following session with the debugger illustrates the use of
+ C<Parse::Eyapp::Node-E<gt>hexpand>. First we create a DAG using C<hnew>:
+
+  pl@nereida:~/Lbook/code/Simple-Types/script$ perl -MParse::Eyapp::Node -wde 0
+  main::(-e:1):   0
+    DB<1> $x = Parse::Eyapp::Node->hnew('A(C(B),C(B))')
+    DB<2> x $x
+  0  A=HASH(0x850c850)
+     'children' => ARRAY(0x850ca30)
+        0  C=HASH(0x850c928)
+           'children' => ARRAY(0x850c9e8)
+              0  B=HASH(0x850c9a0)
+                 'children' => ARRAY(0x83268c8)
+                      empty array
+        1  C=HASH(0x850c928)
+           -> REUSED_ADDRESS
+
+Now we can expand the DAG using C<hexpand>:
+
+    DB<3> $y = Parse::Eyapp::Node->hexpand('A', $x->child(0))
+    DB<4> x $y
+  0  A=HASH(0x8592558)
+     'children' => ARRAY(0x832613c)
+        0  C=HASH(0x850c928)
+           'children' => ARRAY(0x850c9e8)
+              0  B=HASH(0x850c9a0)
+                 'children' => ARRAY(0x83268c8)
+                      empty array
+    DB<5> $z = Parse::Eyapp::Node->hexpand('A', $x->children)
+    DB<6> x $z
+  0  A=HASH(0x850c850)
+     'children' => ARRAY(0x850ca30)
+        0  C=HASH(0x850c928)
+           'children' => ARRAY(0x850c9e8)
+              0  B=HASH(0x850c9a0)
+                 'children' => ARRAY(0x83268c8)
+                      empty array
+        1  C=HASH(0x850c928)
+           -> REUSED_ADDRESS
+
+Notice that the address for C<$z> is the same than the address for C<$x>.
+The following command illustrates the use with a handler:
+
+    DB<7> $z = Parse::Eyapp::Node->hexpand('A', $x->children, sub { $_[0]->{t} = "X" })
+    DB<8> x $z
+  0  A=HASH(0x850c850)
+     'children' => ARRAY(0x850ca30)
+        0  C=HASH(0x850c928)
+           'children' => ARRAY(0x850c9e8)
+              0  B=HASH(0x850c9a0)
+                 'children' => ARRAY(0x83268c8)
+                      empty array
+        1  C=HASH(0x850c928)
+           -> REUSED_ADDRESS
+     't' => 'X'
 
 =head2  $node->type 
 

@@ -11,6 +11,7 @@ our @EXPORT_OK = qw(
   valid_keys 
   invalid_keys 
   write_file 
+  numbered
   insert_function 
   insert_method
 );
@@ -78,6 +79,14 @@ sub compute_lines {
                  $directive;
                 }
               }eg;
+}
+
+sub numbered {
+  my ($output, $c) = (shift(), 1);
+  my $cr = $output =~ tr/\n//;
+  my $digits = 1+int(log($cr)/log(10));
+  $output =~ s/^/sprintf("%${digits}d ",$c++)/emg;
+  $output;
 }
 
 sub insert_function {
