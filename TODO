@@ -1,4 +1,7 @@
   * Add to Parse::Eyapp::Base function
+             empty_method(qw{ ... classes ... }, 'method') As a stack?
+             push_method (when undef supress the method)
+             pop_method
              MakeHierarchy('BinaryOp(PLUS, TIMES, MINUS, DIV) Operation(BinaryOp)')
     that will build a inheritance hierarchy
 

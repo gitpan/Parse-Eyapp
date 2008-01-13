@@ -54,6 +54,7 @@ doc:tt2/Eyapp.tt2
 	cd tt2; tpage  YATW.tt2 > ../lib/Parse/Eyapp/YATW.pod
 	cd tt2; tpage  Driver.tt2 > ../lib/Parse/Eyapp/Driver.pod
 	cd tt2; tpage  Parse.tt2 > ../lib/Parse/Eyapp/Parse.pod
+	cd tt2; tpage  Base.tt2 > ../lib/Parse/Eyapp/Base.pod
 
 coverage:
 	cover -delete

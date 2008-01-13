@@ -24,6 +24,7 @@ lib/Parse/Eyapp/YATW.pod
 lib/Parse/Eyapp/Scope.pm
 lib/Parse/Eyapp/Scope.pod
 lib/Parse/Eyapp/Base.pm
+lib/Parse/Eyapp/Base.pod
 #lib/Parse/Eyapp/Unify.pm
 #lib/Parse/Eyapp/Unify.pod
 lib/Parse/Eyapp.pm

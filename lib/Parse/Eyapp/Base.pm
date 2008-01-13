@@ -7,6 +7,7 @@ use List::Util qw(first);
 use base qw(Exporter);
 our @EXPORT_OK = qw(
   compute_lines 
+  empty_method
   slurp_file 
   valid_keys 
   invalid_keys 
@@ -14,6 +15,10 @@ our @EXPORT_OK = qw(
   numbered
   insert_function 
   insert_method
+  delete_method
+  push_method
+  push_empty_method
+  pop_method
 );
 our %EXPORT_TAGS = ( 'all' => [ @EXPORT_OK ] );
 
@@ -63,6 +68,8 @@ sub write_file {
   close($OUTPUTFILE) or croak "Can't close file $OUTPUTFILE.";
 }
 
+# Sort of backpatching for line number directives:
+# Substitutes $pattern by #line $number $filename in string $textr
 sub compute_lines {
   my ($textr, $filename, $pattern) = @_;
   
@@ -84,6 +91,7 @@ sub compute_lines {
 sub numbered {
   my ($output, $c) = (shift(), 1);
   my $cr = $output =~ tr/\n//;
+  $cr = 1 if $cr <= 0;
   my $digits = 1+int(log($cr)/log(10));
   $output =~ s/^/sprintf("%${digits}d ",$c++)/emg;
   $output;
@@ -98,17 +106,26 @@ sub insert_function {
   unless ref($code) eq 'CODE';
 
   for (@_) {
-    croak "Error in insert_method: Illegal method name $_\n" unless /^[\w:]+$/;
+    croak "Error in insert_function: Illegal method name $_\n" unless /^[\w:]+$/;
     *{$_} = $code;
   }
 }
 
 sub insert_method {
-  no warnings;
-  no strict;
 
   my $code = pop;
-    croak "Error in insert_method: last arg must be a CODE ref\n"
+
+  unless (ref($code)) { # not a ref: string or undef
+    # Call is: insert_method('Tutu', 'titi')
+    if (defined($code) && $code  =~/^\w+$/) {
+      delete_method(@_, $code); 
+      return;
+    }
+    # Call is: insert_method('Tutu', 'titi', undef)
+    goto &delete_method; 
+    return;
+  }
+    croak "Error in insert_method: expected a CODE ref found $code\n"
   unless ref($code) eq 'CODE';
 
   my $name = pop;
@@ -116,10 +133,96 @@ sub insert_method {
 
   for (@_) {
     croak "Error in insert_method: Illegal method name $_\n" unless /^[\w:]+$/;
+    no warnings 'redefine';;
+    no strict 'refs';
     *{$_."::".$name} = $code;
   }
 }
 
+sub delete_method {
+  my $name = pop;
+  croak "Error in delete_method: Illegal method name $name\n" unless $name =~/^\w+$/;
+
+  no strict 'refs';
+  for (@_) {
+    croak "Error in delete_method: Illegal class name $_\n" unless /^[\w:]+$/;
+    my $fullname = $_."::".$name;
+
+    # Temporarily save the other entries
+    my @refs = map { *{$fullname}{$_} } qw{HASH SCALAR ARRAY GLOB};
+
+    # Delete typeglob
+    *{$fullname} = do { local *{$fullname} };
+
+    # Restore HASH SCALAR ARRAY GLOB entries
+    for (@refs) {
+      next unless defined($_);
+      *{$fullname} = $_;
+    }
+  }
+}
+
+sub empty_method {
+  insert_method(@_, sub {});
+}
+
+sub push_empty_method {
+  push_method(@_, sub {});
+}
+
+{
+  my %methods;
+
+  sub push_method {
+    my $handler;
+    if (ref($_[-1]) eq 'CODE') {  
+      $handler = pop;
+    }
+    else {
+      $handler = undef;
+    }
+
+    my $name = pop;
+    croak "Error in push_method: Illegal method name $name\n" unless $name =~/^\w+$/;
+    my @classes = @_;
+
+    my @returnmethods;
+
+    for (@classes) {
+      croak "Error in push_method: Illegal class name $_\n" unless /^[\w:]+$/;
+      my $fullname = $_."::".$name;
+      if ($_->can($name)) {
+        no strict 'refs';
+        my $coderef = \&{$fullname};
+        push @returnmethods, $coderef;
+        push @{$methods{$fullname}}, $coderef;
+      }
+      else {
+        push @{$methods{$fullname}}, undef;
+      }
+    }
+    insert_method(@classes, $name, $handler);
+    
+    return wantarray? @returnmethods : $returnmethods[0];
+  }
+
+  sub pop_method {
+    my $name = pop;
+    my @classes = @_;
+
+    my @returnmethods;
+
+    for (@classes) {
+      my $fullname = $_."::".$name;
+      no strict 'refs';
+      push @returnmethods, $_->can($name)? \&{$fullname} : undef;
+      my $handler = pop @{$methods{$fullname}};
+      insert_method($_, $name, $handler);
+    }
+    return wantarray? @returnmethods : $returnmethods[0];
+  }
+
+} # Closure for %methods
 
 1;
 
