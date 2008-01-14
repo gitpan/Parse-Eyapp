@@ -6804,7 +6804,9 @@ like:
   print &tutu()."\n"; # It will print "tutu"
 
  
-I would like to have such feature in a future Perl release. Meanwhile we can do:
+It will be nice to have such feature in a future Perl release. Among other
+uses it makes room for some sort of I<dynamic scope privacy> for Perl subroutines. 
+Meanwhile we can do:
 
   use strict;
   use Parse::Eyapp::Base qw(:all);
@@ -6877,13 +6879,16 @@ to the code implementing such function. See an example of call:
 
 =head2 Function C<empty_method>
  
-Tha call to 
+The call to 
 
                            empty_method(qw{CLASSES ... }, 'subname')
 
 is equivalent to
 
                           insert_method(qw{CLASSES ... }, 'subname', sub {})
+
+Consequently C<empty_method> replaces the current C<CODE> for
+function C<subname> by an empty subroutine
 
 =head2 Function C<push_method>
 
@@ -6892,7 +6897,7 @@ The call
       push_method( qw{CLASS1 CLASS2 ... }, 'subname', sub { ... } )
 
 saves the current methods C<CLASS1::subname>, C<CLASS2::subname>, etc. in a stack
-and proceeds to install the new handler specified through the las argument.
+and proceeds to install the new handler specified through the last argument.
 See an example:
 
   pl@nereida:~/src/perl/YappWithDefaultAction/lib/Parse/Eyapp$ perl -wde 0
@@ -6924,8 +6929,10 @@ The call
                                   pop_method(qw{CLASS1 CLASS2 ... }, 'subname' )
 
 pops the methods in the tops of the stacks associated with
-C<CLASS1::subname>, C<CLASS2::subname>, etc. 'subname').
+C<CLASS1::subname>, C<CLASS2::subname>, etc. 
 See the example in the section L<push_method> above.
+
+The caller class is assumed if no classes are specified.
 
 
 =head2  Function C<compute_lines>
@@ -6937,8 +6944,6 @@ The call
 Substitutes all the ocurrences of 
 C<$pattern> by C<#line $number $filename> in string C<$text>.
 where C<$number> is the line number.
-
-The caller class is assumed if no classes are specified.
 
 =head2 Function C<slurp_file>
 
