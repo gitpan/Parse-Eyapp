@@ -106,7 +106,7 @@ sub insert_function {
   unless ref($code) eq 'CODE';
 
   for (@_) {
-    croak "Error in insert_function: Illegal method name $_\n" unless /^[\w:]+$/;
+    croak "Error in insert_function: Illegal function name <$_>\n" unless /^[\w:]+$/;
     *{$_} = $code;
   }
 }
@@ -129,10 +129,12 @@ sub insert_method {
   unless ref($code) eq 'CODE';
 
   my $name = pop;
-  croak "Error in insert_method: Illegal method name $_\n" unless $name =~/^\w+$/;
+  croak "Error in insert_method: Illegal method name <$_>\n" unless $name =~/^\w+$/;
 
-  for (@_) {
-    croak "Error in insert_method: Illegal method name $_\n" unless /^[\w:]+$/;
+  my @classes = @_;
+  @classes = scalar(caller) unless @classes; 
+  for (@classes) {
+    croak "Error in insert_method: Illegal class name <$_>\n" unless /^[\w:]+$/;
     no warnings 'redefine';;
     no strict 'refs';
     *{$_."::".$name} = $code;
@@ -141,11 +143,13 @@ sub insert_method {
 
 sub delete_method {
   my $name = pop;
-  croak "Error in delete_method: Illegal method name $name\n" unless $name =~/^\w+$/;
+  croak "Error in delete_method: Illegal method name <$name>\n" unless $name =~/^\w+$/;
+  my @classes = @_;
 
+  @classes = scalar(caller) unless @classes; 
   no strict 'refs';
-  for (@_) {
-    croak "Error in delete_method: Illegal class name $_\n" unless /^[\w:]+$/;
+  for (@classes) {
+    croak "Error in delete_method: Illegal class name <$_>\n" unless /^[\w:]+$/;
     my $fullname = $_."::".$name;
 
     # Temporarily save the other entries
@@ -183,13 +187,14 @@ sub push_empty_method {
     }
 
     my $name = pop;
-    croak "Error in push_method: Illegal method name $name\n" unless $name =~/^\w+$/;
+    croak "Error in push_method: Illegal method name <$name>\n" unless $name =~/^\w+$/;
     my @classes = @_;
 
     my @returnmethods;
 
+    @classes = scalar(caller) unless @classes; 
     for (@classes) {
-      croak "Error in push_method: Illegal class name $_\n" unless /^[\w:]+$/;
+      croak "Error in push_method: Illegal class name <$_>\n" unless /^[\w:]+$/;
       my $fullname = $_."::".$name;
       if ($_->can($name)) {
         no strict 'refs';
@@ -212,6 +217,7 @@ sub push_empty_method {
 
     my @returnmethods;
 
+    @classes = scalar(caller) unless @classes; 
     for (@classes) {
       my $fullname = $_."::".$name;
       no strict 'refs';

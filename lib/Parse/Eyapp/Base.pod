@@ -1,9 +1,64 @@
 =head1 NAME 
 
-Parse::Eyapp::Base - Before Function::Utils comes ...
+Parse::Eyapp::Base - Emulates local &function = sub { ... };
  
 =head1 SYNOPSIS
+
+  use Parse::Eyapp::Base qw(:all);
+
+  sub tutu { "tutu" }
+
+  sub plim {
+    push_method('tutu', sub { "titi" });
+
+    print &tutu()."\n"; # Prints "titi"
+
+    pop_method('tutu');
+  }
+
+  plim();
+  print &tutu()."\n"; # Prints "tutu"
+
+=head1 INTRODUCTION
+    
+C<Parse::Eyapp::Base> holds a set of utility functions that give support to the other 
+modules that made C<Parse::Eyapp>. Several of them are related to the dynamic use of methods 
+and subroutines. Namely, C<push_method> and C<pop_method> allows to emulate
+what it will be something like an extension of C<local> to functions, i.e. something
+like:
+
+  sub tutu { "tutu" }
+
+  sub plim {
+    local &tutu = sub { "titi" };
+
+    print &tutu()."\n"; # It will print "titi"
+  }
+
+  print &tutu()."\n"; # It will print "tutu"
+
  
+I would like to have such feature in a future Perl release. Meanwhile we can do:
+
+  use strict;
+  use Parse::Eyapp::Base qw(:all);
+
+  sub tutu { "tutu" }
+
+  sub plim {
+    push_method('tutu', sub { "titi" });
+
+    print &tutu()."\n"; # Prints "titi"
+
+    pop_method('tutu');
+  }
+
+  plim();
+  print &tutu()."\n"; # Prints "tutu"
+
+
+
+=head1 SUBROUTINES
     
 =head2 Function C<insert_method>
 
@@ -20,6 +75,12 @@ A second way to call it is without the last argument, the handler:
 
 In such case the function is  deleted from all the specified classes
 and it no longer exists.
+
+The caller class is assumed if no classes are specified:
+
+          insert_method('subname', sub { ... } )
+
+
 See the following session with the debugger:
 
   pl@nereida:~/src/perl/YappWithDefaultAction/lib/Parse/Eyapp$ perl -wde 0
@@ -53,6 +114,7 @@ to the code implementing such function. See an example of call:
 =head2 Function C<empty_method>
  
 Tha call to 
+
                            empty_method(qw{CLASSES ... }, 'subname')
 
 is equivalent to
@@ -61,7 +123,14 @@ is equivalent to
 
 =head2 Function C<push_method>
 
-    DB<8> q
+The call
+
+      push_method( qw{CLASS1 CLASS2 ... }, 'subname', sub { ... } )
+
+saves the current methods C<CLASS1::subname>, C<CLASS2::subname>, etc. in a stack
+and proceeds to install the new handler specified through the las argument.
+See an example:
+
   pl@nereida:~/src/perl/YappWithDefaultAction/lib/Parse/Eyapp$ perl -wde 0
   main::(-e:1):   0
     DB<1> use Parse::Eyapp::Base qw(:all)
@@ -74,7 +143,7 @@ is equivalent to
     DB<6> Tutu::titi()
   Inside first Tutu::titi!
 
-    DB<7> push_method('Tutu', 'titi') # No handler: sub Tutu::titi no loneger exists
+    DB<7> push_method('Tutu', 'titi') # No handler: sub Tutu::titi no longer exists
     DB<8> print "Can't titi\n" unless Tutu->can('titi')
   Can't titi
 
@@ -82,10 +151,17 @@ is equivalent to
     DB<10> Tutu::titi()
   Inside first Tutu::titi!
 
+The caller class is assumed if no classes are specified.
 
 =head2 Function C<pop_method>
 
-See L<push_method> above
+The call 
+
+                                  pop_method(qw{CLASS1 CLASS2 ... }, 'subname' )
+
+pops the methods in the tops of the stacks associated with
+C<CLASS1::subname>, C<CLASS2::subname>, etc. 'subname').
+See the example in the section L<push_method> above.
 
 
 =head2  Function C<compute_lines>
@@ -95,8 +171,10 @@ The call
                 compute_lines(\$text, $filename, $pattern)
 
 Substitutes all the ocurrences of 
-C<$pattern> by C<#line $number $filename> in string C<$text>
+C<$pattern> by C<#line $number $filename> in string C<$text>.
+where C<$number> is the line number.
 
+The caller class is assumed if no classes are specified.
 
 =head2 Function C<slurp_file>
 
@@ -215,30 +293,6 @@ indented. See an example:
 =over
 
 =item * L<Parse::Eyapp>,
-
-=item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
-(An Introduction to Compiler Construction in seven pages)> in
-
-=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
-
-
-=item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
-
-=item * L<eyapp>,
-
-=item * L<treereg>,
-
-=item * L<Parse::yapp>,
-
-=item * yacc(1),
-
-=item * bison(1),
-
-=item * the classic book "Compilers: Principles, Techniques, and Tools" by Alfred V. Aho, Ravi Sethi and
-
-=item * Jeffrey D. Ullman (Addison-Wesley 1986)
-
-=item * L<Parse::RecDescent>.
 
 =back
 
