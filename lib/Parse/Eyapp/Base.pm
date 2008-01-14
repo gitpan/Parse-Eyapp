@@ -123,7 +123,6 @@ sub insert_method {
     }
     # Call is: insert_method('Tutu', 'titi', undef)
     goto &delete_method; 
-    return;
   }
     croak "Error in insert_method: expected a CODE ref found $code\n"
   unless ref($code) eq 'CODE';
@@ -203,6 +202,7 @@ sub push_empty_method {
         push @{$methods{$fullname}}, $coderef;
       }
       else {
+        push @returnmethods, undef;
         push @{$methods{$fullname}}, undef;
       }
     }

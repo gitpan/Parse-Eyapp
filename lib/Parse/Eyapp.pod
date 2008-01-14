@@ -2,11 +2,6 @@
  
 Parse::Eyapp - Extensions for Parse::Yapp
  
- 
-=head1 VERSION
- 
-1.088
-
 =head1 SYNOPSIS
  
   use Parse::Eyapp;
@@ -113,7 +108,7 @@ Parse::Eyapp - Extensions for Parse::Yapp
 
 =head1 Structure of this Document
 
-This document is divided in four parts:
+This document is divided in the following parts:
 
 =over
 
@@ -142,6 +137,28 @@ trees and transform them.
 describes the Eyapp interface for Scope Analysis.
 It can be useful if your application language 
 has nested scopes.
+
+=item * The next part describes (section
+L<Miscellaneous Support Functions in Parse::Eyapp::Base>) 
+the functions in C<Parse::Eyapp::Base>.
+They are support functions for the other modules 
+in C<Parse::Eyapp>.
+Several of these functions are related to the dynamic use of methods 
+and subroutines. Namely, C<push_method> and C<pop_method> allows to emulate
+what it will be something like an extension of C<local> to functions, i.e. something
+like:
+
+  sub tutu { "tutu" }
+
+  sub plim {
+    local &tutu = sub { "titi" };
+
+    print &tutu()."\n"; # It will print "titi"
+  }
+
+  print &tutu()."\n"; # It will print "tutu"
+
+=item * Don't forget to read the section L<BUGS AND LIMITATIONS>
 
 =back
 
@@ -6867,7 +6884,8 @@ See the following session with the debugger:
 
 =head2 Function C<insert_function>
 
-It works as L<Function insert_method>, only that instead of classes 
+It works as C<insert_method> (see section L<Function insert_method>), 
+only that instead of classes 
 receives the full names of the functions to install and a reference 
 to the code implementing such function. See an example of call:
 
@@ -6922,17 +6940,114 @@ See an example:
 
 The caller class is assumed if no classes are specified.
 
+In list context the C<push_method>  function returns an array of pointers to the old
+versions of the function. In a scalar context returns the first C<CODE> reference. 
+See the following example:
+
+  pl@nereida:~/src/perl/YappWithDefaultAction/examples$ cat -n returnedbypushmethod.pl
+     1  #!/usr/local/bin/perl -w
+     2  use strict;
+     3  use Parse::Eyapp::Base qw(:all);
+     4
+     5  sub tutu { "tutu" }
+     6  sub Chum::tutu { "chum" }
+     7
+     8  my @classes = qw{main Cham Chum};
+     9
+    10  my %oldf;
+    11  our $tutu = 5;
+    12  our @tutu = 9..12;
+    13  $Cham::tutu = 8;
+    14  @Cham::tutu = 1..3;
+    15
+    16  @oldf{@classes} = push_method(@classes, 'tutu', sub { "titi" });
+    17
+    18  print "Calling new function 'tutu':".&tutu()."\n";
+    19
+    20  for (@classes) {
+    21    if (defined($oldf{$_})) {
+    22      print "Old function 'tutu' in $_ gives: ".$oldf{$_}->()."\n";
+    23    }
+    24    else {
+    25       print "Function 'tutu' wasn't defined in $_\n";
+    26    }
+    27  }
+
+When executed with the debugger we can see that 
+
+=over 2
+
+=item * Package variables with the same name 
+like C<$tutu> or C<@tutu> aren't changed by
+C<insert_method>
+
+=item * References to the old versions of function C<tutu>
+are returned by C<insert_method>
+
+=back
+
+See the session with the debugger:
+
+  pl@nereida:~/LEyapp/examples$ perl -wd returnedbypushmethod.pl
+  main::(returnedbypushmethod.pl:8):
+  8:      my @classes = qw{main Cham Chum};
+    DB<1> c 18
+  main::(returnedbypushmethod.pl:18):
+  18:     print "Calling new function 'tutu':".&tutu()."\n";
+    DB<2> n
+  Calling new function 'tutu':titi
+  main::(returnedbypushmethod.pl:20):
+  20:     for (@classes) {
+    DB<2> x @tutu
+  0  9
+  1  10
+  2  11
+  3  12
+    DB<3> x @Cham::tutu
+  0  1
+  1  2
+  2  3
+    DB<4> p $Cham::tutu
+  8
+    DB<5> c
+  Old function 'tutu' in main gives: tutu
+  Function 'tutu' wasn't defined in Cham
+  Old function 'tutu' in Chum gives: chum
+
 =head2 Function C<pop_method>
 
 The call 
 
-                                  pop_method(qw{CLASS1 CLASS2 ... }, 'subname' )
+                     pop_method(qw{CLASS1 CLASS2 ... }, 'subname' )
 
 pops the methods in the tops of the stacks associated with
 C<CLASS1::subname>, C<CLASS2::subname>, etc. 
 See the example in the section L<push_method> above.
 
 The caller class is assumed if no classes are specified.
+
+In list context the C<pop_method>  function returns an array of pointers to the old
+versions of the function. In a scalar context returns the first function 
+reference. When the stack is empty the function(s) are deleted.
+See the following example:
+
+    pl@nereida:~/src/perl/YappWithDefaultAction/examples$ cat returnedbypopmethod.pl
+    #!/usr/local/bin/perl -w
+    use strict;
+    use Parse::Eyapp::Base qw(:all);
+
+    sub tutu { "tutu" }
+
+    my $old = pop_method('tutu');
+
+    print "Can't Call function 'tutu'\n" unless main->can('tutu');
+    print "Old function 'tutu' gives: ".$old->()."\n";
+
+When executed gives the following output:
+
+    pl@nereida:~/src/perl/YappWithDefaultAction/examples$ returnedbypopmethod.pl
+    Can't Call function 'tutu'
+    Old function 'tutu' gives: tutu
 
 
 =head2  Function C<compute_lines>
