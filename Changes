@@ -1,4 +1,10 @@
-Revision history for Perl extension Yapp.
+Revision history for Perl extension Eyapp.
+
+1.104 Mon jan 14 18:42:11 WET 2008
+     - Base.pm expanded with pus_method and pop_method. Documentation for Base.pm
+       aded
+
+Previous pre-eyapp history
 
 	- original version; created by h2xs 1.18
 0.01  Thu Jun 25 20:02:09 1998

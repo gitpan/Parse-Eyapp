@@ -6813,7 +6813,7 @@ like:
   sub tutu { "tutu" }
 
   sub plim {
-    local &tutu = sub { "titi" };
+    local sub tutu = sub { "titi" }; 
 
     print &tutu()."\n"; # It will print "titi"
   }
@@ -6821,9 +6821,7 @@ like:
   print &tutu()."\n"; # It will print "tutu"
 
  
-It will be nice to have such feature in a future Perl release. Among other
-uses it makes room for some sort of I<dynamic scope privacy> for Perl subroutines. 
-Meanwhile we can do:
+Using C<Parse::Eyapp::Base> we can do s.t. similar:
 
   use strict;
   use Parse::Eyapp::Base qw(:all);
@@ -6831,7 +6829,7 @@ Meanwhile we can do:
   sub tutu { "tutu" }
 
   sub plim {
-    push_method('tutu', sub { "titi" });
+    push_method(tutu => sub { "titi" });
 
     print &tutu()."\n"; # Prints "titi"
 
@@ -6841,6 +6839,9 @@ Meanwhile we can do:
   plim();
   print &tutu()."\n"; # Prints "tutu"
 
+Among other
+uses, C<push_method> and C<pop_method> make room for some sort of I<dynamic scope privacy> 
+for Perl subroutines. 
 
 
 =head2 Function C<insert_method>
@@ -6894,6 +6895,19 @@ to the code implementing such function. See an example of call:
     \&type_info
   );
 
+
+When the package is unspecified the caller package is assumed. See the following 
+example:
+
+  pl@nereida:~/src/perl/YappWithDefaultAction/lib/Parse/Eyapp$ perl -wde 0
+  main::(-e:1):   0
+    DB<1> use Parse::Eyapp::Base qw(:all)
+    DB<2> insert_function('Tutu::tata', 'titi', sub{ print "Inside titi\n"})
+    DB<3> titi()
+  Inside titi
+
+    DB<4> Tutu::tata()
+  Inside titi
 
 =head2 Function C<empty_method>
  
@@ -6973,7 +6987,7 @@ See the following example:
     26    }
     27  }
 
-When executed with the debugger we can see that 
+The following session with the debugger shows that:
 
 =over 2
 
@@ -6985,8 +6999,6 @@ C<insert_method>
 are returned by C<insert_method>
 
 =back
-
-See the session with the debugger:
 
   pl@nereida:~/LEyapp/examples$ perl -wd returnedbypushmethod.pl
   main::(returnedbypushmethod.pl:8):
@@ -7140,9 +7152,13 @@ See a more complete example:
 
 =head2 Function C<write_file>
 
-Simply writes the referenced by C<$text> into the file referenced by C<outputfilehandler>
+The call
 
-              write_file($outputfilehandler, \$text)
+              write_file($filename, $textref)
+
+simply opens a file  with name C<$filename>
+writes in it the text referenced by C<$texterf> and closes the file
+
  
 =head2 Function C<numbered>
 

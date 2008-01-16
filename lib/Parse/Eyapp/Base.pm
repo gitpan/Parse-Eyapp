@@ -107,7 +107,8 @@ sub insert_function {
 
   for (@_) {
     croak "Error in insert_function: Illegal function name <$_>\n" unless /^[\w:]+$/;
-    *{$_} = $code;
+    my $fullname = /^\w+$/? scalar(caller).'::'.$_ : $_;
+    *{$fullname} = $code;
   }
 }
 
@@ -141,7 +142,8 @@ sub insert_method {
 }
 
 sub delete_method {
-  my $name = pop;
+  my $name = pop; 
+  $name = '' unless defined($name);
   croak "Error in delete_method: Illegal method name <$name>\n" unless $name =~/^\w+$/;
   my @classes = @_;
 
@@ -149,6 +151,10 @@ sub delete_method {
   no strict 'refs';
   for (@classes) {
     croak "Error in delete_method: Illegal class name <$_>\n" unless /^[\w:]+$/;
+    unless ($_->can($name)) {
+      print STDERR "Warning in delete_method: No sub <$name> to delete in package <$_>\n";
+      next;
+    }
     my $fullname = $_."::".$name;
 
     # Temporarily save the other entries
@@ -186,6 +192,7 @@ sub push_empty_method {
     }
 
     my $name = pop;
+    $name = '' unless defined($name);
     croak "Error in push_method: Illegal method name <$name>\n" unless $name =~/^\w+$/;
     my @classes = @_;
 
@@ -213,6 +220,8 @@ sub push_empty_method {
 
   sub pop_method {
     my $name = pop;
+    $name = '' unless defined($name);
+    croak "Error in push_method: Illegal method name <$name>\n" unless $name =~/^\w+$/;
     my @classes = @_;
 
     my @returnmethods;
