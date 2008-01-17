@@ -144,19 +144,7 @@ the functions in C<Parse::Eyapp::Base>.
 They are support functions for the other modules 
 in C<Parse::Eyapp>.
 Several of these functions are related to the dynamic use of methods 
-and subroutines. Namely, C<push_method> and C<pop_method> allows to emulate
-what it will be something like an extension of C<local> to functions, i.e. something
-like:
-
-  sub tutu { "tutu" }
-
-  sub plim {
-    local &tutu = sub { "titi" };
-
-    print &tutu()."\n"; # It will print "titi"
-  }
-
-  print &tutu()."\n"; # It will print "tutu"
+and subroutines. 
 
 =item * Don't forget to read the section L<BUGS AND LIMITATIONS>
 
@@ -6806,42 +6794,7 @@ defined.
 
 C<Parse::Eyapp::Base> holds a set of utility functions that give support to the other 
 modules that made C<Parse::Eyapp>. Several of them are related to the dynamic use of methods 
-and subroutines. Namely, C<push_method> and C<pop_method> allows to emulate
-what it will be something like an extension of C<local> to functions, i.e. something
-like:
-
-  sub tutu { "tutu" }
-
-  sub plim {
-    local sub tutu = sub { "titi" }; 
-
-    print &tutu()."\n"; # It will print "titi"
-  }
-
-  print &tutu()."\n"; # It will print "tutu"
-
- 
-Using C<Parse::Eyapp::Base> we can do s.t. similar:
-
-  use strict;
-  use Parse::Eyapp::Base qw(:all);
-
-  sub tutu { "tutu" }
-
-  sub plim {
-    push_method(tutu => sub { "titi" });
-
-    print &tutu()."\n"; # Prints "titi"
-
-    pop_method('tutu');
-  }
-
-  plim();
-  print &tutu()."\n"; # Prints "tutu"
-
-Among other
-uses, C<push_method> and C<pop_method> make room for some sort of I<dynamic scope privacy> 
-for Perl subroutines. 
+and subroutines. 
 
 
 =head2 Function C<insert_method>
@@ -7036,30 +6989,189 @@ pops the methods in the tops of the stacks associated with
 C<CLASS1::subname>, C<CLASS2::subname>, etc. 
 See the example in the section L<push_method> above.
 
+=over
+
+=item *
 The caller class is assumed if no classes are specified.
 
-In list context the C<pop_method>  function returns an array of pointers to the old
-versions of the function. In a scalar context returns the first function 
-reference. When the stack is empty the function(s) are deleted.
-See the following example:
+=item *
+If the stack for C<CLASS::subname> is empty the old specification
+of C<subname> will remain.
 
-    pl@nereida:~/src/perl/YappWithDefaultAction/examples$ cat returnedbypopmethod.pl
-    #!/usr/local/bin/perl -w
-    use strict;
-    use Parse::Eyapp::Base qw(:all);
+  pl@nereida:~/LEyapp/examples$ cat returnedbypopmethod.pl
+  #!/usr/local/bin/perl -w
+  use strict;
+  use Parse::Eyapp::Base qw(:all);
 
-    sub tutu { "tutu" }
+  sub tutu { "tutu" }
 
-    my $old = pop_method('tutu');
+  my $old = pop_method('tutu');
 
-    print "Can't Call function 'tutu'\n" unless main->can('tutu');
-    print "Old function 'tutu' gives: ".$old->()."\n";
+  print "Function 'tutu' is available\n" if main->can('tutu');
+  print "Old function 'tutu' gives: ".$old->()."\n";
+
 
 When executed gives the following output:
 
-    pl@nereida:~/src/perl/YappWithDefaultAction/examples$ returnedbypopmethod.pl
-    Can't Call function 'tutu'
-    Old function 'tutu' gives: tutu
+  pl@nereida:~/LEyapp/examples$ returnedbypopmethod.pl
+  Function 'tutu' is available
+  Old function 'tutu' gives: tutu
+
+
+=item *
+In list context the C<pop_method>  function returns an array of pointers to the old
+versions of the function. In a scalar context returns the first function 
+reference. When the stack is empty the function(s) are deleted.
+
+=back
+
+=head2 Examples of C<push_method> and C<pop_method>
+
+=head3 Hiding functions
+
+See the following example:
+
+  package Tutu;
+  use Parse::Eyapp::Base qw(:all);
+
+  sub tutu {
+    print "Inside tutu\n"
+  }
+
+  sub plim {
+
+    # When the stack is empty the old 'tutu' remains ...
+    pop_method('tutu');
+
+    &tutu(); # Inside tutu
+
+    push_method('tutu'); # Tutu dissapears
+  }
+
+  package main;
+
+  Tutu::plim(); 
+  # main can't call 'tutu'
+  print "Can't tutu\n" unless Tutu->can('tutu');
+  Tutu::plim();
+
+When executed the former program produces this output:
+
+  pl@nereida:~/LEyapp/examples$ localsubbase.pl
+  Inside tutu
+  Can't tutu
+  Inside tutu
+
+=head3 Changing the Behavior of Method-parametric Methods
+
+A common situation where I need the couple (C<push_method>, C<pop_method>) 
+is to control the behavior of method C<str> when debugging:
+
+  pl@nereida:~/Lbook/code/Simple-Types/script$ perl -wd usetypes.pl prueba26.c 2
+  Loading DB routines from perl5db.pl version 1.28
+  Editor support available.
+  main::(usetypes.pl:5):  my $filename = shift || die "Usage:\n$0 file.c\n";
+    DB<1> c Parse::Eyapp::Node::str
+  1 int f() {
+  2   int a[30];
+  3
+  4   return;
+  5 }
+  Parse::Eyapp::Node::str(/home/pl/src/perl/YappWithDefaultAction/lib//Parse/Eyapp/Node.pm:716):
+  716:      my @terms;
+
+Let us assume I want to see the syntax tree for this program. 
+I can see it using C<$_[0]-E<gt>str>
+but the problem is that nodes C<PROGRAM> and C<FUNCTION>
+have defined a C<footnote> method that will dump their symbol and type tables producing 
+hundred of lines of output and making difficult to see the shape ot the tree.
+This is because method C<str> calls method C<footnote> wherever the node being
+visited I<can> do C<footnote>. The solution is to use C<push_method> to make
+the C<footnote> methods dissapear:
+
+    DB<2> use Parse::Eyapp::Base qw(:all)
+    DB<3> push_method(qw{PROGRAM FUNCTION}, 'footnote')
+
+The use of C<push_method> without an explicit code handler eliminates
+the CODE entry for C<footnote>:
+
+    DB<4> p $_->can('footnote')? "1\n" : "0\n" for (qw{PROGRAM FUNCTION})
+  0
+  0
+
+Now I can see the shape of the tree:
+
+    DB<5> p $_[0]->str
+
+  PROGRAM(
+    FUNCTION[f](
+      EMPTYRETURN
+    )
+  ) # PROGRAM
+
+If I want back the C<footnote> methods I can use C<pop_method>:
+
+    DB<6> pop_method(qw{PROGRAM FUNCTION}, 'footnote')
+    DB<7> p $_->can('footnote')? "1\n" : "0\n" for (qw{PROGRAM FUNCTION})
+    1
+    1
+
+Now the information will be profuse:
+
+    DB<8> p $_[0]->str
+
+  PROGRAM^{0}(
+    FUNCTION[f]^{1}(
+      EMPTYRETURN
+    )
+  ) # PROGRAM
+  ---------------------------
+  0)
+  Types:
+  $VAR1 = {
+    'CHAR' => bless( {
+      'children' => []
+    }, 'CHAR' ),
+    ..... etc, etc.
+    'A_30(INT)' => bless( {
+      'children' => [
+        $VAR1->{'INT'}
+      ]
+    }, 'A_30' )
+  };
+  Symbol Table:
+  $VAR1 = {
+    'f' => {
+      'type' => 'F(X_0(),INT)',
+      'line' => 1
+    }
+  };
+
+  ---------------------------
+  1)
+  $VAR1 = {
+    'a' => {
+      'type' => 'A_30(INT)',
+      'line' => 2
+    }
+  };
+
+You can still do something like this to achieve a similar effect:
+
+  DB<9> p eval { local (*PROGRAM::footnote, *FUNCTION::footnote) = (sub {}, sub {}); $_[0]->str }
+
+  PROGRAM(
+    FUNCTION[f](
+      EMPTYRETURN
+    )
+  ) # PROGRAM
+
+but is certainly more verbose and does not eliminate function C<footnote>
+from the C<PROGRAM> and C<FUNCTION> classes.
+
+Therefore the usefulness of C<push_method> is when you either want to
+temporarily delete your function/methods or localize them not necessarily in a 
+scope basis.
 
 
 =head2  Function C<compute_lines>

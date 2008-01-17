@@ -1,5 +1,7 @@
 Revision history for Perl extension Eyapp.
-
+1.106 Thu jan 17 09:31:24 WET 2008
+     - Documentation of Parsse::Eyapp::Base 
+     - pop_method does not modifies the methods when its stack is empty
 1.104 Mon jan 14 18:42:11 WET 2008
      - Base.pm expanded with pus_method and pop_method. Documentation for Base.pm
        aded

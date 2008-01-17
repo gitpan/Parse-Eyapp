@@ -231,8 +231,12 @@ sub push_empty_method {
       my $fullname = $_."::".$name;
       no strict 'refs';
       push @returnmethods, $_->can($name)? \&{$fullname} : undef;
-      my $handler = pop @{$methods{$fullname}};
-      insert_method($_, $name, $handler);
+      if (defined($methods{$fullname}) 
+          && UNIVERSAL::isa($methods{$fullname}, 'ARRAY') 
+          && @{$methods{$fullname}}) {
+        my $handler = pop @{$methods{$fullname}};
+        insert_method($_, $name, $handler);
+      }
     }
     return wantarray? @returnmethods : $returnmethods[0];
   }
