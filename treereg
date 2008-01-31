@@ -13,6 +13,7 @@ my $packagename;
 my $prefix = '';
 my $syntax = 1;
 my $numbers = 1;
+my @PERL5LIB; # search path
 my $severity = 0; # 0 = Don't  check arity. 1 = Check arity. 2 = Check arity and give a warning 3 = ... and croak
 
 GetOptions(
@@ -23,6 +24,7 @@ GetOptions(
   'severity=i' => \$severity,
   'syntax!'    => \$syntax,
   'numbers!'   => \$numbers,
+  'lib=s'      => \@PERL5LIB,
   'version'    => \&version,
   'usage'      => \&usage, 
   'help'       => \&man,
@@ -50,6 +52,7 @@ my $treeparser = Parse::Eyapp::Treeregexp->new(
 		    PREFIX   => $prefix,
 		    SYNTAX   => $syntax,
 		    NUMBERS  => $numbers,
+        PERL5LIB => \@PERL5LIB,
 		    SEVERITY => $severity
 		  );
 $treeparser->generate();
@@ -118,6 +121,12 @@ Output file. By default is the name of the input file (concatenated with .pm)
 Name of the package containing the generated subroutines. 
 By default is the longest prefix of the input file name that
 conforms to the classic definition of integer C<[a-z_A-Z]\w*>.
+
+=item * C<-l[ib] path/to/library/>
+
+Specifies that C</path/to/library/> will be included in C<@INC>.
+Useful when the C<syntax> option is on. Can be inserted as many times as necessary.
+
 
 =item * C<-p[refix] treeprefix>
 

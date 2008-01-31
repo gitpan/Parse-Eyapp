@@ -1,6 +1,6 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.106.
+#    This file was generated using Parse::Eyapp version 1.107.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -236,7 +236,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.106',
+    my($self)=$class->SUPER::new( yyversion => '1.107',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'treeregexplist', '$end' ], 0 ],
@@ -1318,6 +1318,7 @@ my %_Trnew = (
   OUTPUTFILE => 'STRING', # If specified the package will be dumped to such file
   SYNTAX => 'BOOL',       # Check perl actions syntax after generating the package
   SEVERITY => 'INT',      # Controls the level of checking matching the number of childrens
+  PERL5LIB => 'ARRAY',    # Search path
   INFILE => 'STRING',     # Input file containing the grammar
   STRING => 'STRING',     # Input string containing the grammar. Incompatible with INFILE
   NUMBERS => 'BOOL',      # Generate (or not) #line directives
@@ -1335,12 +1336,16 @@ sub new {
     croak( "Parse::Eyapp::Treeregexp::new Error!: unknown argument $a. "
           ."Valid arguments are: $validkeys")
   }
-  my ($packagename, $outputfile, $checksyntax)
-       = ($arg{PACKAGE}, $arg{OUTPUTFILE}, $arg{SYNTAX});
+  my $checksyntax = 1;
+  $checksyntax = $arg{SYNTAX} if exists($arg{SYNTAX});
+
+  my ($packagename, $outputfile) = ($arg{PACKAGE}, $arg{OUTPUTFILE});
 
   # file scope variables
   $filename = $arg{INFILE};
   
+  my $perl5lib = $arg{PERL5LIB} || [];
+
   #package scope variables
   $severity = $arg{SEVERITY};
   $prefix = $arg{PREFIX} || '';
@@ -1381,8 +1386,9 @@ sub new {
   my $object = bless {
            'INPUT_FROM_FILE' => $input_from_file,
            'PACKAGENAME'     => $packagename, 
-           'OUTPUTFILE'      =>  $outputfile, 
+           'OUTPUTFILE'      => $outputfile, 
            'CHECKSYNTAX'     => $checksyntax, 
+           'PERL5LIB'        => $perl5lib,
          }, $class;
   return $object;
 }
@@ -1492,11 +1498,17 @@ sub has_array_prefix {
     if ($input_from_file or defined($outputfile)) {
       compute_lines(\$text, $outputfile, $ouputlinepattern) if $self->{NUMBERS};
       write_file($outputfile, \$text);
-      require $outputfile;
+      if ($self->{CHECKSYNTAX}) {
+        push @INC, @{$self->{PERL5LIB}};
+        require $outputfile;
+      }
     }
     else {
       print $text if $debug;
-      croak $@ unless eval $text;
+      if ($self->{CHECKSYNTAX}) {
+        push @INC, @{$self->{PERL5LIB}};
+        croak $@ unless eval $text;
+      }
     }
 
     undef %times;

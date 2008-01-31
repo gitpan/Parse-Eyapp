@@ -1,14 +1,13 @@
 #!/usr/bin/perl -w
 use strict;
-use Rule6;
+use Rule5;
+use Parse::Eyapp::Base qw(insert_function);
 use Shift;
-{ no warnings; *TERMINAL::info = \&TERMINAL::attr; }
 
-push @SHIFTLEFT::ISA, 'Parse::Eyapp::Node';
 sub SHIFTLEFT::info { $_[0]{shift} }
+insert_function('TERMINAL::info', \&TERMINAL::attr);
 
-my $parser = new Rule6();
-$parser->YYData->{INPUT} = <>;
+my $parser = new Rule5();
 my $t = $parser->Run;
 print "***********\n",$t->str,"\n";
 $t->s(@Shift::all);
