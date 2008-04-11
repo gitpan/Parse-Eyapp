@@ -94,9 +94,9 @@ treereg - Compiler for Tree Regular Expressions
 =head1 SYNOPSIS
 
   treereg [-m packagename] [[no]syntax] [[no]numbers] [-severity 0|1|2|3] \
-          [-p treeprefix] [-o outputfile] -i filename[.trg] 
+          [-p treeprefix] [-o outputfile] [-lib /path/to/library/] -i filename[.trg] 
   treereg [-m packagename] [[no]syntax] [[no]numbers] [-severity 0|1|2|3] \
-          [-p treeprefix] [-o outputfile] filename[.trg] 
+          [-p treeprefix] [-lib /path/to/library/] [-o outputfile] filename[.trg] 
   treereg -v 
   treereg -h 
 
@@ -122,7 +122,7 @@ Name of the package containing the generated subroutines.
 By default is the longest prefix of the input file name that
 conforms to the classic definition of integer C<[a-z_A-Z]\w*>.
 
-=item * C<-l[ib] path/to/library/>
+=item * C<-l[ib] /path/to/library/>
 
 Specifies that C</path/to/library/> will be included in C<@INC>.
 Useful when the C<syntax> option is on. Can be inserted as many times as necessary.

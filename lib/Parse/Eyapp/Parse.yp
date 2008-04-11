@@ -338,7 +338,11 @@ decl:  '\n'                 #default action
                 ++$prec;
                 undef
             }
-    |   START ident '\n'                { $start=$_[2][0]; undef }
+    |   START ident '\n'                
+            { 
+              $start=$_[2][0]; 
+              undef 
+            }
     |   HEADCODE '\n'                   { push(@$head,$_[1]); undef }
     |   UNION CODE '\n'                 { undef } #ignore
     |   DEFAULTACTION CODE '\n'         { $defaultaction = $_[2]; undef } 
@@ -421,7 +425,10 @@ rulesec:  rulesec rules #default action
     |     startrules    #default action
 ;
 
-startrules:  IDENT ':' { $start = $_[1][0]; } rhss ';'  { _AddRules($_[1],$_[4]); undef }
+startrules:  IDENT ':' 
+                        { $start = $_[1][0] unless $start; } 
+                      rhss ';'  
+                        { _AddRules($_[1],$_[4]); undef }
   | error ';'          { $_[0]->YYErrok }
 ;
 

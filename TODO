@@ -1,11 +1,7 @@
+  * Document generate, new, etc. in treeregexp
   * Add to Parse::Eyapp::Base function
-             empty_method(qw{ ... classes ... }, 'method') As a stack?
-             push_method (when undef supress the method)
-             pop_method
              MakeHierarchy('BinaryOp(PLUS, TIMES, MINUS, DIV) Operation(BinaryOp)')
     that will build a inheritance hierarchy
-
-  * Function to delete methods from a class: "can" included
 
   * Unify: to support trees and not only dags a symbol table will be helpful
   * Parse::Eyapp::Node->new: Probably s.t. like

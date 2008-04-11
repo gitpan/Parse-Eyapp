@@ -1,6 +1,6 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.107.
+#    This file was generated using Parse::Eyapp version 1.108.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -244,7 +244,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.107',
+    my($self)=$class->SUPER::new( yyversion => '1.108',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
@@ -1228,7 +1228,10 @@ sub {
 	],
 	[#Rule decl_15
 		 'decl', 3,
-sub {  $start=$_[2][0]; undef }
+sub {  
+              $start=$_[2][0]; 
+              undef 
+            }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule decl_16
@@ -1373,7 +1376,7 @@ sub {  _AddRules($_[1],$_[4]); undef }
 	],
 	[#Rule _CODE
 		 '@35-2', 0,
-sub {  $start = $_[1][0]; }
+sub {  $start = $_[1][0] unless $start; }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule startrules_37
