@@ -1220,7 +1220,7 @@ token C<'a'>.
 
 =item 4. Decide what action shift or reduce matches the kind of trees you want.
 In this example we want C<NUM - NUM - NUM> to produce a tree like
-C<MINUS(MINUS(NUM, NUM), NUM)> and not C<NUM, MINUS(MINUS(NUM, NUM))>. We want the 
+C<MINUS(MINUS(NUM, NUM), NUM)> and not C<MINUS(NUM, MINUS(NUM, NUM))>. We want the 
 conflict in C<exp - exp.- NUM> to be solved in favor of the reduction
 by C<exp: exp '-' exp>. 
 This is achieved by declaring C<%left '-'>. 
