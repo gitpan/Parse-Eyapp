@@ -1,3 +1,4 @@
+  * delete_method isn't documented
   * Document generate, new, etc. in treeregexp
   * Add to Parse::Eyapp::Base function
              MakeHierarchy('BinaryOp(PLUS, TIMES, MINUS, DIV) Operation(BinaryOp)')

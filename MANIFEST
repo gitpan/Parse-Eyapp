@@ -62,7 +62,7 @@ t/27unshiftinmyself.t
 t/28unshifttwoitems.t
 t/29foldinglistsofexpressions.t
 t/30complextreereg.t
-t/32deletenodewithwarn.t
+#t/32deletenodewithwarn.t
 t/33moveinvariantoutofloop.t
 t/34moveinvariantoutofloopcomplexformula.t
 t/35match.t
