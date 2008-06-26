@@ -31,6 +31,7 @@ lib/Parse/Eyapp.pm
 lib/Parse/Eyapp.pod
 eyapp
 treereg
+vgg
 preamble.tex
 tutpreamble.tex
 t/01calc.t

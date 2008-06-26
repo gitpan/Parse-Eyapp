@@ -1,0 +1,144 @@
+#!/usr/bin/perl -w
+use strict;
+use Getopt::Long;
+eval {
+  require GraphViz::Parse::Yapp;
+};
+
+die "Install GraphViz\n:\$ cpan GraphViz\n" if $@;
+
+my $format = 'png';
+
+GetOptions (
+  "format=s"  => \$format,
+  "help"    => \&usage,
+);
+
+error("Unknown format") unless $format =~ m{
+                             ^(
+                              png|ps|text|gif|jpeg|
+                              wbmp|cmapx|cmap|ismap|imap|
+                              vrml|vtx|mp|fig|svg|svgz|plain|
+                              canon|debug|hpgl|pcl|mif|pic|gd
+															)$
+														}x;
+
+
+my $file = shift || error("Provide a .output file");
+
+$file =~ s/\.(output|eyp|yp)$//;
+error("Cant find file $file.output") unless -r "$file.output" || -r "$file.eyp" || -r "$file.yp";
+
+unless (-r "$file.output") {
+	eval {
+	  require Parse::Eyapp;
+	};
+	die "Install Parse::Eyapp or Parse::Yapp\n" if $@;
+
+	my $gf = -r "$file.eyp" ? "$file.eyp" : "$file.yp";
+	my($parser)=new Parse::Eyapp(inputfile => $gf);
+	my($warnings)=$parser->Warnings();
+		$warnings
+	and	print STDERR $warnings;
+	$parser->outputtables("", $file);
+}
+
+my $method = "as_$format";
+my $g = GraphViz::Parse::Yapp->new("$file.output");
+
+$g->$method("$file.$format");
+
+sub error {
+  my $message = shift;
+
+  print "$message\n" if $message;
+	usage();
+}
+
+sub usage {
+  print "Usage:\n$0 [-f format ] file\n";
+  print "Format is one of:\n".<<"EOL";
+	png
+	ps
+	text
+	gif
+	jpeg
+	s_wbmp
+	cmapx
+	cmap
+	ismap
+	imap
+	vrml
+	vtx
+	mp
+	fig
+	svg
+	svgz
+	plain
+	canon
+	debug
+	hpgl
+	pcl
+	mif
+	pic
+	gd
+EOL
+  exit(1);
+}
+
+=head1 NAME
+
+vgg - Builds a graph (png, ps, jpg, etc.) from a Eyapp grammar using GraphViz
+
+
+=head1 SYNOPSYS
+
+	vgg Calc
+	vgg Calc.output
+	vgg -f ps Calc
+	vgg I<-h>
+
+=head1 INSTALL
+
+For this script to work, you have to install L<GraphViz> first
+
+=head1 SEE ALSO
+
+=over
+
+=item * L<GraphViz>
+
+=item * L<eyapp>,
+
+=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
+L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+
+=back
+
+=head1 ACKNOWLEDGMENTS
+
+This work has been supported by CEE (FEDER) and the Spanish Ministry of
+I<Educación y Ciencia> through I<Plan Nacional I+D+I> number TIN2005-08818-C04-04
+(ULL::OPLINK project L<http://www.oplink.ull.es/>). 
+Support from Gobierno de Canarias was through GC02210601
+(I<Grupos Consolidados>).
+The University of La Laguna has also supported my work in many ways
+and for many years.
+
+I wish to thank Leon Brocard for his C<Parse::Yapp> module.
+
+
+=head1 AUTHOR
+
+Casiano Rodriguez-Leon 
+
+=head1 COPYRIGHT
+
+(c) Copyright 2006 Casiano Rodriguez-Leon
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.8 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut
+

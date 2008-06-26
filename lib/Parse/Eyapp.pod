@@ -7444,6 +7444,10 @@ perldoc L<eyapp>,
 =item *
 perldoc L<treereg>,
 
+=item *
+perldoc L<vgg>,
+
+
 =item * I<Análisis Léxico y Sintáctico>, (Notes for a course in compiler 
 construction) by  Casiano Rodriguez-Leon. 
 Available at  L<http://nereida.deioc.ull.es/~pl/perlexamples/>

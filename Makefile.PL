@@ -29,7 +29,7 @@ WriteMakefile(
               'lib/Parse/Eyapp/_TreeregexpSupport.pm' => '$(INST_LIBDIR)/Eyapp/_TreeregexpSupport.pm',
               'lib/Parse/Eyapp/Node.pm' => '$(INST_LIBDIR)/Eyapp/Node.pm',
             },
-	'EXE_FILES' => [ 'eyapp', 'treereg' ],
+	'EXE_FILES' => [ 'eyapp', 'treereg', 'vgg' ],
       ($] >= 5.005 ?     
             (
                ABSTRACT_FROM  => 'lib/Parse/Eyapp.pod', 

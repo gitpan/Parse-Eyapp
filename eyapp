@@ -117,6 +117,9 @@ at your option, any later version of Perl 5 you may have available.
 
 =item * L<Parse::Eyapp>,
 
+=item *
+perldoc L<vgg>,
+
 =item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
 (An Introduction to Compiler Construction in seven pages)> in
 
