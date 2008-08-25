@@ -40,7 +40,14 @@ WriteMakefile(
 );
 
 sub MY::postamble {
-return <<'EOT';
+	my @machines = qw{orion beowulf};
+
+my $DQT = <<"EODQT";
+remotetest:
+	/home/pp2/LGRID_Machine/scripts/remotetest.pl \${DISTVNAME}.tar.gz @machines
+EODQT
+
+my $SQT = <<'EOSQT';
 release: lib/Parse/Eyapp/Parse.yp
 	PERL5LIB=lib; eyapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
 	PERL5LIB=lib; $(PERL) -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
@@ -96,5 +103,7 @@ html: doc
 	chmod a+r /home/pl/public_html/perlexamples/eyapp.html
 	mv treereg.html /home/pl/public_html/perlexamples/
 	chmod a+r /home/pl/public_html/perlexamples/treereg.html
-EOT
+EOSQT
+
+return $SQT.$DQT;
 }

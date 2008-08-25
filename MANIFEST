@@ -82,6 +82,7 @@ t/47ruleindex.t
 t/48yyprefix.t
 t/49conflicts.t
 t/50SimpleChalfscope.t
+t/53accessorsskip.t
 #t/97podcoverage.t
 #t/99Cplusplusgrammar.t
 examples/testequal.pl

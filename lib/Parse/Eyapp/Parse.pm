@@ -1,6 +1,6 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.111.
+#    This file was generated using Parse::Eyapp version 1.112.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -27,7 +27,7 @@ BEGIN {
 # (c) Copyright Casiano Rodriguez-Leon 
 # Based on the original yapp by Francois Desarmenien 1998-2001
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
-# (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez Leon, all rights reserved.
+# (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez Leon, all rights reserved.
 
 require 5.004;
 
@@ -120,8 +120,9 @@ sub child_index_in_AST {
     my ($symb, $line, $id) = @{$value->[1]};
 
     # Accessors will be build only for explictly named attributes
-    next unless defined($id) and $$semantic{$symb};
-    $index{$id} = $_;
+    # Hal Finkel's patch
+    next unless $$semantic{$symb};
+    $index{$id} = $_ if defined($id);
     $_++ ;
   }
 
@@ -244,7 +245,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.111',
+    my($self)=$class->SUPER::new( yyversion => '1.112',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
@@ -2046,6 +2047,9 @@ sub _AddRules {
             delete($$term{$lhs});   #No more a terminal
     };
     $$nterm{$lhs}=[];       #It's a non-terminal now
+    
+    # Hal Finkel's patch: a non terminal is a semantic child
+    $$semantic{$lhs} = 1; 
 
     my($epsrules)=0;        #To issue a warning if more than one epsilon rule
 

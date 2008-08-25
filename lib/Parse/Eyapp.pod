@@ -3046,42 +3046,118 @@ To work  L<Language::AttributeGrammar> requires named access to the children
 of the AST nodes. Follows an example (file C<examples/CalcwithAttributeGrammar.pl>)
 of a small calculator:
 
- use Parse::Eyapp;
- use Language::AttributeGrammar;
+  pl@nereida:~/LEyapp/examples$ cat -n CalcwithAttributeGrammar.pl
+     1  #!/usr/bin/perl -w
+     2  use strict;
+     3  use Parse::Eyapp;
+     4  use Data::Dumper;
+     5  use Language::AttributeGrammar;
+     6
+     7  my $grammar = q{
+     8  %{
+     9  # use Data::Dumper;
+    10  %}
+    11  %right  '='
+    12  %left   '-' '+'
+    13  %left   '*' '/'
+    14  %left   NEG
+    15  %tree bypass alias
+    16
+    17  %%
+    18  line: $exp  { $_[1] }
+    19  ;
+    20
+    21  exp:
+    22      %name NUM
+    23            $NUM
+    24          | %name VAR
+    25            $VAR
+    26          | %name ASSIGN
+    27            $VAR '=' $exp
+    28          | %name PLUS
+    29            exp.left '+' exp.right
+    30          | %name MINUS
+    31            exp.left '-' exp.right
+    32          | %name TIMES
+    33            exp.left '*' exp.right
+    34          | %name DIV
+    35            exp.left '/' exp.right
+    36          | %no bypass UMINUS
+    37            '-' $exp %prec NEG
+    38    |   '(' $exp ')'  { $_[2] } /* Let us simplify a bit the tree */
+    39  ;
+    40
+    41  %%
+    42
+    43  sub _Error {
+    44          exists $_[0]->YYData->{ERRMSG}
+    45      and do {
+    46          print $_[0]->YYData->{ERRMSG};
+    47          delete $_[0]->YYData->{ERRMSG};
+    48          return;
+    49      };
+    50      print "Syntax error.\n";
+    51  }
+    52
+    53  sub _Lexer {
+    54      my($parser)=shift;
+    55
+    56          $parser->YYData->{INPUT}
+    57      or  $parser->YYData->{INPUT} = <STDIN>
+    58      or  return('',undef);
+    59
+    60      $parser->YYData->{INPUT}=~s/^\s+//;
+    61
+    62      for ($parser->YYData->{INPUT}) {
+    63          s/^([0-9]+(?:\.[0-9]+)?)//
+    64                  and return('NUM',$1);
+    65          s/^([A-Za-z][A-Za-z0-9_]*)//
+    66                  and return('VAR',$1);
+    67          s/^(.)//s
+    68                  and return($1,$1);
+    69      }
+    70  }
+    71
+    72  sub Run {
+    73      my($self)=shift;
+    74      $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
+    75                      #yydebug =>0xFF
+    76                    );
+    77  }
+    78  }; # end grammar
+    79
+    80
+    81  $Data::Dumper::Indent = 1;
+    82  Parse::Eyapp->new_grammar(
+    83    input=>$grammar,
+    84    classname=>'Rule6',
+    85    firstline =>7,
+    86    outputfile => 'Calc.pm',
+    87  );
+    88  my $parser = Rule6->new();
+    89  $parser->YYData->{INPUT} = "a = -(2*3+5-1)\n";
+    90  my $t = $parser->Run;
+    91  print "\n***** Before ******\n";
+    92  print Dumper($t);
+    93
+    94  my $attgram = new Language::AttributeGrammar <<'EOG';
+    95
+    96  # Compute the expression
+    97  NUM:    $/.val = { $<attr> }
+    98  TIMES:  $/.val = { $<left>.val * $<right>.val }
+    99  PLUS:   $/.val = { $<left>.val + $<right>.val }
+   100  MINUS:  $/.val = { $<left>.val - $<right>.val }
+   101  UMINUS: $/.val = { -$<exp>.val }
+   102  ASSIGN: $/.val = { $<exp>.val }
+   103  EOG
+   104
+   105  my $res = $attgram->apply($t, 'val');
+   106
+   107  $Data::Dumper::Indent = 1;
+   108  print "\n***** After ******\n";
+   109  print Dumper($t);
+   110  print Dumper($res);
 
- my $grammar = q{
- ... # priority declarations. Like in previous examples
- %tree bypass alias
-
- %%
- line: $exp  { $_[1] }
- ;
-
- exp:
-     %name NUM
-           $NUM
-         | %name VAR
-           $VAR
-     ............ # as in the bypass example
- }; # end grammar
-
- Parse::Eyapp->new_grammar(
-   input=>$grammar, classname=>'Rule6', firstline =>7,
- );
- my $parser = Rule6->new();
- $parser->YYData->{INPUT} = "a = -(2*3+5-1)\n";
- my $t = $parser->Run;
- my $attgram = new Language::AttributeGrammar <<'EOG';
- # Compute the expression
- NUM:    $/.val = { $<attr> }
- TIMES:  $/.val = { $<left>.val * $<right>.val }
- PLUS:   $/.val = { $<left>.val + $<right>.val }
- MINUS:  $/.val = { $<left>.val - $<right>.val }
- UMINUS: $/.val = { -$<exp>.val }
- ASSIGN: $/.val = { $<exp>.val }
- EOG
-
- my $res = $attgram->apply($t, 'val');
 
 =head1 Debugging C<Parse::Eyapp> Programs
 

@@ -125,7 +125,7 @@ Support from Gobierno de Canarias was through GC02210601
 The University of La Laguna has also supported my work in many ways
 and for many years.
 
-I wish to thank Leon Brocard for his C<Parse::Yapp> module.
+I wish to thank Leon Brocard for his L<GraphViz::Parse::Yacc> module.
 
 
 =head1 AUTHOR

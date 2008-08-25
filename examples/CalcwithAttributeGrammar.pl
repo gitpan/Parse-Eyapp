@@ -89,6 +89,7 @@ my $parser = Rule6->new();
 $parser->YYData->{INPUT} = "a = -(2*3+5-1)\n";
 my $t = $parser->Run;
 print "\n***** Before ******\n";
+print $t->str."\n";
 print Dumper($t);
 
 my $attgram = new Language::AttributeGrammar <<'EOG';
@@ -106,5 +107,6 @@ my $res = $attgram->apply($t, 'val');
 
 $Data::Dumper::Indent = 1;
 print "\n***** After ******\n";
+print $t->str."\n";
 print Dumper($t);
 print Dumper($res);

@@ -1,3 +1,7 @@
+  * I Really did not fully understand Hal Finkel's patch. I am not
+    really inside the code now. Try to understand the full consequences.
+    Specially check bypass and alias toghether
+  * Avoid dependence of List::MoreUtils
   * delete_method isn't documented
   * Document generate, new, etc. in treeregexp
   * Add to Parse::Eyapp::Base function
