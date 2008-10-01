@@ -1,7 +1,15 @@
+  * common examples generated through the text template. Idem MANIFEST
+  * eyapp with prefix option
+  * new with yyprefix
+  * Lexical analyzer seems to be in a mess: line count seem full of bugs
+  * I don't know if I did too much for the prefix: still it remains
+    the problem of run-time
   * I Really did not fully understand Hal Finkel's patch. I am not
     really inside the code now. Try to understand the full consequences.
     Specially check bypass and alias toghether
-  * Avoid dependence of List::MoreUtils
+
+  * Avoid dependence of List::MoreUtils. It breaks Eyapp in some architectures
+
   * delete_method isn't documented
   * Document generate, new, etc. in treeregexp
   * Add to Parse::Eyapp::Base function
@@ -12,6 +20,7 @@
   * Parse::Eyapp::Node->new: Probably s.t. like
      TUTU(TITI({ $[0]->{chu} = 4 }) {$_[0]->{k} = "hello"})
     will be better to initialize the attributes
+
   * Document Parse::Eyapp::Base
 - Distribution
   * Attributed Grammars

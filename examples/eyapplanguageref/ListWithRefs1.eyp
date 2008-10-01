@@ -1,0 +1,51 @@
+# ListWithRefs.eyp
+%semantic token 'c' 'd'
+%{
+use Data::Dumper;
+%}
+%%
+S:      'c'+  D+ 
+           { 
+              print Dumper($_[1]);
+              print $_[1]->str."\n";
+              print Dumper($_[2]);
+              print $_[2]->str."\n";
+           } 
+;
+
+D: 'd'
+;
+
+%%
+
+sub _Error {
+        exists $_[0]->YYData->{ERRMSG}
+    and do {
+        print $_[0]->YYData->{ERRMSG};
+        delete $_[0]->YYData->{ERRMSG};
+        return;
+    };
+    print "Syntax error.\n";
+}
+
+sub _Lexer {
+    my($parser)=shift;
+
+        $parser->YYData->{INPUT}
+    or  $parser->YYData->{INPUT} = <STDIN>
+    or  return('',undef);
+
+    $parser->YYData->{INPUT}=~s/^[ \t\n]//;
+
+    for ($parser->YYData->{INPUT}) {
+        s/^(.)//s and return($1,$1);
+    }
+}
+
+sub Run {
+    my($self)=shift;
+    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, 
+      yybuildingtree => 1,
+      #, yydebug => 0x1F 
+    );
+}

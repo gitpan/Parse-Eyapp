@@ -3,7 +3,7 @@
 #
 # This module is based on Francois Desarmenien Parse::Yapp distribution
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
-# (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon, all rights reserved.
+# (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 #
 
 package Parse::Eyapp::Output;
@@ -46,7 +46,8 @@ sub Output {
 
   my ($GRAMMAR, $TERMS, $FILENAME, $PACKAGES); # Cas
   my($package)=$self->Option('classname');
-  my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree);
+
+  my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree, $prefix);
   my($version)=$Parse::Eyapp::Driver::VERSION;
   my($datapos);
   my $makenodeclasses = '';
@@ -63,6 +64,8 @@ sub Output {
 
   ($GRAMMAR, $PACKAGES) = $self->Rules();
   $bypass = $self->Bypass;
+  $prefix = $self->Prefix;
+
   $buildingtree = $self->Buildingtree;
   $accessors = $self->Accessors;
   $TERMS = $self->Terms();
@@ -94,7 +97,7 @@ BEGIN {
 #    This file was generated using Parse::Eyapp version <<$version>>.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
-# (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon. Universidad de La Laguna.
+# (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
 #        Don't edit this file, use source file <<$FILENAME>> instead.
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
@@ -133,6 +136,7 @@ sub new {
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
                                   yybypass => <<$bypass>>,
                                   yybuildingtree => <<$buildingtree>>,
+                                  yyprefix => '<<$prefix>>',
                                   @_,);
     bless($self,$class);
 

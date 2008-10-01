@@ -19,8 +19,31 @@ our @EXPORT_OK = qw(
   push_method
   push_empty_method
   pop_method
+  firstval
+  lastval
+  part
 );
 our %EXPORT_TAGS = ( 'all' => [ @EXPORT_OK ] );
+
+sub firstval(&@) {
+  my $handler = shift;
+  
+  return (grep { $handler->($_) } @_)[0]
+}
+
+sub lastval(&@) {
+  my $handler = shift;
+  
+  return (grep { $handler->($_) } @_)[-1]
+}
+
+sub part(&@) {
+  my $h = shift;
+
+  my @p;
+  push @{$p[$h->($_)]}, $_ for (@_);
+  return @p;
+}
 
 ####################################################################
 # Usage      : $input = slurp_file($filename, 'trg');

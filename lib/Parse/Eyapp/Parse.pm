@@ -1,9 +1,9 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.112.
+#    This file was generated using Parse::Eyapp version 1.113.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
-# (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon. Universidad de La Laguna.
+# (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
 #        Don't edit this file, use source file "lib/Parse/Eyapp/Parse.yp" instead.
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
@@ -44,6 +44,7 @@ my $tree = 0; # true if %tree or %metatree
 my $metatree = 0;
 my $flatlists = 0; # true if flat list semantic for * + and ? operators
 my $bypass = 0;
+my $prefix = ''; # yyprefix
 my $buildingtree = 0;
 my $alias = 0;
 my $accessors = ''; # code generated for named accessors when %tree or %metatree is active
@@ -129,7 +130,7 @@ sub child_index_in_AST {
   return %index;
 }
 
-# This sub igives support to the "%tree alias" directive
+# This sub gives support to the "%tree alias" directive
 # Builds the named accessors to the children
 # for the current production. Uses child_index_in_AST
 # to build the mapping between names and indices
@@ -141,7 +142,7 @@ sub make_accessors {
   my %index = child_index_in_AST($rhs);
   for (keys(%index)) {
     $accessors .= <<"END_OF_ACCESSOR";
-sub $name->[0]::$_ {
+sub ${prefix}$name->[0]::$_ {
   my \$self = shift;
 
   return \$self->child($index{$_}, \@_)
@@ -245,7 +246,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.112',
+    my($self)=$class->SUPER::new( yyversion => '1.113',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
@@ -264,62 +265,63 @@ sub new {
   [ decl_13 => 'decl', [ 'TOKEN', 'typedecl', 'symlist', '\n' ], 0 ],
   [ decl_14 => 'decl', [ 'ASSOC', 'typedecl', 'symlist', '\n' ], 0 ],
   [ decl_15 => 'decl', [ 'START', 'ident', '\n' ], 0 ],
-  [ decl_16 => 'decl', [ 'HEADCODE', '\n' ], 0 ],
-  [ decl_17 => 'decl', [ 'UNION', 'CODE', '\n' ], 0 ],
-  [ decl_18 => 'decl', [ 'DEFAULTACTION', 'CODE', '\n' ], 0 ],
-  [ decl_19 => 'decl', [ 'TREE', '\n' ], 0 ],
-  [ decl_20 => 'decl', [ 'METATREE', '\n' ], 0 ],
-  [ decl_21 => 'decl', [ 'STRICT', '\n' ], 0 ],
-  [ decl_22 => 'decl', [ 'TYPE', 'typedecl', 'identlist', '\n' ], 0 ],
-  [ decl_23 => 'decl', [ 'EXPECT', 'NUMBER', '\n' ], 0 ],
-  [ decl_24 => 'decl', [ 'error', '\n' ], 0 ],
-  [ typedecl_25 => 'typedecl', [  ], 0 ],
-  [ typedecl_26 => 'typedecl', [ '<', 'IDENT', '>' ], 0 ],
-  [ symlist_27 => 'symlist', [ 'symlist', 'symbol' ], 0 ],
-  [ symlist_28 => 'symlist', [ 'symbol' ], 0 ],
-  [ identlist_29 => 'identlist', [ 'identlist', 'ident' ], 0 ],
-  [ identlist_30 => 'identlist', [ 'ident' ], 0 ],
-  [ body_31 => 'body', [ 'rulesec', '%%' ], 0 ],
-  [ body_32 => 'body', [ '%%' ], 0 ],
-  [ rulesec_33 => 'rulesec', [ 'rulesec', 'rules' ], 0 ],
-  [ rulesec_34 => 'rulesec', [ 'startrules' ], 0 ],
-  [ startrules_35 => 'startrules', [ 'IDENT', ':', '@35-2', 'rhss', ';' ], 0 ],
-  [ _CODE => '@35-2', [  ], 0 ],
-  [ startrules_37 => 'startrules', [ 'error', ';' ], 0 ],
-  [ rules_38 => 'rules', [ 'IDENT', ':', 'rhss', ';' ], 0 ],
-  [ rules_39 => 'rules', [ 'error', ';' ], 0 ],
-  [ rhss_40 => 'rhss', [ 'rhss', '|', 'rule' ], 0 ],
-  [ rhss_41 => 'rhss', [ 'rule' ], 0 ],
-  [ rule_42 => 'rule', [ 'optname', 'rhs', 'prec', 'epscode' ], 0 ],
-  [ rule_43 => 'rule', [ 'optname', 'rhs' ], 0 ],
-  [ rhs_44 => 'rhs', [  ], 0 ],
-  [ rhs_45 => 'rhs', [ 'rhselts' ], 0 ],
-  [ rhselts_46 => 'rhselts', [ 'rhselts', 'rhseltwithid' ], 0 ],
-  [ rhselts_47 => 'rhselts', [ 'rhseltwithid' ], 0 ],
-  [ rhseltwithid_48 => 'rhseltwithid', [ 'rhselt', '.', 'IDENT' ], 0 ],
-  [ rhseltwithid_49 => 'rhseltwithid', [ '$', 'rhselt' ], 0 ],
-  [ rhseltwithid_50 => 'rhseltwithid', [ '$', 'error' ], 0 ],
-  [ rhseltwithid_51 => 'rhseltwithid', [ 'rhselt' ], 0 ],
-  [ rhselt_52 => 'rhselt', [ 'symbol' ], 0 ],
-  [ rhselt_53 => 'rhselt', [ 'code' ], 0 ],
-  [ rhselt_54 => 'rhselt', [ '(', 'optname', 'rhs', ')' ], 0 ],
-  [ rhselt_55 => 'rhselt', [ 'rhselt', 'STAR' ], 0 ],
-  [ rhselt_56 => 'rhselt', [ 'rhselt', '<', 'STAR', 'symbol', '>' ], 0 ],
-  [ rhselt_57 => 'rhselt', [ 'rhselt', 'OPTION' ], 0 ],
-  [ rhselt_58 => 'rhselt', [ 'rhselt', '<', 'PLUS', 'symbol', '>' ], 0 ],
-  [ rhselt_59 => 'rhselt', [ 'rhselt', 'PLUS' ], 0 ],
-  [ optname_60 => 'optname', [  ], 0 ],
-  [ optname_61 => 'optname', [ 'NAME', 'IDENT' ], 0 ],
-  [ prec_62 => 'prec', [ 'PREC', 'symbol' ], 0 ],
-  [ epscode_63 => 'epscode', [  ], 0 ],
-  [ epscode_64 => 'epscode', [ 'code' ], 0 ],
-  [ code_65 => 'code', [ 'CODE' ], 0 ],
-  [ code_66 => 'code', [ 'BEGINCODE' ], 0 ],
-  [ tail_67 => 'tail', [  ], 0 ],
-  [ tail_68 => 'tail', [ 'TAILCODE' ], 0 ],
+  [ decl_16 => 'decl', [ 'PREFIX', '\n' ], 0 ],
+  [ decl_17 => 'decl', [ 'HEADCODE', '\n' ], 0 ],
+  [ decl_18 => 'decl', [ 'UNION', 'CODE', '\n' ], 0 ],
+  [ decl_19 => 'decl', [ 'DEFAULTACTION', 'CODE', '\n' ], 0 ],
+  [ decl_20 => 'decl', [ 'TREE', '\n' ], 0 ],
+  [ decl_21 => 'decl', [ 'METATREE', '\n' ], 0 ],
+  [ decl_22 => 'decl', [ 'STRICT', '\n' ], 0 ],
+  [ decl_23 => 'decl', [ 'TYPE', 'typedecl', 'identlist', '\n' ], 0 ],
+  [ decl_24 => 'decl', [ 'EXPECT', 'NUMBER', '\n' ], 0 ],
+  [ decl_25 => 'decl', [ 'error', '\n' ], 0 ],
+  [ typedecl_26 => 'typedecl', [  ], 0 ],
+  [ typedecl_27 => 'typedecl', [ '<', 'IDENT', '>' ], 0 ],
+  [ symlist_28 => 'symlist', [ 'symlist', 'symbol' ], 0 ],
+  [ symlist_29 => 'symlist', [ 'symbol' ], 0 ],
+  [ identlist_30 => 'identlist', [ 'identlist', 'ident' ], 0 ],
+  [ identlist_31 => 'identlist', [ 'ident' ], 0 ],
+  [ body_32 => 'body', [ 'rulesec', '%%' ], 0 ],
+  [ body_33 => 'body', [ '%%' ], 0 ],
+  [ rulesec_34 => 'rulesec', [ 'rulesec', 'rules' ], 0 ],
+  [ rulesec_35 => 'rulesec', [ 'startrules' ], 0 ],
+  [ startrules_36 => 'startrules', [ 'IDENT', ':', '@36-2', 'rhss', ';' ], 0 ],
+  [ _CODE => '@36-2', [  ], 0 ],
+  [ startrules_38 => 'startrules', [ 'error', ';' ], 0 ],
+  [ rules_39 => 'rules', [ 'IDENT', ':', 'rhss', ';' ], 0 ],
+  [ rules_40 => 'rules', [ 'error', ';' ], 0 ],
+  [ rhss_41 => 'rhss', [ 'rhss', '|', 'rule' ], 0 ],
+  [ rhss_42 => 'rhss', [ 'rule' ], 0 ],
+  [ rule_43 => 'rule', [ 'optname', 'rhs', 'prec', 'epscode' ], 0 ],
+  [ rule_44 => 'rule', [ 'optname', 'rhs' ], 0 ],
+  [ rhs_45 => 'rhs', [  ], 0 ],
+  [ rhs_46 => 'rhs', [ 'rhselts' ], 0 ],
+  [ rhselts_47 => 'rhselts', [ 'rhselts', 'rhseltwithid' ], 0 ],
+  [ rhselts_48 => 'rhselts', [ 'rhseltwithid' ], 0 ],
+  [ rhseltwithid_49 => 'rhseltwithid', [ 'rhselt', '.', 'IDENT' ], 0 ],
+  [ rhseltwithid_50 => 'rhseltwithid', [ '$', 'rhselt' ], 0 ],
+  [ rhseltwithid_51 => 'rhseltwithid', [ '$', 'error' ], 0 ],
+  [ rhseltwithid_52 => 'rhseltwithid', [ 'rhselt' ], 0 ],
+  [ rhselt_53 => 'rhselt', [ 'symbol' ], 0 ],
+  [ rhselt_54 => 'rhselt', [ 'code' ], 0 ],
+  [ rhselt_55 => 'rhselt', [ '(', 'optname', 'rhs', ')' ], 0 ],
+  [ rhselt_56 => 'rhselt', [ 'rhselt', 'STAR' ], 0 ],
+  [ rhselt_57 => 'rhselt', [ 'rhselt', '<', 'STAR', 'symbol', '>' ], 0 ],
+  [ rhselt_58 => 'rhselt', [ 'rhselt', 'OPTION' ], 0 ],
+  [ rhselt_59 => 'rhselt', [ 'rhselt', '<', 'PLUS', 'symbol', '>' ], 0 ],
+  [ rhselt_60 => 'rhselt', [ 'rhselt', 'PLUS' ], 0 ],
+  [ optname_61 => 'optname', [  ], 0 ],
+  [ optname_62 => 'optname', [ 'NAME', 'IDENT' ], 0 ],
+  [ prec_63 => 'prec', [ 'PREC', 'symbol' ], 0 ],
+  [ epscode_64 => 'epscode', [  ], 0 ],
+  [ epscode_65 => 'epscode', [ 'code' ], 0 ],
+  [ code_66 => 'code', [ 'CODE' ], 0 ],
+  [ code_67 => 'code', [ 'BEGINCODE' ], 0 ],
+  [ tail_68 => 'tail', [  ], 0 ],
+  [ tail_69 => 'tail', [ 'TAILCODE' ], 0 ],
 ],
                                   yyTERMS  =>
-{ '$end' => 0, '$' => 0, '%%' => 0, '(' => 0, ')' => 0, '.' => 0, ':' => 0, ';' => 0, '<' => 0, '>' => 0, '\n' => 0, '|' => 0, ASSOC => 1, BEGINCODE => 1, CODE => 1, DEFAULTACTION => 1, EXPECT => 1, HEADCODE => 1, IDENT => 1, LITERAL => 1, METATREE => 1, NAME => 1, NUMBER => 1, OPTION => 1, PLUS => 1, PREC => 1, SEMANTIC => 1, STAR => 1, START => 1, STRICT => 1, SYNTACTIC => 1, TAILCODE => 1, TOKEN => 1, TREE => 1, TYPE => 1, UNION => 1, error => 1 },
+{ '$end' => 0, '$' => 0, '%%' => 0, '(' => 0, ')' => 0, '.' => 0, ':' => 0, ';' => 0, '<' => 0, '>' => 0, '\n' => 0, '|' => 0, ASSOC => 1, BEGINCODE => 1, CODE => 1, DEFAULTACTION => 1, EXPECT => 1, HEADCODE => 1, IDENT => 1, LITERAL => 1, METATREE => 1, NAME => 1, NUMBER => 1, OPTION => 1, PLUS => 1, PREC => 1, PREFIX => 1, SEMANTIC => 1, STAR => 1, START => 1, STRICT => 1, SYNTACTIC => 1, TAILCODE => 1, TOKEN => 1, TREE => 1, TYPE => 1, UNION => 1, error => 1 },
                                   yyFILENAME  => "lib/Parse/Eyapp/Parse.yp",
                                   yystates =>
 [
@@ -334,13 +336,14 @@ sub new {
 			'TREE' => 11,
 			"%%" => -6,
 			'EXPECT' => 12,
-			"\n" => 13,
-			'METATREE' => 14,
+			'METATREE' => 13,
+			"\n" => 14,
 			'SYNTACTIC' => 15,
 			'TYPE' => 16,
-			'STRICT' => 18,
-			'TOKEN' => 19,
-			'HEADCODE' => 20
+			'PREFIX' => 18,
+			'STRICT' => 19,
+			'TOKEN' => 20,
+			'HEADCODE' => 21
 		},
 		GOTOS => {
 			'head' => 10,
@@ -352,34 +355,34 @@ sub new {
 	},
 	{#State 1
 		ACTIONS => {
-			"<" => 21
+			"<" => 22
 		},
-		DEFAULT => -25,
+		DEFAULT => -26,
 		GOTOS => {
-			'typedecl' => 22
+			'typedecl' => 23
 		}
 	},
 	{#State 2
 		ACTIONS => {
-			"%%" => 23
+			"%%" => 24
 		}
 	},
 	{#State 3
 		ACTIONS => {
-			'' => 24
+			'' => 25
 		}
 	},
 	{#State 4
 		ACTIONS => {
-			'CODE' => 25
+			'CODE' => 26
 		}
 	},
 	{#State 5
 		ACTIONS => {
-			'IDENT' => 26
+			'IDENT' => 27
 		},
 		GOTOS => {
-			'ident' => 27
+			'ident' => 28
 		}
 	},
 	{#State 6
@@ -387,69 +390,69 @@ sub new {
 	},
 	{#State 7
 		ACTIONS => {
-			"\n" => 28
+			"\n" => 29
 		}
 	},
 	{#State 8
 		ACTIONS => {
-			'CODE' => 29
+			'CODE' => 30
 		}
 	},
 	{#State 9
 		ACTIONS => {
-			"<" => 21
+			"<" => 22
 		},
-		DEFAULT => -25,
+		DEFAULT => -26,
 		GOTOS => {
-			'typedecl' => 30
+			'typedecl' => 31
 		}
 	},
 	{#State 10
 		ACTIONS => {
-			"%%" => 35,
-			'error' => 33,
-			'IDENT' => 31
+			"%%" => 36,
+			'error' => 34,
+			'IDENT' => 32
 		},
 		GOTOS => {
-			'body' => 32,
-			'rulesec' => 36,
-			'startrules' => 34
+			'body' => 33,
+			'rulesec' => 37,
+			'startrules' => 35
 		}
 	},
 	{#State 11
 		ACTIONS => {
-			"\n" => 37
+			"\n" => 38
 		}
 	},
 	{#State 12
 		ACTIONS => {
-			'NUMBER' => 38
+			'NUMBER' => 39
 		}
 	},
 	{#State 13
-		DEFAULT => -10
+		ACTIONS => {
+			"\n" => 40
+		}
 	},
 	{#State 14
-		ACTIONS => {
-			"\n" => 39
-		}
+		DEFAULT => -10
 	},
 	{#State 15
 		ACTIONS => {
-			"<" => 21
+			"<" => 22
 		},
-		DEFAULT => -25,
+		DEFAULT => -26,
 		GOTOS => {
-			'typedecl' => 40
+			'typedecl' => 41
 		}
 	},
 	{#State 16
 		ACTIONS => {
-			"<" => 21
+			"<" => 22
 		},
-		DEFAULT => -25,
+		DEFAULT => -26,
 		GOTOS => {
-			'typedecl' => 41
+			'typedecl' => 42
 		}
 	},
 	{#State 17
@@ -463,609 +466,618 @@ sub new {
 			'TREE' => 11,
 			"%%" => -7,
 			'EXPECT' => 12,
-			'METATREE' => 14,
-			"\n" => 13,
+			'METATREE' => 13,
+			"\n" => 14,
 			'SYNTACTIC' => 15,
 			'TYPE' => 16,
-			'STRICT' => 18,
-			'TOKEN' => 19,
-			'HEADCODE' => 20
+			'PREFIX' => 18,
+			'STRICT' => 19,
+			'TOKEN' => 20,
+			'HEADCODE' => 21
 		},
 		GOTOS => {
-			'decl' => 42
+			'decl' => 43
 		}
 	},
 	{#State 18
 		ACTIONS => {
-			"\n" => 43
+			"\n" => 44
 		}
 	},
 	{#State 19
 		ACTIONS => {
-			"<" => 21
-		},
-		DEFAULT => -25,
-		GOTOS => {
-			'typedecl' => 44
+			"\n" => 45
 		}
 	},
 	{#State 20
 		ACTIONS => {
-			"\n" => 45
+			"<" => 22
+		},
+		DEFAULT => -26,
+		GOTOS => {
+			'typedecl' => 46
 		}
 	},
 	{#State 21
 		ACTIONS => {
-			'IDENT' => 46
+			"\n" => 47
 		}
 	},
 	{#State 22
 		ACTIONS => {
-			'LITERAL' => 47,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'symlist' => 50,
-			'symbol' => 48,
-			'ident' => 49
+			'IDENT' => 48
 		}
 	},
 	{#State 23
-		DEFAULT => -5
+		ACTIONS => {
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symlist' => 52,
+			'symbol' => 50,
+			'ident' => 51
+		}
 	},
 	{#State 24
-		DEFAULT => 0
+		DEFAULT => -5
 	},
 	{#State 25
-		ACTIONS => {
-			"\n" => 51
-		}
+		DEFAULT => 0
 	},
 	{#State 26
-		DEFAULT => -4
-	},
-	{#State 27
-		ACTIONS => {
-			"\n" => 52
-		}
-	},
-	{#State 28
-		DEFAULT => -24
-	},
-	{#State 29
 		ACTIONS => {
 			"\n" => 53
 		}
 	},
+	{#State 27
+		DEFAULT => -4
+	},
+	{#State 28
+		ACTIONS => {
+			"\n" => 54
+		}
+	},
+	{#State 29
+		DEFAULT => -25
+	},
 	{#State 30
 		ACTIONS => {
-			'LITERAL' => 47,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'symlist' => 54,
-			'symbol' => 48,
-			'ident' => 49
+			"\n" => 55
 		}
 	},
 	{#State 31
 		ACTIONS => {
-			":" => 55
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symlist' => 56,
+			'symbol' => 50,
+			'ident' => 51
 		}
 	},
 	{#State 32
 		ACTIONS => {
-			'TAILCODE' => 57
-		},
-		DEFAULT => -67,
-		GOTOS => {
-			'tail' => 56
+			":" => 57
 		}
 	},
 	{#State 33
 		ACTIONS => {
-			";" => 58
+			'TAILCODE' => 59
+		},
+		DEFAULT => -68,
+		GOTOS => {
+			'tail' => 58
 		}
 	},
 	{#State 34
-		DEFAULT => -34
+		ACTIONS => {
+			";" => 60
+		}
 	},
 	{#State 35
-		DEFAULT => -32
+		DEFAULT => -35
 	},
 	{#State 36
-		ACTIONS => {
-			"%%" => 62,
-			'error' => 61,
-			'IDENT' => 59
-		},
-		GOTOS => {
-			'rules' => 60
-		}
+		DEFAULT => -33
 	},
 	{#State 37
-		DEFAULT => -19
-	},
-	{#State 38
 		ACTIONS => {
-			"\n" => 63
-		}
-	},
-	{#State 39
-		DEFAULT => -20
-	},
-	{#State 40
-		ACTIONS => {
-			'LITERAL' => 47,
-			'IDENT' => 26
+			"%%" => 64,
+			'error' => 63,
+			'IDENT' => 61
 		},
 		GOTOS => {
-			'symlist' => 64,
-			'symbol' => 48,
-			'ident' => 49
+			'rules' => 62
 		}
+	},
+	{#State 38
+		DEFAULT => -20
+	},
+	{#State 39
+		ACTIONS => {
+			"\n" => 65
+		}
+	},
+	{#State 40
+		DEFAULT => -21
 	},
 	{#State 41
 		ACTIONS => {
-			'IDENT' => 26
+			'LITERAL' => 49,
+			'IDENT' => 27
 		},
 		GOTOS => {
-			'identlist' => 65,
-			'ident' => 66
+			'symlist' => 66,
+			'symbol' => 50,
+			'ident' => 51
 		}
 	},
 	{#State 42
-		DEFAULT => -8
-	},
-	{#State 43
-		DEFAULT => -21
-	},
-	{#State 44
 		ACTIONS => {
-			'LITERAL' => 47,
-			'IDENT' => 26
+			'IDENT' => 27
 		},
 		GOTOS => {
-			'symlist' => 67,
-			'symbol' => 48,
-			'ident' => 49
+			'identlist' => 67,
+			'ident' => 68
 		}
 	},
-	{#State 45
+	{#State 43
+		DEFAULT => -8
+	},
+	{#State 44
 		DEFAULT => -16
+	},
+	{#State 45
+		DEFAULT => -22
 	},
 	{#State 46
 		ACTIONS => {
-			">" => 68
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symlist' => 69,
+			'symbol' => 50,
+			'ident' => 51
 		}
 	},
 	{#State 47
-		DEFAULT => -2
-	},
-	{#State 48
-		DEFAULT => -28
-	},
-	{#State 49
-		DEFAULT => -3
-	},
-	{#State 50
-		ACTIONS => {
-			"\n" => 70,
-			'LITERAL' => 47,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'symbol' => 69,
-			'ident' => 49
-		}
-	},
-	{#State 51
 		DEFAULT => -17
 	},
+	{#State 48
+		ACTIONS => {
+			">" => 70
+		}
+	},
+	{#State 49
+		DEFAULT => -2
+	},
+	{#State 50
+		DEFAULT => -29
+	},
+	{#State 51
+		DEFAULT => -3
+	},
 	{#State 52
-		DEFAULT => -15
+		ACTIONS => {
+			"\n" => 72,
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symbol' => 71,
+			'ident' => 51
+		}
 	},
 	{#State 53
 		DEFAULT => -18
 	},
 	{#State 54
-		ACTIONS => {
-			"\n" => 71,
-			'LITERAL' => 47,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'symbol' => 69,
-			'ident' => 49
-		}
+		DEFAULT => -15
 	},
 	{#State 55
-		DEFAULT => -36,
-		GOTOS => {
-			'@35-2' => 72
-		}
+		DEFAULT => -19
 	},
 	{#State 56
-		DEFAULT => -1
-	},
-	{#State 57
-		DEFAULT => -68
-	},
-	{#State 58
-		DEFAULT => -37
-	},
-	{#State 59
 		ACTIONS => {
-			":" => 73
+			"\n" => 73,
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symbol' => 71,
+			'ident' => 51
 		}
 	},
+	{#State 57
+		DEFAULT => -37,
+		GOTOS => {
+			'@36-2' => 74
+		}
+	},
+	{#State 58
+		DEFAULT => -1
+	},
+	{#State 59
+		DEFAULT => -69
+	},
 	{#State 60
-		DEFAULT => -33
+		DEFAULT => -38
 	},
 	{#State 61
 		ACTIONS => {
-			";" => 74
+			":" => 75
 		}
 	},
 	{#State 62
-		DEFAULT => -31
+		DEFAULT => -34
 	},
 	{#State 63
-		DEFAULT => -23
+		ACTIONS => {
+			";" => 76
+		}
 	},
 	{#State 64
-		ACTIONS => {
-			"\n" => 75,
-			'LITERAL' => 47,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'symbol' => 69,
-			'ident' => 49
-		}
+		DEFAULT => -32
 	},
 	{#State 65
-		ACTIONS => {
-			"\n" => 76,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'ident' => 77
-		}
+		DEFAULT => -24
 	},
 	{#State 66
-		DEFAULT => -30
+		ACTIONS => {
+			"\n" => 77,
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symbol' => 71,
+			'ident' => 51
+		}
 	},
 	{#State 67
 		ACTIONS => {
 			"\n" => 78,
-			'LITERAL' => 47,
-			'IDENT' => 26
+			'IDENT' => 27
 		},
 		GOTOS => {
-			'symbol' => 69,
-			'ident' => 49
+			'ident' => 79
 		}
 	},
 	{#State 68
-		DEFAULT => -26
+		DEFAULT => -31
 	},
 	{#State 69
-		DEFAULT => -27
+		ACTIONS => {
+			"\n" => 80,
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symbol' => 71,
+			'ident' => 51
+		}
 	},
 	{#State 70
-		DEFAULT => -11
+		DEFAULT => -27
 	},
 	{#State 71
-		DEFAULT => -14
+		DEFAULT => -28
 	},
 	{#State 72
-		ACTIONS => {
-			'NAME' => 82
-		},
-		DEFAULT => -60,
-		GOTOS => {
-			'rule' => 79,
-			'rhss' => 81,
-			'optname' => 80
-		}
+		DEFAULT => -11
 	},
 	{#State 73
-		ACTIONS => {
-			'NAME' => 82
-		},
-		DEFAULT => -60,
-		GOTOS => {
-			'rule' => 79,
-			'rhss' => 83,
-			'optname' => 80
-		}
+		DEFAULT => -14
 	},
 	{#State 74
-		DEFAULT => -39
+		ACTIONS => {
+			'NAME' => 84
+		},
+		DEFAULT => -61,
+		GOTOS => {
+			'rule' => 81,
+			'rhss' => 83,
+			'optname' => 82
+		}
 	},
 	{#State 75
-		DEFAULT => -12
+		ACTIONS => {
+			'NAME' => 84
+		},
+		DEFAULT => -61,
+		GOTOS => {
+			'rule' => 81,
+			'rhss' => 85,
+			'optname' => 82
+		}
 	},
 	{#State 76
-		DEFAULT => -22
+		DEFAULT => -40
 	},
 	{#State 77
-		DEFAULT => -29
+		DEFAULT => -12
 	},
 	{#State 78
-		DEFAULT => -13
+		DEFAULT => -23
 	},
 	{#State 79
-		DEFAULT => -41
+		DEFAULT => -30
 	},
 	{#State 80
-		ACTIONS => {
-			'CODE' => 92,
-			'LITERAL' => 47,
-			'IDENT' => 26,
-			'BEGINCODE' => 85,
-			"(" => 93,
-			"\$" => 87
-		},
-		DEFAULT => -44,
-		GOTOS => {
-			'symbol' => 91,
-			'rhselt' => 86,
-			'rhs' => 84,
-			'rhselts' => 89,
-			'rhseltwithid' => 88,
-			'ident' => 49,
-			'code' => 90
-		}
+		DEFAULT => -13
 	},
 	{#State 81
-		ACTIONS => {
-			"|" => 95,
-			";" => 94
-		}
+		DEFAULT => -42
 	},
 	{#State 82
 		ACTIONS => {
-			'IDENT' => 96
+			'CODE' => 94,
+			'LITERAL' => 49,
+			'IDENT' => 27,
+			'BEGINCODE' => 87,
+			"(" => 95,
+			"\$" => 89
+		},
+		DEFAULT => -45,
+		GOTOS => {
+			'symbol' => 93,
+			'rhselt' => 88,
+			'rhs' => 86,
+			'rhselts' => 91,
+			'rhseltwithid' => 90,
+			'ident' => 51,
+			'code' => 92
 		}
 	},
 	{#State 83
 		ACTIONS => {
-			"|" => 95,
-			";" => 97
+			"|" => 97,
+			";" => 96
 		}
 	},
 	{#State 84
 		ACTIONS => {
-			'PREC' => 98
-		},
-		DEFAULT => -43,
-		GOTOS => {
-			'prec' => 99
+			'IDENT' => 98
 		}
 	},
 	{#State 85
-		DEFAULT => -66
+		ACTIONS => {
+			"|" => 97,
+			";" => 99
+		}
 	},
 	{#State 86
 		ACTIONS => {
-			"<" => 100,
-			'PLUS' => 101,
-			'OPTION' => 102,
-			'STAR' => 103,
-			"." => 104
-		},
-		DEFAULT => -51
-	},
-	{#State 87
-		ACTIONS => {
-			"(" => 93,
-			'error' => 106,
-			'CODE' => 92,
-			'LITERAL' => 47,
-			'IDENT' => 26,
-			'BEGINCODE' => 85
-		},
-		GOTOS => {
-			'symbol' => 91,
-			'rhselt' => 105,
-			'ident' => 49,
-			'code' => 90
-		}
-	},
-	{#State 88
-		DEFAULT => -47
-	},
-	{#State 89
-		ACTIONS => {
-			'CODE' => 92,
-			'LITERAL' => 47,
-			'IDENT' => 26,
-			'BEGINCODE' => 85,
-			"(" => 93,
-			"\$" => 87
-		},
-		DEFAULT => -45,
-		GOTOS => {
-			'symbol' => 91,
-			'rhselt' => 86,
-			'rhseltwithid' => 107,
-			'ident' => 49,
-			'code' => 90
-		}
-	},
-	{#State 90
-		DEFAULT => -53
-	},
-	{#State 91
-		DEFAULT => -52
-	},
-	{#State 92
-		DEFAULT => -65
-	},
-	{#State 93
-		ACTIONS => {
-			'NAME' => 82
-		},
-		DEFAULT => -60,
-		GOTOS => {
-			'optname' => 108
-		}
-	},
-	{#State 94
-		DEFAULT => -35
-	},
-	{#State 95
-		ACTIONS => {
-			'NAME' => 82
-		},
-		DEFAULT => -60,
-		GOTOS => {
-			'rule' => 109,
-			'optname' => 80
-		}
-	},
-	{#State 96
-		DEFAULT => -61
-	},
-	{#State 97
-		DEFAULT => -38
-	},
-	{#State 98
-		ACTIONS => {
-			'LITERAL' => 47,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'symbol' => 110,
-			'ident' => 49
-		}
-	},
-	{#State 99
-		ACTIONS => {
-			'CODE' => 92,
-			'BEGINCODE' => 85
-		},
-		DEFAULT => -63,
-		GOTOS => {
-			'epscode' => 112,
-			'code' => 111
-		}
-	},
-	{#State 100
-		ACTIONS => {
-			'STAR' => 114,
-			'PLUS' => 113
-		}
-	},
-	{#State 101
-		DEFAULT => -59
-	},
-	{#State 102
-		DEFAULT => -57
-	},
-	{#State 103
-		DEFAULT => -55
-	},
-	{#State 104
-		ACTIONS => {
-			'IDENT' => 115
-		}
-	},
-	{#State 105
-		ACTIONS => {
-			'OPTION' => 102,
-			"<" => 100,
-			'PLUS' => 101,
-			'STAR' => 103
-		},
-		DEFAULT => -49
-	},
-	{#State 106
-		DEFAULT => -50
-	},
-	{#State 107
-		DEFAULT => -46
-	},
-	{#State 108
-		ACTIONS => {
-			"(" => 93,
-			"\$" => 87,
-			'CODE' => 92,
-			'LITERAL' => 47,
-			'IDENT' => 26,
-			'BEGINCODE' => 85
+			'PREC' => 100
 		},
 		DEFAULT => -44,
 		GOTOS => {
-			'symbol' => 91,
-			'rhselt' => 86,
-			'rhs' => 116,
-			'rhselts' => 89,
-			'rhseltwithid' => 88,
-			'ident' => 49,
-			'code' => 90
+			'prec' => 101
 		}
 	},
-	{#State 109
-		DEFAULT => -40
+	{#State 87
+		DEFAULT => -67
 	},
-	{#State 110
+	{#State 88
+		ACTIONS => {
+			"<" => 102,
+			'PLUS' => 103,
+			'OPTION' => 104,
+			'STAR' => 105,
+			"." => 106
+		},
+		DEFAULT => -52
+	},
+	{#State 89
+		ACTIONS => {
+			"(" => 95,
+			'error' => 108,
+			'CODE' => 94,
+			'LITERAL' => 49,
+			'IDENT' => 27,
+			'BEGINCODE' => 87
+		},
+		GOTOS => {
+			'symbol' => 93,
+			'rhselt' => 107,
+			'ident' => 51,
+			'code' => 92
+		}
+	},
+	{#State 90
+		DEFAULT => -48
+	},
+	{#State 91
+		ACTIONS => {
+			'CODE' => 94,
+			'LITERAL' => 49,
+			'IDENT' => 27,
+			'BEGINCODE' => 87,
+			"(" => 95,
+			"\$" => 89
+		},
+		DEFAULT => -46,
+		GOTOS => {
+			'symbol' => 93,
+			'rhselt' => 88,
+			'rhseltwithid' => 109,
+			'ident' => 51,
+			'code' => 92
+		}
+	},
+	{#State 92
+		DEFAULT => -54
+	},
+	{#State 93
+		DEFAULT => -53
+	},
+	{#State 94
+		DEFAULT => -66
+	},
+	{#State 95
+		ACTIONS => {
+			'NAME' => 84
+		},
+		DEFAULT => -61,
+		GOTOS => {
+			'optname' => 110
+		}
+	},
+	{#State 96
+		DEFAULT => -36
+	},
+	{#State 97
+		ACTIONS => {
+			'NAME' => 84
+		},
+		DEFAULT => -61,
+		GOTOS => {
+			'rule' => 111,
+			'optname' => 82
+		}
+	},
+	{#State 98
 		DEFAULT => -62
 	},
+	{#State 99
+		DEFAULT => -39
+	},
+	{#State 100
+		ACTIONS => {
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symbol' => 112,
+			'ident' => 51
+		}
+	},
+	{#State 101
+		ACTIONS => {
+			'CODE' => 94,
+			'BEGINCODE' => 87
+		},
+		DEFAULT => -64,
+		GOTOS => {
+			'epscode' => 114,
+			'code' => 113
+		}
+	},
+	{#State 102
+		ACTIONS => {
+			'STAR' => 116,
+			'PLUS' => 115
+		}
+	},
+	{#State 103
+		DEFAULT => -60
+	},
+	{#State 104
+		DEFAULT => -58
+	},
+	{#State 105
+		DEFAULT => -56
+	},
+	{#State 106
+		ACTIONS => {
+			'IDENT' => 117
+		}
+	},
+	{#State 107
+		ACTIONS => {
+			'OPTION' => 104,
+			"<" => 102,
+			'PLUS' => 103,
+			'STAR' => 105
+		},
+		DEFAULT => -50
+	},
+	{#State 108
+		DEFAULT => -51
+	},
+	{#State 109
+		DEFAULT => -47
+	},
+	{#State 110
+		ACTIONS => {
+			"(" => 95,
+			"\$" => 89,
+			'CODE' => 94,
+			'LITERAL' => 49,
+			'IDENT' => 27,
+			'BEGINCODE' => 87
+		},
+		DEFAULT => -45,
+		GOTOS => {
+			'symbol' => 93,
+			'rhselt' => 88,
+			'rhs' => 118,
+			'rhselts' => 91,
+			'rhseltwithid' => 90,
+			'ident' => 51,
+			'code' => 92
+		}
+	},
 	{#State 111
-		DEFAULT => -64
+		DEFAULT => -41
 	},
 	{#State 112
-		DEFAULT => -42
+		DEFAULT => -63
 	},
 	{#State 113
-		ACTIONS => {
-			'LITERAL' => 47,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'symbol' => 117,
-			'ident' => 49
-		}
+		DEFAULT => -65
 	},
 	{#State 114
-		ACTIONS => {
-			'LITERAL' => 47,
-			'IDENT' => 26
-		},
-		GOTOS => {
-			'symbol' => 118,
-			'ident' => 49
-		}
+		DEFAULT => -43
 	},
 	{#State 115
-		DEFAULT => -48
+		ACTIONS => {
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symbol' => 119,
+			'ident' => 51
+		}
 	},
 	{#State 116
 		ACTIONS => {
-			")" => 119
+			'LITERAL' => 49,
+			'IDENT' => 27
+		},
+		GOTOS => {
+			'symbol' => 120,
+			'ident' => 51
 		}
 	},
 	{#State 117
-		ACTIONS => {
-			">" => 120
-		}
+		DEFAULT => -49
 	},
 	{#State 118
 		ACTIONS => {
-			">" => 121
+			")" => 121
 		}
 	},
 	{#State 119
-		DEFAULT => -54
+		ACTIONS => {
+			">" => 122
+		}
 	},
 	{#State 120
-		DEFAULT => -58
+		ACTIONS => {
+			">" => 123
+		}
 	},
 	{#State 121
-		DEFAULT => -56
+		DEFAULT => -55
+	},
+	{#State 122
+		DEFAULT => -59
+	},
+	{#State 123
+		DEFAULT => -57
 	}
 ],
                                   yyrules  =>
@@ -1237,20 +1249,29 @@ sub {
 	],
 	[#Rule decl_16
 		 'decl', 2,
-sub {  push(@$head,$_[1]); undef }
+sub { 
+              # TODO: Instead of ident has to be a prefix!!!
+              $prefix=$_[1][0]; 
+              undef 
+            }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule decl_17
-		 'decl', 3,
-sub {  undef }
+		 'decl', 2,
+sub {  push(@$head,$_[1]); undef }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule decl_18
 		 'decl', 3,
-sub {  $defaultaction = $_[2]; undef }
+sub {  undef }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule decl_19
+		 'decl', 3,
+sub {  $defaultaction = $_[2]; undef }
+################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+	],
+	[#Rule decl_20
 		 'decl', 2,
 sub {  
             $tree = $buildingtree = 1;
@@ -1261,7 +1282,7 @@ sub {
           }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_20
+	[#Rule decl_21
 		 'decl', 2,
 sub {  
             $metatree = $tree = $buildingtree = 1;
@@ -1269,7 +1290,7 @@ sub {
           }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_21
+	[#Rule decl_22
 		 'decl', 2,
 sub {  
             $strict = 1;
@@ -1277,7 +1298,7 @@ sub {
           }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_22
+	[#Rule decl_23
 		 'decl', 4,
 sub { 
                 for ( @{$_[3]} ) {
@@ -1297,45 +1318,45 @@ sub {
             }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_23
+	[#Rule decl_24
 		 'decl', 3,
 sub {  $expect=$_[2][0]; undef }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule decl_24
+	[#Rule decl_25
 		 'decl', 2,
 sub {  $_[0]->YYErrok }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule typedecl_25
+	[#Rule typedecl_26
 		 'typedecl', 0, undef
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule typedecl_26
+	[#Rule typedecl_27
 		 'typedecl', 3, undef
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule symlist_27
+	[#Rule symlist_28
 		 'symlist', 2,
 sub {  push(@{$_[1]},$_[2]); $_[1] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule symlist_28
+	[#Rule symlist_29
 		 'symlist', 1,
 sub {  [ $_[1] ] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule identlist_29
+	[#Rule identlist_30
 		 'identlist', 2,
 sub {  push(@{$_[1]},$_[2]); $_[1] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule identlist_30
+	[#Rule identlist_31
 		 'identlist', 1,
 sub {  [ $_[1] ] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule body_31
+	[#Rule body_32
 		 'body', 2,
 sub { 
                 $start
@@ -1357,55 +1378,55 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule body_32
+	[#Rule body_33
 		 'body', 1,
 sub {  _SyntaxError(2,"No rules in input grammar",$_[1][1]); }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rulesec_33
+	[#Rule rulesec_34
 		 'rulesec', 2, undef
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rulesec_34
+	[#Rule rulesec_35
 		 'rulesec', 1, undef
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule startrules_35
+	[#Rule startrules_36
 		 'startrules', 5,
 sub {  _AddRules($_[1],$_[4]); undef }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule _CODE
-		 '@35-2', 0,
+		 '@36-2', 0,
 sub {  $start = $_[1][0] unless $start; }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule startrules_37
+	[#Rule startrules_38
 		 'startrules', 2,
 sub {  $_[0]->YYErrok }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rules_38
+	[#Rule rules_39
 		 'rules', 4,
 sub {  _AddRules($_[1],$_[3]); undef }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rules_39
+	[#Rule rules_40
 		 'rules', 2,
 sub {  $_[0]->YYErrok }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhss_40
+	[#Rule rhss_41
 		 'rhss', 3,
 sub {  push(@{$_[1]},$_[3]); $_[1] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhss_41
+	[#Rule rhss_42
 		 'rhss', 1,
 sub {  [ $_[1] ] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rule_42
+	[#Rule rule_43
 		 'rule', 4,
 sub {  
             my ($name, $rhs, $prec, $code) = @_[1..4];
@@ -1421,7 +1442,7 @@ sub {
           }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rule_43
+	[#Rule rule_44
 		 'rule', 2,
 sub { 
             my ($name, $rhs) = @_[1, 2];
@@ -1449,15 +1470,15 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhs_44
+	[#Rule rhs_45
 		 'rhs', 0, undef
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhs_45
+	[#Rule rhs_46
 		 'rhs', 1, undef
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselts_46
+	[#Rule rhselts_47
 		 'rhselts', 2,
 sub {  
                 push(@{$_[1]},$_[2]); 
@@ -1465,12 +1486,12 @@ sub {
               }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselts_47
+	[#Rule rhselts_48
 		 'rhselts', 1,
 sub {  [ $_[1] ] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhseltwithid_48
+	[#Rule rhseltwithid_49
 		 'rhseltwithid', 3,
 sub { 
           push @{$_[1][1]}, $_[3][0];
@@ -1478,7 +1499,7 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhseltwithid_49
+	[#Rule rhseltwithid_50
 		 'rhseltwithid', 2,
 sub { 
           # check that is an identifier
@@ -1489,26 +1510,26 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhseltwithid_50
+	[#Rule rhseltwithid_51
 		 'rhseltwithid', 2,
 sub {  _SyntaxError(2,"\$ is allowed for identifiers only",$lineno[0]) }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhseltwithid_51
+	[#Rule rhseltwithid_52
 		 'rhseltwithid', 1, undef
-################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-	],
-	[#Rule rhselt_52
-		 'rhselt', 1,
-sub {  [ 'SYMB', $_[1] ] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule rhselt_53
 		 'rhselt', 1,
-sub {  [ 'CODE', $_[1] ] }
+sub {  [ 'SYMB', $_[1] ] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
 	[#Rule rhselt_54
+		 'rhselt', 1,
+sub {  [ 'CODE', $_[1] ] }
+################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+	],
+	[#Rule rhselt_55
 		 'rhselt', 4,
 sub {  
            my ($name, $rhs) = @_[2, 3];
@@ -1533,7 +1554,7 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_55
+	[#Rule rhselt_56
 		 'rhselt', 2,
 sub {  
           my ($what, $val) = @{$_[1]};
@@ -1552,7 +1573,7 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_56
+	[#Rule rhselt_57
 		 'rhselt', 5,
 sub {  
           my ($what, $val) = @{$_[1]};
@@ -1580,7 +1601,7 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_57
+	[#Rule rhselt_58
 		 'rhselt', 2,
 sub { 
           my ($what, $val) = @{$_[1]};
@@ -1599,7 +1620,7 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_58
+	[#Rule rhselt_59
 		 'rhselt', 5,
 sub {  
           my ($what, $val) = @{$_[1]};
@@ -1618,7 +1639,7 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule rhselt_59
+	[#Rule rhselt_60
 		 'rhselt', 2,
 sub { 
            my ($what, $val) = @{$_[1]};
@@ -1638,11 +1659,11 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule optname_60
+	[#Rule optname_61
 		 'optname', 0, undef
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule optname_61
+	[#Rule optname_62
 		 'optname', 2,
 sub {  
            $_[2][2] = $_[1][0];
@@ -1650,7 +1671,7 @@ sub {
          }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule prec_62
+	[#Rule prec_63
 		 'prec', 2,
 sub { 
                         defined($$term{$_[2][0]})
@@ -1665,22 +1686,22 @@ sub {
         }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule epscode_63
+	[#Rule epscode_64
 		 'epscode', 0,
 sub {  $defaultaction }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule epscode_64
+	[#Rule epscode_65
 		 'epscode', 1,
 sub {  $_[1] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule code_65
+	[#Rule code_66
 		 'code', 1,
 sub {  $_[1] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule code_66
+	[#Rule code_67
 		 'code', 1,
 sub { 
         _SyntaxError(2, "%begin code is allowed only when metatree is active\n", $lineno[0])
@@ -1691,11 +1712,11 @@ sub {
       }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule tail_67
+	[#Rule tail_68
 		 'tail', 0, undef
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 	],
-	[#Rule tail_68
+	[#Rule tail_69
 		 'tail', 1,
 sub {  $tail=$_[1] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
@@ -1704,6 +1725,7 @@ sub {  $tail=$_[1] }
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
                                   yybypass => 0,
                                   yybuildingtree => 0,
+                                  yyprefix => '',
                                   @_,);
     bless($self,$class);
 
@@ -1733,34 +1755,34 @@ sub {  $tail=$_[1] }
          decl_22
          decl_23
          decl_24
-         typedecl_25
+         decl_25
          typedecl_26
-         symlist_27
+         typedecl_27
          symlist_28
-         identlist_29
+         symlist_29
          identlist_30
-         body_31
+         identlist_31
          body_32
-         rulesec_33
+         body_33
          rulesec_34
-         startrules_35
+         rulesec_35
+         startrules_36
          _CODE
-         startrules_37
-         rules_38
+         startrules_38
          rules_39
-         rhss_40
+         rules_40
          rhss_41
-         rule_42
+         rhss_42
          rule_43
-         rhs_44
+         rule_44
          rhs_45
-         rhselts_46
+         rhs_46
          rhselts_47
-         rhseltwithid_48
+         rhselts_48
          rhseltwithid_49
          rhseltwithid_50
          rhseltwithid_51
-         rhselt_52
+         rhseltwithid_52
          rhselt_53
          rhselt_54
          rhselt_55
@@ -1768,15 +1790,16 @@ sub {  $tail=$_[1] }
          rhselt_57
          rhselt_58
          rhselt_59
-         optname_60
+         rhselt_60
          optname_61
-         prec_62
-         epscode_63
+         optname_62
+         prec_63
          epscode_64
-         code_65
+         epscode_65
          code_66
-         tail_67
-         tail_68} );
+         code_67
+         tail_68
+         tail_69} );
     $self;
 }
 
@@ -1925,6 +1948,9 @@ sub _Lexer {
 
             $$input=~/\G%(type)/gc
         and return('TYPE',[ undef, $lineno[0] ]);
+
+            $$input=~/\G%prefix\s+([A-Za-z_][A-Za-z0-9_:]*::)/gc
+        and return('PREFIX',[ $1, $lineno[0] ]);
 
             $$input=~/\G%(union)/gc
         and return('UNION',[ undef, $lineno[0] ]);
@@ -2123,10 +2149,14 @@ sub Parse {
 
     @$parsed{ 'HEAD', 'TAIL', 'RULES', 'NTERM', 'TERM',
               'NULL', 'PREC', 'SYMS',  'START', 'EXPECT', 
-              'SEMANTIC', 'BYPASS', 'ACCESSORS', 'BUILDINGTREE' }
+              'SEMANTIC', 'BYPASS', 'ACCESSORS', 'BUILDINGTREE',
+              'PREFIX',
+            }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
                $nullable, $precterm, $syms, $start, $expect, 
-               $semantic, $bypass, $accessors, $buildingtree);
+               $semantic, $bypass, $accessors, $buildingtree,
+               $prefix,
+            );
 
     undef($input);
     undef($lexlevel);

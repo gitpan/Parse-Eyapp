@@ -1,0 +1,58 @@
+# CsBetweenCommansAndDWithNames.eyp
+
+%semantic token 'c' 'd' 
+
+%{
+sub TERMINAL::info {
+  $_[0]->attr;
+}
+%}
+%tree
+%%
+Start: S      
+;
+S: 
+    ('c' <%name Cs * ','> 'd') %name Cs_and_d *   
+      { 
+         print "\nNode\n";
+         print $_[1]->str."\n"; 
+         print "\nChild 0\n";
+         print $_[1]->child(0)->str."\n"; 
+         print "\nChild 1\n";
+         print $_[1]->child(1)->str."\n"; 
+         $_[1] 
+      }
+;
+
+%%
+
+sub _Error {
+        exists $_[0]->YYData->{ERRMSG}
+    and do {
+        print $_[0]->YYData->{ERRMSG};
+        delete $_[0]->YYData->{ERRMSG};
+        return;
+    };
+    print "Syntax error.\n";
+}
+
+sub _Lexer {
+    my($parser)=shift;
+
+    for ($parser->YYData->{INPUT}) {
+        s/^[ \t\n]//;
+        return('',undef) unless $_;
+        s/^(.)//s and return($1,$1);
+    }
+    return('',undef);
+}
+
+sub Run {
+    my($self)=shift;
+
+    $self->YYData->{INPUT} or $self->YYData->{INPUT} = <STDIN>;
+
+    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error 
+      #, yydebug => 0x1F 
+    );
+}

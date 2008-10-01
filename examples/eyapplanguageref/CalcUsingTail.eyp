@@ -1,0 +1,46 @@
+# examples/CalcUsingTail.eyp
+%right  '='
+%left   '-' '+'
+%left   '*' '/'
+%left   NEG
+%right  '^'
+
+%{
+use Tail;
+my %s; # symbol table
+%}
+
+%%
+start: 
+    input { \%s }
+;
+
+input: line * 
+;
+
+line:       
+  '\n'         { undef }
+  | exp '\n'   { print "$_[1]\n" if defined($_[1]); $_[1] }
+;
+
+exp:
+    $NUM                   { $NUM->[0]     }
+  | $VAR                   { $s{$VAR->[0]} }
+  | $VAR '=' $exp          { $s{$VAR->[0]} = $exp }
+  | exp.x '+' exp.y { $x + $y }
+  | exp.x '-' exp.y { $x - $y }
+  | exp.x '*' exp.y { $x * $y }
+  | exp.x '/' exp.y         
+    {
+       $y and return($x/$y);
+       $_[0]->YYData->{ERRMSG} = "Illegal division by zero at line $_[2][1].\n";
+       $_[0]->YYError; 
+       undef
+    }
+  | '-' $exp %prec NEG  { -$exp }
+  | exp.x '^' exp.y { $x ** $y }
+  | '(' $exp ')'        { $exp }
+;
+
+%%
+

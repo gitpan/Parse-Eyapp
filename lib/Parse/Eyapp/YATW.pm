@@ -1,12 +1,11 @@
-# (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon, all rights reserved.
+# (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 package Parse::Eyapp::YATW;
 use strict;
 use warnings;
 use Carp;
 use Data::Dumper;
 use List::Util qw(first);
-use List::MoreUtils qw(lastval);
-#use Parse::Eyapp::Base qw( valid_keys invalid_keys );
+use Parse::Eyapp::Base qw( lastval );
 
 sub valid_keys {
   my %valid_args = @_;

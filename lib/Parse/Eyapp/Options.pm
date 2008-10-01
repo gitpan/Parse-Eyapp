@@ -3,7 +3,7 @@
 #
 # This module is based on Francois Desarmenien Parse::Yapp module
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
-# (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon, all rights reserved.
+# (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 
 package Parse::Eyapp::Options;
 
@@ -57,6 +57,9 @@ my(%known_options)= (
     template    => {
         ''      =>  "Template text for generating grammar file"
     },
+    prefixname   =>  {
+        ''      =>  "Prefix for the Tree Classes"
+    },
 );
 
 my(%default_options)= (
@@ -70,6 +73,7 @@ my(%default_options)= (
     input => undef,
     template => undef,
     shebang => undef,
+    prefixname => '',
 );
 
 my(%actions)= (

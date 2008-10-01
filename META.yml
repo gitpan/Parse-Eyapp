@@ -1,13 +1,12 @@
 --- #YAML:1.0
 name:                Parse-Eyapp
-version:             1.112
+version:             1.113
 abstract:            Extensions for Parse::Yapp
 license:             ~
 generated_by:        ExtUtils::MakeMaker version 6.31
 distribution_type:   module
 requires:     
     Data::Dumper:                  1.0
-    List::MoreUtils:               0
     List::Util:                    1.0
     Pod::Usage:                    1.0
 meta-spec:

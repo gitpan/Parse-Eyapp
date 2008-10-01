@@ -40,7 +40,6 @@ Requires perl5.6 or higher
 
 You need the following modules:
 
-                     List::MoreUtils 
                      List::Util  
                      Data::Dumper
                      Pod::Usage 

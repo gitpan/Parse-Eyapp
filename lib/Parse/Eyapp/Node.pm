@@ -1,10 +1,11 @@
-# (c) Parse::Eyapp Copyright 2006-2007 Casiano Rodriguez-Leon, all rights reserved.
+# (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 package Parse::Eyapp::Node;
 use strict;
 use Carp;
+use Parse::Eyapp::Base qw{firstval lastval};
+
 use Parse::Eyapp::YATW;
 #use base qw(Exporter);
-use List::MoreUtils qw(firstval lastval);
 use List::Util qw(first);
 use Data::Dumper;
 
@@ -302,10 +303,9 @@ sub _new {
   #TODO: Shall I receive a prefix?
 
   my (@stack, @index, @results, %results, @place, $open);
+  #skip white spaces
+  s{\A\s+}{};
   while ($_) {
-    #skip white spaces
-    s{\A\s+}{};
-
     # If is a leaf is followed by parenthesis or comma or an ID
     s{\A([A-Za-z_][A-Za-z0-9_:]*)\s*([),])} 
      {$1()$2} # ... then add an empty pair of parenthesis
@@ -367,6 +367,9 @@ sub _new {
         next; 
     }; 
 
+    last unless $_;
+
+    #skip white spaces
     croak "Error building Parse::Eyapp::Node tree at '$_'." unless s{\A\s+}{};
   } # while
   croak "Syntax error! Open parenthesis has no right partner!" if @index;
@@ -756,7 +759,7 @@ sub _str {
   $class =~ s/^$_// for @PREFIXES; 
   my $information;
   $information = $self->info if ($INDENT >= 0 && UNIVERSAL::can($self, 'info'));
-  $class .= $DELIMITER.$information.$pair if $information;
+  $class .= $DELIMITER.$information.$pair if defined($information);
   if ($INDENT >= 0 &&  $res) {
    $class .= $FOOTNOTE_LEFT.$fn.$FOOTNOTE_RIGHT;
   }

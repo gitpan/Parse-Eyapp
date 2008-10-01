@@ -374,6 +374,9 @@ When the program runs with input C<b*(2-2)> produces the following output:
   }, 'NUM' );
   ----------------------------------------------------------
 
+See also the section L<Parse::Eyapp/Compiling: More Options>  for a more
+contrived example.
+
 =head1 SEE ALSO
 
 =over
@@ -382,8 +385,7 @@ When the program runs with input C<b*(2-2)> produces the following output:
 
 =item * L<eyapptut>
 
-=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
-L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
 
 =item * L<http://nereida.deioc.ull.es/~pl/perlexamples/section_eyappts.html> (Spanish),
 

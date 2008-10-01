@@ -533,7 +533,7 @@ Casiano Rodriguez-Leon (casiano@ull.es)
 =head1 ACKNOWLEDGMENTS
 
 This work has been supported by CEE (FEDER) and the Spanish Ministry of
-I<Educación y Ciencia> through I<Plan Nacional I+D+I> number TIN2005-08818-C04-04
+I<Educacion y Ciencia> through I<Plan Nacional I+D+I> number TIN2005-08818-C04-04
 (ULL::OPLINK project L<http://www.oplink.ull.es/>). 
 Support from Gobierno de Canarias was through GC02210601
 (I<Grupos Consolidados>).
@@ -549,7 +549,7 @@ my family and Larry Wall.
 
 =head1 LICENCE AND COPYRIGHT
  
-Copyright (c) 2006-2007 Casiano Rodriguez-Leon (casiano@ull.es). All rights reserved.
+Copyright (c) 2006-2008 Casiano Rodriguez-Leon (casiano@ull.es). All rights reserved.
 
 Parse::Yapp copyright is of Francois Desarmenien, all rights reserved. 1998-2001
  

@@ -21,7 +21,7 @@ my $grammar = q{
   use Data::Dumper;
   use Test::More;
   use List::Util qw(reduce);
-  use List::MoreUtils qw(firstval lastval);
+  use Parse::Eyapp::Base qw(firstval lastval);
 
   my %reserved = (
     int => "INT",

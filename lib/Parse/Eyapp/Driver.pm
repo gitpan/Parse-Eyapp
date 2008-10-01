@@ -6,7 +6,7 @@
 #
 # This module is based on Francois Desarmenien Parse::Yapp module
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
-# (c) Parse::Eyapp Copyright 2006 Casiano Rodriguez-Leon, all rights reserved.
+# (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 
 package Parse::Eyapp::Driver;
 
@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.112';
+$VERSION = '1.113';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 

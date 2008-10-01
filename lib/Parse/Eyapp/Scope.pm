@@ -2,8 +2,7 @@ package Parse::Eyapp::Scope;
 use strict;
 use warnings;
 use Carp;
-use List::MoreUtils qw(part);
-use Parse::Eyapp::Base qw(valid_keys invalid_keys);
+use Parse::Eyapp::Base qw(part valid_keys invalid_keys);
 
 my %_new_scope = (
   SCOPE_NAME      => 'STRING',

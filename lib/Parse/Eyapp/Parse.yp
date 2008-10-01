@@ -20,6 +20,7 @@ my $tree = 0; # true if %tree or %metatree
 my $metatree = 0;
 my $flatlists = 0; # true if flat list semantic for * + and ? operators
 my $bypass = 0;
+my $prefix = ''; # yyprefix
 my $buildingtree = 0;
 my $alias = 0;
 my $accessors = ''; # code generated for named accessors when %tree or %metatree is active
@@ -105,7 +106,7 @@ sub child_index_in_AST {
   return %index;
 }
 
-# This sub igives support to the "%tree alias" directive
+# This sub gives support to the "%tree alias" directive
 # Builds the named accessors to the children
 # for the current production. Uses child_index_in_AST
 # to build the mapping between names and indices
@@ -117,7 +118,7 @@ sub make_accessors {
   my %index = child_index_in_AST($rhs);
   for (keys(%index)) {
     $accessors .= <<"END_OF_ACCESSOR";
-sub $name->[0]::$_ {
+sub ${prefix}$name->[0]::$_ {
   my \$self = shift;
 
   return \$self->child($index{$_}, \@_)
@@ -342,6 +343,12 @@ decl:  '\n'                 #default action
     |   START ident '\n'                
             { 
               $start=$_[2][0]; 
+              undef 
+            }
+    |   PREFIX '\n'                
+            {
+              # TODO: Instead of ident has to be a prefix!!!
+              $prefix=$_[1][0]; 
               undef 
             }
     |   HEADCODE '\n'                   { push(@$head,$_[1]); undef }
@@ -818,6 +825,9 @@ sub _Lexer {
             $$input=~/\G%(type)/gc
         and return('TYPE',[ undef, $lineno[0] ]);
 
+            $$input=~/\G%prefix\s+([A-Za-z_][A-Za-z0-9_:]*::)/gc
+        and return('PREFIX',[ $1, $lineno[0] ]);
+
             $$input=~/\G%(union)/gc
         and return('UNION',[ undef, $lineno[0] ]);
 
@@ -1015,10 +1025,14 @@ sub Parse {
 
     @$parsed{ 'HEAD', 'TAIL', 'RULES', 'NTERM', 'TERM',
               'NULL', 'PREC', 'SYMS',  'START', 'EXPECT', 
-              'SEMANTIC', 'BYPASS', 'ACCESSORS', 'BUILDINGTREE' }
+              'SEMANTIC', 'BYPASS', 'ACCESSORS', 'BUILDINGTREE',
+              'PREFIX',
+            }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
                $nullable, $precterm, $syms, $start, $expect, 
-               $semantic, $bypass, $accessors, $buildingtree);
+               $semantic, $bypass, $accessors, $buildingtree,
+               $prefix,
+            );
 
     undef($input);
     undef($lexlevel);

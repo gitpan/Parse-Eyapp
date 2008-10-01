@@ -110,8 +110,7 @@ For this script to work, you have to install L<GraphViz> first
 
 =item * L<eyapp>,
 
-=item * The pdf files in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> and  
-L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapptut.pdf>.
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
 
 =back
 

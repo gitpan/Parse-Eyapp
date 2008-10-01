@@ -2,7 +2,7 @@
 # Module Parse::Eyapp::Grammar
 #
 # (c) Copyright 1998-2001 Francois Desarmenien, all rights reserved.
-# (c) Copyright 2006 Casiano Rodriguez-Leon, all rights reserved.
+# (c) Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 # 
 package Parse::Eyapp::Grammar;
 @ISA=qw( Parse::Eyapp::Options );
@@ -31,6 +31,7 @@ sub new {
     $values = $parser->Parse($self->Option('input'), 
                              $self->Option('firstline'), # Line where the grammar source starts
                              $self->Option('inputfile'),  # The file or program containing the grammar
+                             #$self->Option('prefixname'),  # yyprefix
                              #$self->Option('buildingtree')  # If building AST
                             );
 
@@ -140,6 +141,16 @@ sub Bypass {
     
   return  $$self{GRAMMAR}{BYPASS}
 }
+
+#####################################
+# Method To Return the Prefix Option#
+#####################################
+sub Prefix {
+  my($self)=shift;
+    
+  return  $$self{GRAMMAR}{PREFIX}
+}
+
 
 sub Buildingtree {
   my($self)=shift;
@@ -427,6 +438,7 @@ sub _ReduceGrammar {
                    BYPASS         => $values->{BYPASS},   # added to simplify AST
                    BUILDINGTREE   => $values->{BUILDINGTREE},   # influences the semantic of lists * + ?
                    ACCESSORS      => $values->{ACCESSORS}, # getter-setter for %tree and %metatree
+                   PREFIX         => $values->{PREFIX},   # yyprefix
                  };
     my($rules,$nterm,$term) =  @$values {'RULES', 'NTERM', 'TERM'};
 
