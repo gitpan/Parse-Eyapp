@@ -14,7 +14,7 @@ The Eyapp program parsing the C<Eyapp> language
 is in the file C<Parse/Eyapp/Parse.yp> 
 in the C<Parse::Eyapp> distribution.
 Therefore C<Parse::Eyapp::Parse> 
-objects have all the methods in C<Parse::Eyapp::driver>.
+objects have all the methods in C<Parse::Eyapp::Driver>.
 
 A C<Parse::Eyapp::Parse> is nothing but a particular kind of C<Parse::Eyapp>
 parser: I<the one that parses> C<Eyapp> I<grammars>.
@@ -27,7 +27,7 @@ The grammar extends L<yacc> and L<yapp> grammars.
 Semicolons have been omitted to save space.
 Between C-like comments you can find an (informal) 
 explanation of the language 
-associated with the token.
+associated with each token.
 
 
   eyapp: head body tail ;

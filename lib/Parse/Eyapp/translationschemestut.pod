@@ -1,6 +1,6 @@
 =head1 NAME
  
-Parse::Eyapp::translationschemestut - Introduction to TRanslation Schemes in Eyapp
+Parse::Eyapp::translationschemestut - Introduction to Translation Schemes in Eyapp
  
 =head1 INTRODUCTION
 
@@ -33,7 +33,7 @@ Eyapp allows through the C<%metatree> directive
 the creation of I<Translation Schemes> where the actions have access to 
 almost any node of the syntax tree.
 
-When using the C<%metatree> directive semantic actions aren't executed. Instead they are 
+When using the C<%metatree> directive semantic actions aren't immediately executed. Instead they are 
 inserted as nodes of the syntax tree. The main difference with ordinary nodes
 being that the attribute of such a C<CODE> node is a reference to the anonymous 
 subroutine representing the semantic action.
@@ -428,6 +428,9 @@ L<HOP::Parser>
 
 =item *
 L<HOP::Lexer>
+
+=item* ocamlyacc tutorial at 
+L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocamlyacc-tutorial.html>
 
 =back
 

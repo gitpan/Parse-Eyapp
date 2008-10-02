@@ -126,7 +126,7 @@ describes the use of Translation Schemes inside the Eyapp language.
 
 =item *
 The Treeregexp language 
-is described in L<Parse::Eyapp::Treregexp>.
+is described in L<Parse::Eyapp::Treeregexp>.
 Treeregexp is a language to describe transformations
 of abstract syntax trees.
 
@@ -274,7 +274,7 @@ It receives two arguments
 
 Similar to C<qtables> but prints 
 the information on warnings, conflicts and rules
-to the specified C<$path/$file>.
+to the specified C<$path/$base>.
 
 =head2 $eyapp->Warnings
 
@@ -326,7 +326,7 @@ The Eyapp program parsing the C<Eyapp> language
 is in the file C<Parse/Eyapp/Parse.yp> 
 in the C<Parse::Eyapp> distribution.
 Therefore C<Parse::Eyapp::Parse> 
-objects have all the methods in C<Parse::Eyapp::driver>.
+objects have all the methods in C<Parse::Eyapp::Driver>.
 
 A C<Parse::Eyapp::Parse> is nothing but a particular kind of C<Parse::Eyapp>
 parser: I<the one that parses> C<Eyapp> I<grammars>.
@@ -521,8 +521,6 @@ This distribution depends on the following modules:
 
 =over
 
-=item * L<List::MoreUtils>
-
 =item * L<List::Util>
 
 =item * L<Data::Dumper>
@@ -701,6 +699,9 @@ L<HOP::Parser>
 
 =item *
 L<HOP::Lexer>
+
+=item* ocamlyacc tutorial at 
+L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocamlyacc-tutorial.html>
 
 =back
 

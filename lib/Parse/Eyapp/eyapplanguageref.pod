@@ -1,6 +1,6 @@
 =head1 NAME
  
-Parse::Eyapp::eyapplanguageref - Introduction to the Eyapp language 
+Parse::Eyapp::eyapplanguageref - The Eyapp language reference manual
  
 =head1 THE EYAPP LANGUAGE
 
@@ -12,7 +12,7 @@ The grammar extends L<yacc> and L<yapp> grammars.
 Semicolons have been omitted to save space.
 Between C-like comments you can find an (informal) 
 explanation of the language 
-associated with the token.
+associated with each token.
 
 
   eyapp: head body tail ;
@@ -86,7 +86,7 @@ and I<Terminal> symbols, called
 also I<Tokens>.
 
 Tokens are the symbols the lexical analyzer function returns to the parser.
-There are two kinds: I<symbolic tokens> and I<string
+There are two kinds of tokens: I<symbolic tokens> and I<string
 literals>.
 
 I<Syntactic variables> and I<symbolic tokens> identifiers must conform
@@ -130,7 +130,7 @@ The head section contains a list of declarations
 There are different kinds of declarations. 
 
 This reference does not 
-fully describes all the declarations that are shared with L<yacc> and 
+fully describes all the declarations that are shared with C<yacc> and 
 L<yapp>. 
 
 =head2 Example of Head Section
@@ -209,7 +209,7 @@ used, the first rule in the body section will be used.
 
 =head2 Expect
 
-The C<%expect #NUMBER> directive works as in L<bison> 
+The C<%expect #NUMBER> directive works as in C<bison> 
 and  suppress warnings when the number of Shift/Reduce
 conflicts is exactly C<#NUMBER>. See section 
 L</Solving Ambiguities and Conflicts> to know more
@@ -229,32 +229,32 @@ in the left hand side of any production rules.
 The directive C<%strict> forces the declaration of all tokens. 
 The following C<eyapp> program issues a warning:
 
-  pl@nereida:~/LEyapp/examples$ cat -n bugyapp2.eyp
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n bugyapp2.eyp
        1  %strict
        2  %%
        3  expr: NUM;
        4  %%
-  pl@nereida:~/LEyapp/examples$ eyapp bugyapp2.eyp
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ eyapp bugyapp2.eyp
   Warning! Non declared token NUM at line 3 of bugyapp2.eyp
+
 
 To keep silent the compiler declare all tokens using
 one of the token declaration directives (C<%token>, C<%left>, etc.)
 
-  pl@nereida:~/LEyapp/examples$ cat -n bugyapp3.eyp
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n bugyapp3.eyp
        1  %strict
        2  %token NUM
        3  %%
        4  expr: NUM;
        5  %%
-  pl@nereida:~/LEyapp/examples$ eyapp bugyapp3.eyp
-  pl@nereida:~/LEyapp/examples$   
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ eyapp bugyapp3.eyp
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ls -ltr | tail -1
+  -rw-r--r-- 1 pl users 2395 2008-10-02 09:41 bugyapp3.pm
 
 It is a good practice to use C<%strict> at the beginning of your grammar.
 
 
 
-
-It is a good practice to use C<%strict> at the beginning of your grammar.
 
 =head2 The C<%prefix> Directive
 
@@ -270,16 +270,18 @@ See the example in C<examples/eyapplanguageref/alias_and_yyprefix.pl>
 
 In C<Parse::Eyapp> you can modify the default action 
 using the C<%defaultaction { Perl code }>
-directive. See section L<Default actions>.
+directive. See section L<DEFAULT ACTIONS>.
+The examples C<examples/eyapplanguageref/Postfix.eyp> and 
+C<examples/eyapplanguageref/Lhs.eyp> illustrate the use of the directive.
 
 =head2 Tree Construction Directives
 
 C<Parse::Eyapp> facilitates the construction of concrete syntax trees and 
 abstract syntax trees (abbreviated AST from now on) through the C<%tree>
-C<%metatree> directives. See sections
-L<Abstract Syntax Trees : %tree and %name>
+and C<%metatree> directives. See sections
+L<ABSTRACT SYNTAX TREES: %tree AND %name>
 and
-L<Translation Schemes and the %metatree directive>. 
+L<Parse::Eyapp::translationschemestut>. 
 
 =head2 Syntactic and Semantic Tokens
 
@@ -324,10 +326,10 @@ The former two productions can be abbreviated as
                           ;
 
 The operators C<*>, C<+> and C<?> are presented in section
-L</Lists and Optionals>.
+L</LISTS AND OPTIONALS>.
 
 A I<syntactic variable cannot appear more than once as
-a rule name> (This differs from L<yacc>).
+a rule name> (This differs from C<yacc>).
 
 =head2 Semantic Values and Semantic Actions
 
@@ -354,7 +356,7 @@ the Parser visits the node associated with the
 production C<A -E<gt> X_1 X_2 ... X_n>
 the associated semantic action is called. 
 Asociated with each symbol
-of a Parse::Eyapp grammar there is a scalar I<Semantic Value>
+of a L<Parse::Eyapp> grammar there is a scalar I<Semantic Value>
 or I<Attribute>. The semantic values of terminals are provided
 by the lexical analyzer. In the calculator example
 (see file C<examples/eyapplanguageref/Calc.yp> in the distribution),
@@ -377,14 +379,14 @@ the arguments are as follows:
 
 C<$_[1]> to C<$_[n]> are the attributes of
 the symbols C<X_1>, C<X_2>, ..., C<X_n>. 
-Just as C<$1> to C<$n> in L<yacc>,
+Just as C<$1> to C<$n> in C<yacc>,
 
 =item * 
 
 C<$_[0]> is the parser object itself.
 Having C<$_[0]> beeing the parser object itself allows you to call
-parser methods. Most L<yacc> macros have been converted into
-parser methods. See section L</Methods Available in the Generated Class>.
+parser methods. Most C<yacc> macros have been converted into
+parser methods. See section L<Parse::Eyapp/METHODS AVAILABLE IN THE GENERATED CLASS>.
 
 =back 
 
@@ -396,7 +398,7 @@ Names can be given to the attributes using the dot notation
 
                      exp.left '+' exp.right { $left + $right }
 
-See section L<Names for attributes> for more details about the I<dot> and I<dollar> 
+See section L<NAMES FOR ATTRIBUTES> for more details about the I<dot> and I<dollar> 
 notations.
 
 If no action is specified and no C<%defaultaction> is specified
@@ -404,7 +406,7 @@ the default action
                          
                                { $_[1] }
 
-will be executed instead. See section L</Default actions> to know more.
+will be executed instead. See section L</DEFAULT ACTIONS> to know more.
 
 =head2 Actions in Mid-Rule
 
@@ -489,14 +491,14 @@ Following with the calculator example, the body is:
 This example does not uses any of the Eyapp extensions (with the exception of the 
 I<star list> at line 5) and the dot and dollar notations. 
 Please, see the L<Parse::Yapp> pages and elsewhere documentation
-on L<yacc> and L<bison> for more information.
+on C<yacc> and C<bison> for more information.
 
 
 =head2 Solving Ambiguities and Conflicts
 
 When Eyapp analizes a grammar like:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ cat -n ambiguities.eyp
+  examples/eyapplanguageref$ cat -n ambiguities.eyp
      1  %%
      2  exp:
      3      NUM
@@ -504,22 +506,22 @@ When Eyapp analizes a grammar like:
      5  ;
      6  %%
 
+
 it will produce a warning announcing the existence of 
 I<shift-reduce> conflicts:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ eyapp ambiguities.eyp
- 1 shift/reduce conflict (see .output file)
- State 5: reduce by rule 2: exp -> exp '-' exp (default action)
- State 5: shifts:
-   to state    3 with '-'
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ ls -ltr | tail -1
- -rw-rw----  1 pl users   1082 2007-02-06 08:26 ambiguities.output
+  examples/eyapplanguageref$ eyapp ambiguities.eyp
+  1 shift/reduce conflict (see .output file)
+  State 5: reduce by rule 2: exp -> exp '-' exp (default action)
+  State 5: shifts:
+    to state    3 with '-'
+
 
 when C<eyapp> finds warnings automatically produces a C<.output> file
 describing the conflict.
 
 What the warning is saying is that an expression like C<exp '-' exp> (rule 2) followed by a
-minus C<'-'> can be worked in more than one way. If we
+minus C<'-'> can be parsed in more than one way. If we
 have an input like C<NUM - NUM - NUM> the activity of a LALR(1) parser
 (the family of parsers to which Eyapp belongs)
 consists of a sequence of I<shift and reduce actions>. A I<shift action>
@@ -668,8 +670,10 @@ confuse the driver with the I<error> token. Use a symbolic token instead.
 The tail section contains Perl code. Usually the lexical analyzer and the
 Error management subroutines go there. A better practice however is to isolate
 both subroutines in a module and use them in the grammar. An example of this is in
-files C<examples/eyapplanguageref/CalcUsingTail.eyp>, C<examples/eyapplanguageref/usecalcusingtail.pl>,
-and C<examples/Tail.pm>.
+files C<examples/eyapplanguageref/CalcUsingTail.eyp> (the grammar), 
+C<examples/eyapplanguageref/usecalcusingtail.pl> (the client program),
+and C<examples/eyapplanguageref/Tail.pm> (the module containing the lexical analizer
+plus error handling and auxiliary subroutines).
 
 =head2 The Lexical Analyzer
 
@@ -688,7 +692,7 @@ method which provides access to the user data area.
 I<When the lexical analyzer reaches the end of input, it must return the
 pair> C<('', undef)>
 
-See below how to write a lexical analyzer (file C<examples/Calc.eyp>):
+See below how to write a lexical analyzer (file C<examples/eyapplanguageref/Calc.eyp>):
 
   1  sub make_lexer {
   2    my $input = shift;
@@ -758,7 +762,7 @@ for the example in C<examples/Calc.eyp>:
 
 
 See the L<Parse::Yapp> pages and elsewhere documentation
-on L<yacc> and L<bison> for more information.
+on C<yacc> and C<bison> for more information.
 
 =head1 USING AN EYAPP GRAMMAR
 
@@ -804,7 +808,7 @@ appear as a Perl comment on the right):
 
 =head1 LISTS AND OPTIONALS
 
-The elements of a rhs can be one of these:
+The elements of the right hand side of a production (abbreviated I<rhs>) can be one of these:
 
   rhselt:     
         symbol    
@@ -858,39 +862,53 @@ a C<rhs> expression as in:
 
 The grammar:
 
-  pl@nereida:~/LEyapp/examples$ head -12 List3.yp | cat -n
-   1  # List3.yp
-   2  %semantic token 'c'
-   3  %{
-   4  use Data::Dumper;
-   5  %}
-   6  %%
-   7  S:      'c'+  'd'+
-   8             {
-   9                print Dumper($_[1]);
-  10                print Dumper($_[2]);
-  11             }
-  12  ;
+  examples/eyapplanguageref$ head -14 List3.yp | cat -n
+     1  # List3.yp
+     2  %semantic token 'c'
+     3  %{
+     4  use Data::Dumper;
+     5  %}
+     6  %%
+     7  S:      'c'+  'd'+
+     8             {
+     9                print Dumper($_[1]);
+    10                print Dumper($_[2]);
+    11             }
+    12  ;
+    13
+    14  %%
+
 
 Is equivalent to:
 
-  pl@nereida:~/LEyapp/examples$ eyapp -v List3.yp | head -9 List3.output
+  examples/eyapplanguageref$ eyapp -v List3.yp | head -9 List3.output
   Rules:
   ------
   0:      $start -> S $end
-  1:      PLUS-1 -> PLUS-1 'c'
-  2:      PLUS-1 -> 'c'
-  3:      PLUS-2 -> PLUS-2 'd'
-  4:      PLUS-2 -> 'd'
-  5:      S -> PLUS-1 PLUS-2
+    1:      PLUS-1 -> PLUS-1 'c'
+    2:      PLUS-1 -> 'c'
+    3:      PLUS-2 -> PLUS-2 'd'
+    4:      PLUS-2 -> 'd'
+    5:      S -> PLUS-1 PLUS-2
 
-By default, the semantic action associated with a C<+> returns the lists of attributes
-to which the C<+> applies:
 
-  pl@nereida:~/LEyapp/examples$ use_list3.pl
+  By default, the semantic action associated with a C<+> returns the lists of attributes
+  to which the C<+> applies:
+
+  examples/eyapplanguageref$ use_list3.pl
   ccdd
-  $VAR1 = [ 'c', 'c' ];
-  $VAR1 = [ 'd', 'd' ];
+  $VAR1 = [
+            'c',
+            'c'
+          ];
+  $VAR1 = [
+            'd',
+            'd'
+          ];
+
+Observe that, in spite of C<'d'> being a syntactic token
+the action related with the C<d+> element creates 
+the list of C<d>s.
 
 
 The semantic associated with a C<+> changes 
@@ -909,91 +927,28 @@ C<yybuildingtree> option of C<YYParse>:
          
 In such case the associated semantic action creates a node labelled
 
-                     _PLUS_LIST_#number
+                     _PLUS_LIST
 
 whose children are the attributes associated with the items in the 
-plus list. The C<#number> in C<_PLUS_LIST_#number> is the ordinal
-of the production rule as it appears in the C<.output> file.
-As it happens when using the C<%tree> directive syntactic tokens 
+plus list. 
+As it happens when using the C<%tree> directive, I<syntactic tokens> 
 are skipped.
 
 When executing the example above but under the C<%tree> directive
 the ouput changes:
 
-  pl@nereida:~/LEyapp/examples$ head -3 List3.yp; eyapp List3.yp
+  examples/eyapplanguageref$ head -3 List3_tree.yp; eyapp List3_tree.yp
   # List3.yp
   %semantic token 'c'
   %tree
+  examples/eyapplanguageref$ diff List3.yp List3_tree.yp
+  2a3
+  > %tree
 
-  pl@nereida:~/LEyapp/examples$ use_list3.pl
-  ccdd
-  $VAR1 = bless( {
-           'children' => [
-             bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' ),
-             bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' )
-           ]
-         }, '_PLUS_LIST_1' );
-  $VAR1 = bless( { 'children' => [] }, '_PLUS_LIST_2' );
+If we now run the client program with input C<ccdd> we get
+a couple of syntax trees:
 
-
-The node associated with the list of C<d>s is empty since
-terminal C<d> wasn't declared semantic.
-
-=head2 When Nodes Dissappear from Lists
-
-When under the influence of the C<%tree> directive
-the action associated with a list operator
-is to I<flat> the children in a single list.
-
-In the former example, the C<d> nodes dont show up 
-since C<'d'> is a syntactic token. However, it may happen that changing the status
-of C<'d'> to semantic will not suffice.
-
-When inserting the children, the tree (C<%tree>)  node construction
-method (C<YYBuildAST>) omits any attribute that is not a reference.
-Therefore, when inserting explicit actions, it is necessary to guarantee that 
-the returned value is a reference or a semantic token 
-to assure the presence of the value in the lists of children of the node.
-Certainly you can use this property to prune parts of the tree.
-Consider the following example:
-
-
-  pl@nereida:~/LEyapp/examples$ head -19 ListWithRefs1.eyp | cat -n
-   1  # ListWithRefs.eyp
-   2  %semantic token 'c' 'd'
-   3  %{
-   4  use Data::Dumper;
-   5  %}
-   6  %%
-   7  S:      'c'+  D+
-   8             {
-   9                print Dumper($_[1]);
-  10                print $_[1]->str."\n";
-  11                print Dumper($_[2]);
-  12                print $_[2]->str."\n";
-  13             }
-  14  ;
-  15
-  16  D: 'd'
-  17  ;
-  18
-  19  %%
-
-To activate the I<tree semantic> for lists we use the C<yybuildingtree>
-option of C<YYParse>:
-
-  pl@nereida:~/LEyapp/examples$ tail -7 ListWithRefs1.eyp | cat -n
-       1  sub Run {
-       2      my($self)=shift;
-       3      $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-       4        yybuildingtree => 1,
-       5        #, yydebug => 0x1F
-       6      );
-       7  }
-
-The execution gives an ouput like this:
-
-  pl@nereida:~/LEyapp/examples$ eyapp ListWithRefs1.eyp; use_listwithrefs1.pl
+  examples/eyapplanguageref$ use_list3_tree.pl
   ccdd
   $VAR1 = bless( {
                    'children' => [
@@ -1008,15 +963,95 @@ The execution gives an ouput like this:
                                             'token' => 'c'
                                           }, 'TERMINAL' )
                                  ]
-                 }, '_PLUS_LIST_1' );
-  _PLUS_LIST_1(TERMINAL,TERMINAL)
+                 }, '_PLUS_LIST' );
   $VAR1 = bless( {
                    'children' => []
-                 }, '_PLUS_LIST_2' );
-  _PLUS_LIST_2
+                 }, '_PLUS_LIST' );
+
+
+
+The node associated with the list of C<d>s is empty since
+terminal C<d> wasn't declared semantic.
+
+=head2 When Nodes Dissappear from Lists
+
+When under the influence of the C<%tree> directive
+the action associated with a list operator
+is to I<flat> the children in a single list.
+
+In the former example, the C<d> nodes don't show up 
+since C<'d'> is a syntactic token. However, it may happen that changing the status
+of C<'d'> to semantic will not suffice.
+
+When inserting the children, the tree (C<%tree>)  node construction
+method (C<YYBuildAST>) omits any attribute that is not a reference.
+Therefore, when inserting explicit actions, it is necessary to guarantee that 
+the returned value is a reference or a semantic token 
+to assure the presence of the value in the lists of children of the node.
+Certainly you can use this property to prune parts of the tree.
+Consider the following example:
+
+  examples/eyapplanguageref$ head -19 ListWithRefs1.eyp | cat -n
+     1  # ListWithRefs1.eyp
+     2  %semantic token 'c' 'd'
+     3  %{
+     4  use Data::Dumper;
+     5  %}
+     6  %%
+     7  S:      'c'+  D+
+     8             {
+     9                print Dumper($_[1]);
+    10                print $_[1]->str."\n";
+    11                print Dumper($_[2]);
+    12                print $_[2]->str."\n";
+    13             }
+    14  ;
+    15
+    16  D: 'd'
+    17  ;
+    18
+    19  %%
+
+
+To activate the I<tree semantic> for lists we use the C<yybuildingtree>
+option of C<YYParse>:
+
+  examples/eyapplanguageref$ tail -7 ListWithRefs1.eyp | cat -n
+     1  sub Run {
+     2      my($self)=shift;
+     3      $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
+     4        yybuildingtree => 1,
+     5        #, yydebug => 0x1F
+     6      );
+     7  }
+
+
+The execution gives an ouput like this:
+
+  examples/eyapplanguageref$ eyapp ListWithRefs1.eyp; use_listwithrefs1.pl
+  ccdd
+  $VAR1 = bless( {
+                   'children' => [
+                                   bless( {
+                                            'children' => [],
+                                            'attr' => 'c',
+                                            'token' => 'c'
+                                          }, 'TERMINAL' ),
+                                   bless( {
+                                            'children' => [],
+                                            'attr' => 'c',
+                                            'token' => 'c'
+                                          }, 'TERMINAL' )
+                                 ]
+                 }, '_PLUS_LIST' );
+  _PLUS_LIST(TERMINAL,TERMINAL)
+  $VAR1 = bless( {
+                   'children' => []
+                 }, '_PLUS_LIST' );
+  _PLUS_LIST
 
 Though C<'d'> was declared semantic the default action 
-assoaciated with the production C<D: 'd'> in line 16
+associated with the production C<D: 'd'> in line 16
 returns C<$_[1]> (that is, the scalar C<'d'>). Since it is not
 a reference it won't be inserted in the list of children of
 C<_PLUS_LIST>.
@@ -2874,6 +2909,9 @@ L<HOP::Parser>
 
 =item *
 L<HOP::Lexer>
+
+=item* ocamlyacc tutorial at 
+L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocamlyacc-tutorial.html>
 
 =back
 

@@ -229,23 +229,23 @@ of the C<%left> and C<%right> declarations on the header section:
   my $grammar = q{
     # header section
     %right  '='     # Lowest precedence
-    %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
-    %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
-    %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
-    %tree           # Let us build an abstract syntax tree ...
+	    %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
+	    %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
+	    %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
+	    %tree           # Let us build an abstract syntax tree ...
 
-    %%
-    .... # body section
-    %%
-    .... # tail section
+	    %%
+	    .... # body section
+	    %%
+	    .... # tail section
   };
 
 Priority can be assigned to tokens by using the C<%left> and C<%right> declarations. Tokens in
 lines below have more precedence than tokens in line above. By giving token C<'+'> more precedence
 than token C<'='> we solve the ambiguity for phrases like C<VAR = VAR + NUM>. The tree
 
-                        line(exp(VAR, '=', exp(exp(VAR), '+',  exp(NUM))))
-                        
+line(exp(VAR, '=', exp(exp(VAR), '+',  exp(NUM))))
+
 will be built, discarding the other tree. Since priority means earlier evaluation
 and the evaluation of semantic actions is bottom up, the deeper the associated subtree the higher
 the priority.
@@ -253,7 +253,7 @@ the priority.
 In a translation scheme the embedded actions modify the attributes
 associated with the symbols of the grammar.
 
-                                A -> alpha { action(@_) } beta
+A -> alpha { action(@_) } beta
 
 I<Each symbol on the right hand side
 of a production rule has an associated scalar attribute>. In C<eyapp> the attributes of the symbol
@@ -263,8 +263,8 @@ There is no way inside an ordinary C<eyapp> program for an intermediate C<action
 access the attributes of the symbols
 on its right, i.e. those associated with the symbols of C<beta>. This restriction is lifted 
 if you  use the C<%metatree> directive to build a full translation scheme. 
-See the section 
-L<Parse::Eyapp/Translation Schemes and the %metatree directive>
+See 
+L<Parse::Eyapp::translationschemestut>
 to know more about full translation schemes.
 
 Actions on the 
@@ -286,7 +286,7 @@ is performed by the C<YYBuildAST> method of the parser object:
 
                 %default action { goto &Parse::Eyapp::Driver::YYBuildAST }
 
-The C<%tree> directive used in the L<SYNOPSIS> example
+The C<%tree> directive used in the L</SYNOPSIS> example
 is an abbreviation for this and has the effect of building an abstract syntax tree
 for the input.
 
@@ -388,7 +388,7 @@ This is because each time the C<Parse::Eyapp::Node> method C<str>
 visits a node checks if the node has a method C<info> (i.e. C<$node-E<gt>can(info)>).
 If so, the C<info> method is called and the string returned is concatenated
 in the description string. This is the reason for these three lines at the beginning of the
-L<SYNOPSIS> example:
+L</SYNOPSIS> example:
 
                     sub TERMINAL::info {
                       $_[0]{attr}
@@ -641,6 +641,9 @@ L<HOP::Parser>
 
 =item *
 L<HOP::Lexer>
+
+=item* ocamlyacc tutorial at 
+L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocamlyacc-tutorial.html>
 
 =back
 

@@ -1,6 +1,5 @@
 # List3.yp
 %semantic token 'c' 
-%tree
 %{
 use Data::Dumper;
 %}

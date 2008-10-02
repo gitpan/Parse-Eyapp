@@ -1,6 +1,6 @@
 =head1 NAME
 
-Parse::Eyapp::debuggintut - Debugging C<Parse::Eyapp> Programs
+Parse::Eyapp::debuggingtut - Debugging C<Parse::Eyapp> Programs
 
 =head1 INTRODUCTION
 
@@ -87,25 +87,27 @@ in the left hand side of any production rules.
 The directive C<%strict> forces the declaration of all tokens. 
 The following C<eyapp> program issues a warning:
 
-  pl@nereida:~/LEyapp/examples$ cat -n bugyapp2.eyp
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n bugyapp2.eyp
        1  %strict
        2  %%
        3  expr: NUM;
        4  %%
-  pl@nereida:~/LEyapp/examples$ eyapp bugyapp2.eyp
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ eyapp bugyapp2.eyp
   Warning! Non declared token NUM at line 3 of bugyapp2.eyp
+
 
 To keep silent the compiler declare all tokens using
 one of the token declaration directives (C<%token>, C<%left>, etc.)
 
-  pl@nereida:~/LEyapp/examples$ cat -n bugyapp3.eyp
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n bugyapp3.eyp
        1  %strict
        2  %token NUM
        3  %%
        4  expr: NUM;
        5  %%
-  pl@nereida:~/LEyapp/examples$ eyapp bugyapp3.eyp
-  pl@nereida:~/LEyapp/examples$   
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ eyapp bugyapp3.eyp
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ls -ltr | tail -1
+  -rw-r--r-- 1 pl users 2395 2008-10-02 09:41 bugyapp3.pm
 
 It is a good practice to use C<%strict> at the beginning of your grammar.
 
@@ -1276,6 +1278,9 @@ L<HOP::Parser>
 
 =item *
 L<HOP::Lexer>
+
+=item* ocamlyacc tutorial at 
+L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocamlyacc-tutorial.html>
 
 =back
 

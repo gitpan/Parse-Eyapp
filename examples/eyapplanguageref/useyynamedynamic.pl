@@ -6,4 +6,4 @@ $parser = YYNameDynamic->new();
 my $tree = $parser->Run;
 $Data::Dumper::Indent = 1;
 if (defined($tree)) { print Dumper($tree); }
-else { print "Cadena no válida\n"; }
+else { print "Error: invalid input\n"; }

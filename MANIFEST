@@ -101,6 +101,10 @@ examples/debuggingtut/Debug.eyp
 examples/debuggingtut/use_aSb.pl
 examples/debuggingtut/usedebug1.pl
 examples/debuggingtut/usedebug2.pl
+examples/debuggingtut/reducereduceconflict.eyp
+examples/debuggingtut/reducereduceconflict_fix2.eyp
+examples/debuggingtut/shiftreduceconflict.eyp
+examples/debuggingtut/shiftreduceconflict_fixed.eyp
 examples/Driver/aSb.yp
 examples/Driver/paste.pl
 examples/Driver/Postfix.eyp
@@ -131,6 +135,10 @@ examples/eyapplanguageref/ListAndAction.eyp
 examples/eyapplanguageref/ListWithRefs1.eyp
 examples/eyapplanguageref/ListWithRefs2.eyp
 examples/eyapplanguageref/ListWithRefs.eyp
+examples/eyapplanguageref/List3_tree_d_sem.yp
+examples/eyapplanguageref/List3_tree.yp
+examples/eyapplanguageref/use_list3_tree_d_dem.pl
+examples/eyapplanguageref/use_list3_tree.pl
 examples/eyapplanguageref/Makefile
 examples/eyapplanguageref/Parenthesis.eyp
 examples/eyapplanguageref/Postfix.eyp

@@ -505,6 +505,9 @@ L<HOP::Parser>
 =item *
 L<HOP::Lexer>
 
+=item* ocamlyacc tutorial at 
+L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocamlyacc-tutorial.html>
+
 =back
 
 =head1 REFERENCES
