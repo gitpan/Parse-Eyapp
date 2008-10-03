@@ -1,6 +1,6 @@
 ###################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.114.
+#    This file was generated using Parse::Eyapp version 1.115.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -22,7 +22,7 @@ BEGIN {
   require Parse::Eyapp::Driver unless Parse::Eyapp::Driver->can('YYParse');
   require Parse::Eyapp::Node unless Parse::Eyapp::Node->can('hnew'); 
 }
-    
+  
 
 # (c) Copyright Casiano Rodriguez-Leon 
 # Based on the original yapp by Francois Desarmenien 1998-2001
@@ -32,7 +32,6 @@ BEGIN {
 require 5.004;
 
 use Carp;
-use List::Util qw(reduce);
 
 my($input,$lexlevel,@lineno,$nberr,$prec,$labelno);
 my($syms,$head,$tail,$token,$term,$nterm,$rules,$precterm,$start,$nullable,
@@ -47,7 +46,7 @@ my $bypass = 0;
 my $prefix = ''; # yyprefix
 my $buildingtree = 0;
 my $alias = 0;
-my $accessors = ''; # code generated for named accessors when %tree or %metatree is active
+my $accessors = {}; # Hash for named accessors when %tree or %metatree is active { exp::left => 0 }
 my $strict = 0; # When true, all tokens must be declared or a warning will be issued
 
 my %nondeclared; # Potential non declared token identifiers appearing in the program
@@ -77,14 +76,25 @@ sub prefixcode {
   # No identifiers were associated with the attributes if %index is empty
   return $text unless %index;
 
-  # $index{a} is the index of the symbol associated with a in the right hand side
-  # of the production. for ex. in "R: B.b A.a" $index{a} will be 2.
-  $text .= reduce { $a.$b} (map { "my \$$_ = \$_[$index{$_}]; " } (keys(%index)));
+  $text .= join "", (map { "my \$$_ = \$_[$index{$_}]; " } (keys(%index)));
+
+  # The former line produces the code for initialization of the attribute 
+  # variables so that a production like:
+  #                   exp: VAR.left '='.op exp.right { ... semantic action }
+  # will produce s.t. like:
+  #        sub {
+  #            my $left = $_[1]; my $right = $_[3]; my $op = $_[2];  
+  #            ... semantic action
+  #        }
 
   return $text;
 }
 
-# Computes the hash %index used in the previous sub
+# Computes the hash %index used in sub 'prefixcode' 
+# $index{a} is the index of the symbol associated with 'a' in the right hand side
+# of the production. For example in 
+#                              R: B.b A.a
+# $index{a} will be 2.
 sub symbol_index {
   my $rhs = shift || [];
   my $position = shift || @$rhs;
@@ -130,24 +140,19 @@ sub child_index_in_AST {
   return %index;
 }
 
-# This sub gives support to the "%tree alias" directive
-# Builds the named accessors to the children
-# for the current production. Uses child_index_in_AST
+# This sub gives support to the "%tree alias" directive.
+# Expands the 'accessors' hash relation 
+# for the current production. Uses 'child_index_in_AST'
 # to build the mapping between names and indices
 sub make_accessors {
   my $name = shift;
-  return unless ($tree and $alias and defined($name) and $name->[0] =~m{^[a-zA-Z_]\w*});
+  return unless ($tree and $alias and defined($name) and $name->[0] =~m{^[a-zA-Z_]\w*$});
 
   my $rhs = shift;
+
   my %index = child_index_in_AST($rhs);
   for (keys(%index)) {
-    $accessors .= <<"END_OF_ACCESSOR";
-sub ${prefix}$name->[0]::$_ {
-  my \$self = shift;
-
-  return \$self->child($index{$_}, \@_)
-}
-END_OF_ACCESSOR
+    $accessors->{"$name->[0]::$_"} = $index{$_};
   }
 }
 
@@ -246,7 +251,7 @@ sub new {
     and $class=ref($class);
 
     warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.114',
+    my($self)=$class->SUPER::new( yyversion => '1.115',
                                   yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],

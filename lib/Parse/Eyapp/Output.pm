@@ -14,6 +14,7 @@ require 5.004;
 use Parse::Eyapp::Base qw(compute_lines);
 use Parse::Eyapp::Lalr;
 use Parse::Eyapp::Driver;
+use Parse::Eyapp::Node; # required to have access to $Parse::Eyapp::Node::FILENAME
 use File::Basename;
 #use Data::Dumper;
 use List::Util qw(first);
@@ -28,12 +29,32 @@ use Carp;
 sub _CopyModule {
   my $file = shift;
 
-	my $text ="\n{ ###########Included $file file\n";
+	my $text ="\n{ ###########Included $file file\n  no warnings;\n";
 
   open(DRV,$file) or	die "BUG: could not open $file";
 	$text.= join('',<DRV>);
 	close(DRV);
 	$text.="\n} ###########End of include $file file\n";
+}
+
+## This sub gives support to the "%tree alias" directive
+## Builds the text for the named accessors to the children
+sub make_accessors {
+  my $accessors = shift;
+  my $prefix = shift;
+
+  my $text = '';
+  for (keys(%$accessors)) {
+    $text .= <<"END_OF_ACCESSOR";
+sub ${prefix}$_ {
+  my \$self = shift;
+
+  return \$self->child($accessors->{$_}, \@_)
+}
+
+END_OF_ACCESSOR
+  }
+  return $text;
 }
 
 # Compute line numbers for the outputfile. Need for debugging
@@ -68,6 +89,7 @@ sub Output {
 
   $buildingtree = $self->Buildingtree;
   $accessors = $self->Accessors;
+  my $accessors_code = make_accessors($accessors, $prefix);
   $TERMS = $self->Terms();
   $FILENAME = '"'.$self->Option('inputfile').'"';
 
@@ -79,7 +101,19 @@ sub Output {
     $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
   }
   else {
-    $driver = q{
+    $driver = make_header_for_driver_pm();
+    $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
+  }
+
+  my($text)=$self->Option('template') || Driver_pm();
+
+	$text=~s/<<(\$.+)>>/$1/gee;
+
+	$text;
+}
+
+sub make_header_for_driver_pm {
+  return q{
 BEGIN {
   # This strange way to load the modules is to guarantee compatibility when
   # using several standalone and non-standalone Eyapp parsers
@@ -87,11 +121,11 @@ BEGIN {
   require Parse::Eyapp::Driver unless Parse::Eyapp::Driver->can('YYParse');
   require Parse::Eyapp::Node unless Parse::Eyapp::Node->can('hnew'); 
 }
-    }; # end string $driver
-    $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
-  }
+  }; 
+}
 
-    my($text)=$self->Option('template') ||<<'EOT';
+sub Driver_pm {
+  return <<'EOT';
 ###################################################################################
 #
 #    This file was generated using Parse::Eyapp version <<$version>>.
@@ -146,15 +180,10 @@ sub new {
 
 <<$tail>>
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-<<$accessors>>
+<<$accessors_code>>
 1;
 EOT
-
-	$text=~s/<<(\$.+)>>/$1/gee;
-
-	$text;
 }
-
 
 ####################################################################
 # Usage      :   

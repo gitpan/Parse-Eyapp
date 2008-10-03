@@ -339,7 +339,7 @@ L<HOP::Parser>
 =item *
 L<HOP::Lexer>
 
-=item* ocamlyacc tutorial at 
+=item * ocamlyacc tutorial at 
 L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocamlyacc-tutorial.html>
 
 =back
@@ -371,10 +371,10 @@ Support from Gobierno de Canarias was through GC02210601
 The University of La Laguna has also supported my work in many ways
 and for many years.
 
-A large percentage of  code is verbatim taken from Parse::Yapp 1.05.
-The author of Parse::Yapp is Francois Desarmenien.
+A large percentage of  code is verbatim taken from L<Parse::Yapp> 1.05.
+The author of L<Parse::Yapp> is Francois Desarmenien.
  
-I wish to thank Francois Desarmenien for his C<Parse::Yapp> module, 
+I wish to thank Francois Desarmenien for his L<Parse::Yapp> module, 
 to my students at La Laguna and to the Perl Community. Special thanks to 
 my family and Larry Wall.
 
