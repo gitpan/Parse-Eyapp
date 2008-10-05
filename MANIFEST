@@ -91,6 +91,7 @@ t/55builder.t
 t/56equal.t
 t/57testequal.t
 t/58standalone.t
+t/Calc.eyp
 #t/97podcoverage.t
 #t/99Cplusplusgrammar.t
 examples/debuggingtut/aSb.yp
@@ -112,9 +113,6 @@ examples/Driver/Postfix.eyp
 examples/Driver/Rule3.yp
 examples/Driver/use_aSb.pl
 examples/Driver/userule3.pl
-examples/Eyapp/Calc.pm
-examples/Eyapp/clean
-examples/Eyapp/foldand0rule9_4.pl
 examples/eyappintro/synopsis.pl
 examples/eyapplanguageref/15treewithsyntactictoken.pl
 examples/eyapplanguageref/alias_and_yyprefix.pl
@@ -168,6 +166,7 @@ examples/eyapplanguageref/usepostfix.pl
 examples/eyapplanguageref/usereturnnonode.pl
 examples/eyapplanguageref/useyynamedynamic.pl
 examples/eyapplanguageref/YYNameDynamic.eyp
+examples/Eyapp/foldand0rule9_4.pl
 examples/Eyapp/Lhs1.yp
 examples/Eyapp/Postfix.eyp
 examples/Eyapp/README
@@ -192,7 +191,6 @@ examples/Node/28foldwithnewwithvars.pl
 examples/Node/alias_and_yyprefix.pl
 examples/Node/builder.pl
 examples/Node/equal.pl
-examples/Node/main.output
 examples/Node/moveinvariantoutofloopcomplexformula.pl
 examples/Node/synopsis.pl
 examples/Node/Tail2.pm
@@ -204,14 +202,11 @@ examples/Node/TSwithtreetransformations2.eyp
 examples/Node/usetspostfix3.pl
 examples/Node/usetswithtreetransformations2.pl
 examples/ParsingStringsAndTrees/fold.inf
-examples/ParsingStringsAndTrees/I2PIR.pm
 examples/ParsingStringsAndTrees/I2PIR.trg
 examples/ParsingStringsAndTrees/infix2pir.pl
 examples/ParsingStringsAndTrees/Infix.eyp
 examples/ParsingStringsAndTrees/input1.inf
-examples/ParsingStringsAndTrees/input1.pir
 examples/ParsingStringsAndTrees/Makefile
-examples/ParsingStringsAndTrees/parsingstringsandtrees.pdf
 examples/ParsingStringsAndTrees/README
 examples/ParsingStringsAndTrees/simple2.inf
 examples/ParsingStringsAndTrees/simple3.inf
@@ -219,7 +214,6 @@ examples/ParsingStringsAndTrees/simple4.inf
 examples/ParsingStringsAndTrees/simple5.inf
 examples/ParsingStringsAndTrees/simple6.inf
 examples/ParsingStringsAndTrees/simple.inf
-examples/ParsingStringsAndTrees/source.tgz
 examples/translationschemestut/README
 examples/translationschemestut/trans_scheme_default_action.pl
 examples/translationschemestut/trans_scheme_simple_decls4.pl

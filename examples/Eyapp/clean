@@ -1,2 +1,0 @@
-rm -f Calc.pm Lhs1.pm main.pm Postfix.pm Rule3.pm Rule5.pm Rule6.pm Shift.pm T.pm
-
