@@ -1,6 +1,6 @@
-###################################################################################
+########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.116.
+#    This file was generated using Parse::Eyapp version 1.117.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -8,7 +8,7 @@
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
 #
-###################################################################################
+########################################################################################
 package Parse::Eyapp::Treeregparser;
 use strict;
 
@@ -231,13 +231,13 @@ Warning!: Did you changed the \@Parse::Eyapp::Treeregparser::ISA variable inside
 EOFWARN
 
 sub new {
-        my($class)=shift;
-        ref($class)
-    and $class=ref($class);
+  my($class)=shift;
+  ref($class) and $class=ref($class);
 
-    warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.116',
-                                  yyGRAMMAR  =>
+  warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
+  my($self)=$class->SUPER::new( 
+    yyversion => '1.117',
+    yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'treeregexplist', '$end' ], 0 ],
   [ _STAR_LIST => 'STAR-1', [ 'STAR-1', 'treeregexp' ], 0 ],
@@ -298,10 +298,10 @@ sub new {
   [ _STAR_LIST => 'STAR-26', [  ], 0 ],
   [ childlist_57 => 'childlist', [ 'STAR-26' ], 0 ],
 ],
-                                  yyTERMS  =>
+    yyTERMS  =>
 { '$end' => 0, '(' => 0, ')' => 0, '*' => 0, ',' => 0, '.' => 0, ':' => 0, ';' => 0, '=' => 0, '=>' => 0, 'and' => 0, ARRAY => 1, CODE => 1, IDENT => 1, REGEXP => 1, SCALAR => 1 },
-                                  yyFILENAME  => "lib/Parse/Eyapp/Treeregexp.yp",
-                                  yystates =>
+    yyFILENAME  => "lib/Parse/Eyapp/Treeregexp.yp",
+    yystates =>
 [
 	{#State 0
 		DEFAULT => -2,
@@ -757,7 +757,7 @@ sub new {
 		DEFAULT => -19
 	}
 ],
-                                  yyrules  =>
+    yyrules  =>
 [
 	[#Rule _SUPERSTART
 		 '$start', 2, undef
@@ -1109,13 +1109,16 @@ sub {
 	]
 ],
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-                                  yybypass => 0,
-                                  yybuildingtree => 0,
-                                  yyprefix => '',
-                                  @_,);
-    bless($self,$class);
+    yybypass       => 0,
+    yybuildingtree => 0,
+    yyprefix       => '',
+    yyaccessors    => {
+   },
+    @_,
+  );
+  bless($self,$class);
 
-    $self->make_node_classes( qw{TERMINAL _OPTIONAL _STAR_LIST _PLUS_LIST 
+  $self->make_node_classes( qw{TERMINAL _OPTIONAL _STAR_LIST _PLUS_LIST 
          _SUPERSTART
          treeregexplist_3
          _PAREN
@@ -1134,7 +1137,7 @@ sub {
          treereg_51
          treereg_52
          childlist_57} );
-    $self;
+  $self;
 }
 
 
@@ -1918,5 +1921,4 @@ sub Parse::Eyapp::Treeregexp::GLOBALCODE::translate {
 
 
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-
 1;

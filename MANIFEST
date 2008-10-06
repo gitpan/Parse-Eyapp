@@ -91,6 +91,7 @@ t/55builder.t
 t/56equal.t
 t/57testequal.t
 t/58standalone.t
+t/59newgrammarerrors.t
 t/Calc.eyp
 #t/97podcoverage.t
 #t/99Cplusplusgrammar.t

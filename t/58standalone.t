@@ -4,11 +4,11 @@ use Test::More tests=>8;
 #use_ok qw(Parse::Eyapp) or exit;
 
 SKIP: {
-  skip "Calc.eyp not found", 8 unless -r "t/Calc.eyp";
+  skip "Calc.eyp not found", 8 unless (-r "t/Calc.eyp" && -x "./eyapp");
 
   unlink 't/Calc.pm';
 
-  my $r = system('eyapp -s t/Calc.eyp');
+  my $r = system('perl -I./lib/ eyapp -s t/Calc.eyp');
   
   ok(!$r, "standalone option");
 

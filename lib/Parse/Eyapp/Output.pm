@@ -40,21 +40,13 @@ sub _CopyModule {
 ## This sub gives support to the "%tree alias" directive
 ## Builds the text for the named accessors to the children
 sub make_accessors {
-  my $accessors = shift;
-  my $prefix = shift;
+  my $accessors = shift; # hash reference: like left => 0
 
-  my $text = '';
+  my $text = '{';
   for (keys(%$accessors)) {
-    $text .= <<"END_OF_ACCESSOR";
-sub ${prefix}$_ {
-  my \$self = shift;
-
-  return \$self->child($accessors->{$_}, \@_)
-}
-
-END_OF_ACCESSOR
+    $text .= "\n      '$_' => $accessors->{$_},";
   }
-  return $text;
+  return "$text\n   }";
 }
 
 # Compute line numbers for the outputfile. Need for debugging
@@ -89,7 +81,7 @@ sub Output {
 
   $buildingtree = $self->Buildingtree;
   $accessors = $self->Accessors;
-  my $accessors_code = make_accessors($accessors, $prefix);
+  my $accessors_hash = make_accessors($accessors);
   $TERMS = $self->Terms();
   $FILENAME = '"'.$self->Option('inputfile').'"';
 
@@ -126,7 +118,7 @@ BEGIN {
 
 sub Driver_pm {
   return <<'EOT';
-###################################################################################
+########################################################################################
 #
 #    This file was generated using Parse::Eyapp version <<$version>>.
 #
@@ -136,7 +128,7 @@ sub Driver_pm {
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
 #
-###################################################################################
+########################################################################################
 package <<$package>>;
 use strict;
 
@@ -152,35 +144,36 @@ Warning!: Did you changed the \@<<$package>>::ISA variable inside the header sec
 EOFWARN
 
 sub new {
-        my($class)=shift;
-        ref($class)
-    and $class=ref($class);
+  my($class)=shift;
+  ref($class) and $class=ref($class);
 
-    warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '<<$version>>',
-                                  yyGRAMMAR  =>
+  warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
+  my($self)=$class->SUPER::new( 
+    yyversion => '<<$version>>',
+    yyGRAMMAR  =>
 <<$GRAMMAR>>,
-                                  yyTERMS  =>
+    yyTERMS  =>
 <<$TERMS>>,
-                                  yyFILENAME  => <<$FILENAME>>,
-                                  yystates =>
+    yyFILENAME  => <<$FILENAME>>,
+    yystates =>
 <<$states>>,
-                                  yyrules  =>
+    yyrules  =>
 <<$rules>>,
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-                                  yybypass => <<$bypass>>,
-                                  yybuildingtree => <<$buildingtree>>,
-                                  yyprefix => '<<$prefix>>',
-                                  @_,);
-    bless($self,$class);
+    yybypass       => <<$bypass>>,
+    yybuildingtree => <<$buildingtree>>,
+    yyprefix       => '<<$prefix>>',
+    yyaccessors    => <<$accessors_hash>>,
+    @_,
+  );
+  bless($self,$class);
 
-    <<$makenodeclasses>>
-    $self;
+  <<$makenodeclasses>>
+  $self;
 }
 
 <<$tail>>
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-<<$accessors_code>>
 1;
 EOT
 }
@@ -212,15 +205,15 @@ my $validkeys = do { local $" = ", "; my @validkeys = keys(%_new_grammar); "@val
 sub new_grammar {
   my $class = shift;
 
-  croak "Error in new_package: Use named arguments" if (@_ %2);
+  croak "Error in new_grammar: Use named arguments" if (@_ %2);
   my %arg = @_;
   if (defined($a = first { !exists($_new_grammar{$_}) } keys(%arg))) {
-    croak("Parse::Eyapp::Treeregexp::new Error!: unknown argument $a. Valid arguments are: $validkeys")
+    croak("Parse::Eyapp::Output::new_grammar Error!: unknown argument $a. Valid arguments are: $validkeys")
   }
   
-  my $grammar = $arg{input} or croak "Error in new_package: Specify a input grammar";
+  my $grammar = $arg{input} or croak "Error in new_grammar: Specify a input grammar";
 
-  my $name = $arg{classname} or croak 'Error in  new_package: Please provide a name for the grammar';
+  my $name = $arg{classname} or croak 'Error in  new_grammar: Please provide a name for the grammar';
 
   my ($package, $filename, $line) = caller;
 
@@ -240,7 +233,7 @@ sub new_grammar {
   my $text = $p->Output(classname => $name) or croak "Can't generate parser.";
 
   my $outputfile = $arg{outputfile};
-  croak "Error in new_package: Invalid option for parameter linenumber" unless $linenumbers =~ m{[01]};
+  croak "Error in new_grammar: Invalid option for parameter linenumber" unless $linenumbers =~ m{[01]};
 
   if (defined($outputfile)) {
     my($base,$path,$sfx)=fileparse($outputfile,'\..*$');
@@ -251,6 +244,7 @@ sub new_grammar {
 
     compute_lines(\$text, $outfile, $pattern);
     print $OUT $text; #$p->Output(classname  => $name, linenumbers => $linenumbers);
+    close $OUT;
   }
 
   my $x = eval $text;

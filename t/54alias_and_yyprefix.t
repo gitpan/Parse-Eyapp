@@ -82,7 +82,7 @@ Parse::Eyapp->new_grammar(
   input=>$grammar, 
   classname=>'Alias', 
   #firstline =>7,
-  #outputfile => 'main',
+  outputfile => 'main',
 );
 
 my $parser = Alias->new();

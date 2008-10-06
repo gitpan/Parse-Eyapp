@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.116';
+$VERSION = '1.117';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
@@ -32,6 +32,7 @@ my(%params)=(YYLEX => 'CODE', 'YYERROR' => 'CODE', YYVERSION => '',
 	     YYGRAMMAR  => 'ARRAY', 
 	     YYTERMS    => 'HASH',
 	     YYBUILDINGTREE  => '',
+       YYACCESSORS => 'HASH',
 	     ); 
 my (%newparams) = (%params, YYPREFIX => '',);
 
@@ -198,8 +199,13 @@ sub YYPrefix {
   my $self = shift;
 
   $self->{PREFIX} = $_[0] if @_;
-  #$self->{PREFIX} .= '::' unless  $self->{PREFIX} =~ /::$/;
   $self->{PREFIX};
+}
+
+sub YYAccessors {
+  my $self = shift;
+
+  $self->{ACCESSORS}
 }
 
 sub YYFilename {
@@ -274,6 +280,17 @@ sub BeANode {
     for (@_) {
        BeANode("$prefix$_"); 
     }
+
+    my $accessors = $self->YYAccessors();
+    for (keys %$accessors) {
+      my $position = $accessors->{$_};
+      no strict 'refs';
+      *{$prefix.$_} = sub {
+        my $self = shift;
+
+        return $self->child($position, @_)
+      }
+    } # for
   }
 }
 

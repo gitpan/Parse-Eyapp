@@ -1,6 +1,6 @@
-###################################################################################
+########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.116.
+#    This file was generated using Parse::Eyapp version 1.117.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -8,7 +8,7 @@
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
 #
-###################################################################################
+########################################################################################
 package Parse::Eyapp::Parse;
 use strict;
 
@@ -246,13 +246,13 @@ Warning!: Did you changed the \@Parse::Eyapp::Parse::ISA variable inside the hea
 EOFWARN
 
 sub new {
-        my($class)=shift;
-        ref($class)
-    and $class=ref($class);
+  my($class)=shift;
+  ref($class) and $class=ref($class);
 
-    warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
-    my($self)=$class->SUPER::new( yyversion => '1.116',
-                                  yyGRAMMAR  =>
+  warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
+  my($self)=$class->SUPER::new( 
+    yyversion => '1.117',
+    yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
   [ eyapp_1 => 'eyapp', [ 'head', 'body', 'tail' ], 0 ],
@@ -325,10 +325,10 @@ sub new {
   [ tail_68 => 'tail', [  ], 0 ],
   [ tail_69 => 'tail', [ 'TAILCODE' ], 0 ],
 ],
-                                  yyTERMS  =>
+    yyTERMS  =>
 { '$end' => 0, '$' => 0, '%%' => 0, '(' => 0, ')' => 0, '.' => 0, ':' => 0, ';' => 0, '<' => 0, '>' => 0, '\n' => 0, '|' => 0, ASSOC => 1, BEGINCODE => 1, CODE => 1, DEFAULTACTION => 1, EXPECT => 1, HEADCODE => 1, IDENT => 1, LITERAL => 1, METATREE => 1, NAME => 1, NUMBER => 1, OPTION => 1, PLUS => 1, PREC => 1, PREFIX => 1, SEMANTIC => 1, STAR => 1, START => 1, STRICT => 1, SYNTACTIC => 1, TAILCODE => 1, TOKEN => 1, TREE => 1, TYPE => 1, UNION => 1, error => 1 },
-                                  yyFILENAME  => "lib/Parse/Eyapp/Parse.yp",
-                                  yystates =>
+    yyFILENAME  => "lib/Parse/Eyapp/Parse.yp",
+    yystates =>
 [
 	{#State 0
 		ACTIONS => {
@@ -1085,7 +1085,7 @@ sub new {
 		DEFAULT => -57
 	}
 ],
-                                  yyrules  =>
+    yyrules  =>
 [
 	[#Rule _SUPERSTART
 		 '$start', 2, undef
@@ -1728,13 +1728,16 @@ sub {  $tail=$_[1] }
 	]
 ],
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-                                  yybypass => 0,
-                                  yybuildingtree => 0,
-                                  yyprefix => '',
-                                  @_,);
-    bless($self,$class);
+    yybypass       => 0,
+    yybuildingtree => 0,
+    yyprefix       => '',
+    yyaccessors    => {
+   },
+    @_,
+  );
+  bless($self,$class);
 
-    $self->make_node_classes( qw{TERMINAL _OPTIONAL _STAR_LIST _PLUS_LIST 
+  $self->make_node_classes( qw{TERMINAL _OPTIONAL _STAR_LIST _PLUS_LIST 
          _SUPERSTART
          eyapp_1
          symbol_2
@@ -1805,7 +1808,7 @@ sub {  $tail=$_[1] }
          code_67
          tail_68
          tail_69} );
-    $self;
+  $self;
 }
 
 
@@ -2192,5 +2195,4 @@ sub Parse {
 
 
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
-
 1;
