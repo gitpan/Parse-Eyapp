@@ -1,6 +1,23 @@
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
+
+# Configuration variables: Change them if you change machine
+
+# Values in nereida
+
+# Directory where to publish file.
+
+my $PUBLIC_PLACE = '/home/pl/public_html/perlexamples/';
+
+# Run 'make test' in those machines via SSH
+my $MACHINES = 'orion beowulf';
+
+# Where the remote.pl program is:
+my $REMOTETEST = '/home/pp2/LGRID_Machine/scripts/remotetest.pl';
+
+# END configuration variables
+
 WriteMakefile(
     'NAME'	=> 'Parse::Eyapp',
     'VERSION_FROM' => 'lib/Parse/Eyapp/Driver.pm', # finds $VERSION
@@ -39,14 +56,17 @@ WriteMakefile(
 );
 
 sub MY::postamble {
-	my @machines = qw{orion beowulf};
 
-my $DQT = <<"EODQT";
-remotetest:
-	/home/pp2/LGRID_Machine/scripts/remotetest.pl \${DISTVNAME}.tar.gz @machines
-EODQT
+  $_ = targets();
+  s/<<PUBLIC_PLACE>>/$PUBLIC_PLACE/ge;
+  s/<<MACHINES>>/$MACHINES/ge;
+  s/<<REMOTETEST>>/$REMOTETEST/ge;
+  return $_;
+}
 
-my $SQT = <<'EOSQT';
+
+sub targets {
+  return <<'EOSQT';
 release: lib/Parse/Eyapp/Parse.yp
 	PERL5LIB=lib; eyapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
 	PERL5LIB=lib; $(PERL) -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
@@ -74,9 +94,9 @@ coverage:
 
 publicdist: release html pdf dist 
 	chmod a+r Parse-Eyapp-*.tar.gz
-	cp Parse-Eyapp-*.tar.gz /home/pl/public_html/perlexamples/Parse-Eyapp.tar.gz
+	cp Parse-Eyapp-*.tar.gz <<PUBLIC_PLACE>>Parse-Eyapp.tar.gz
 	cp Parse-Eyapp-*.tar.gz /tmp/
-	chmod a+r /home/pl/public_html/perlexamples/Parse-Eyapp.tar.gz
+	chmod a+r <<PUBLIC_PLACE>>Parse-Eyapp.tar.gz
 
 xdvi: doc
 	pod2latex -full -prefile preamble.tex lib/Parse/Eyapp.pod
@@ -125,8 +145,8 @@ pdf: xdvi
                Base.pdf \
                Driver.pdf \
                MatchingTrees.pdf \
-     /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/*.pdf
+     <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>*.pdf
 
 html: doc
 	#rm -f Eyapp.html podindex.html podtoc.html
@@ -150,25 +170,26 @@ html: doc
 	#perl -e 's/^Cannot find page .*//gi' -i.bak -p Eyapp.html 
 	#perl -e 's/^Cannot find page .*//gi' -i.bak -p eyapp.html 
 	#perl -e 's/^Cannot find page .*//gi' -i.bak -p treereg.html 
-	mv Eyapp.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/Eyapp.html
-	mv eyapp.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/eyapp.html
-	mv treereg.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/treereg.html
-	mv translationschemestut.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/translationschemestut.html
-	mv Base.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/Base.html
-	mv Driver.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/Driver.html
-	mv Node.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/Node.html
-	mv YATW.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/YATW.html
-	mv MatchingTrees.html /home/pl/public_html/perlexamples/
-	chmod a+r /home/pl/public_html/perlexamples/MatchingTrees.html
-EOSQT
+	mv Eyapp.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>Eyapp.html
+	mv eyapp.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>eyapp.html
+	mv treereg.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>treereg.html
+	mv translationschemestut.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>translationschemestut.html
+	mv Base.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>Base.html
+	mv Driver.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>Driver.html
+	mv Node.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>Node.html
+	mv YATW.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>YATW.html
+	mv MatchingTrees.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>MatchingTrees.html
 
-return $SQT.$DQT;
+remotetest:
+	<<REMOTETEST>> ${DISTVNAME}.tar.gz <<MACHINES>>
+EOSQT
 }

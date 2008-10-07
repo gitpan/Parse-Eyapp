@@ -7,7 +7,9 @@
 #
 
 package Parse::Eyapp::Output;
-@ISA=qw ( Parse::Eyapp::Lalr );
+use strict;
+
+our @ISA=qw ( Parse::Eyapp::Lalr );
 
 require 5.004;
 
@@ -19,7 +21,6 @@ use File::Basename;
 #use Data::Dumper;
 use List::Util qw(first);
 
-use strict;
 
 use Carp;
 
