@@ -10,7 +10,8 @@ use ExtUtils::MakeMaker;
 
 # Directory where to publish file.
 
-my $PUBLIC_PLACE = '/home/pl/public_html/perlexamples/';
+#my $PUBLIC_PLACE = '/home/pl/public_html/perlexamples/';
+my $PUBLIC_PLACE = '/home/lusasoft/public_html/perlexamples/';
 
 # Run 'make test' in those machines via SSH
 my $MACHINES = 'orion beowulf';
@@ -24,23 +25,23 @@ my $REMOTETEST = 'remotetest.pl';
 WriteMakefile(
     'NAME'	=> 'Parse::Eyapp',
     'VERSION_FROM' => 'lib/Parse/Eyapp/Driver.pm', # finds $VERSION
-    'MAN3PODS' => { 
-                    #'lib/Parse/Eyapp/Tutorial.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3' 
-		    'lib/Parse/Eyapp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3',
-		    'lib/Parse/Eyapp/Base.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Base.3',
-		    'lib/Parse/Eyapp/debuggingtut.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::debuggingtut.3',
-		    'lib/Parse/Eyapp/Driver.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Driver.3',
-		    'lib/Parse/Eyapp/eyappintro.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::eyappintro.3',
-		    'lib/Parse/Eyapp/eyapplanguageref.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::eyapplanguageref.3',
-		    'lib/Parse/Eyapp/languageintro.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::languageintro.3',
-		    'lib/Parse/Eyapp/MatchingTrees.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::MatchingTrees.3',
-		    'lib/Parse/Eyapp/Node.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Node.3',
-		    'lib/Parse/Eyapp/Parse.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Parse.3',
-		    'lib/Parse/Eyapp/Scope.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Scope.3',
-		    'lib/Parse/Eyapp/translationschemestut.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::translationschemestut.3',
-		    'lib/Parse/Eyapp/Treeregexp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Treeregexp.3',
-		    'lib/Parse/Eyapp/YATW.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::YATW.3',
-                  },
+#    'MAN3PODS' => { 
+#                    #'lib/Parse/Eyapp/Tutorial.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3' 
+#		    'lib/Parse/Eyapp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3',
+#		    'lib/Parse/Eyapp/Base.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Base.3',
+#		    'lib/Parse/Eyapp/debuggingtut.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::debuggingtut.3',
+#		    'lib/Parse/Eyapp/Driver.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Driver.3',
+#		    'lib/Parse/Eyapp/eyappintro.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::eyappintro.3',
+#		    'lib/Parse/Eyapp/eyapplanguageref.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::eyapplanguageref.3',
+#		    'lib/Parse/Eyapp/languageintro.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::languageintro.3',
+#		    'lib/Parse/Eyapp/MatchingTrees.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::MatchingTrees.3',
+#		    'lib/Parse/Eyapp/Node.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Node.3',
+#		    'lib/Parse/Eyapp/Parse.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Parse.3',
+#		    'lib/Parse/Eyapp/Scope.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Scope.3',
+#		    'lib/Parse/Eyapp/translationschemestut.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::translationschemestut.3',
+#		    'lib/Parse/Eyapp/Treeregexp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Treeregexp.3',
+#		    'lib/Parse/Eyapp/YATW.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::YATW.3',
+#                  },
     'PREREQ_PM' => { 
                      'List::Util'   => "1.0", 
                      'Data::Dumper' => "1.0",
@@ -49,21 +50,21 @@ WriteMakefile(
                      # Test::Exception => "0.2", # recommended
                      # Test::Pod => "1.0", # recommended
                    },
-    'PM' => {
-              'lib/Parse/Eyapp.pm' => '$(INST_LIBDIR)/Eyapp.pm',
-              'lib/Parse/Eyapp/Base.pm' => '$(INST_LIBDIR)/Eyapp/Base.pm',
-              'lib/Parse/Eyapp/Options.pm' => '$(INST_LIBDIR)/Eyapp/Options.pm',
-              'lib/Parse/Eyapp/Driver.pm' => '$(INST_LIBDIR)/Eyapp/Driver.pm',
-              'lib/Parse/Eyapp/Grammar.pm' => '$(INST_LIBDIR)/Eyapp/Grammar.pm',
-              'lib/Parse/Eyapp/Lalr.pm' => '$(INST_LIBDIR)/Eyapp/Lalr.pm',
-              'lib/Parse/Eyapp/Output.pm' => '$(INST_LIBDIR)/Eyapp/Output.pm',
-              'lib/Parse/Eyapp/Parse.pm' => '$(INST_LIBDIR)/Eyapp/Parse.pm',
-              'lib/Parse/Eyapp/YATW.pm' => '$(INST_LIBDIR)/Eyapp/YATW.pm',
-              'lib/Parse/Eyapp/Treeregexp.pm' => '$(INST_LIBDIR)/Eyapp/Treeregexp.pm',
-              'lib/Parse/Eyapp/Scope.pm' => '$(INST_LIBDIR)/Eyapp/Scope.pm',
-              'lib/Parse/Eyapp/_TreeregexpSupport.pm' => '$(INST_LIBDIR)/Eyapp/_TreeregexpSupport.pm',
-              'lib/Parse/Eyapp/Node.pm' => '$(INST_LIBDIR)/Eyapp/Node.pm',
-            },
+#    'PM' => {
+#              'lib/Parse/Eyapp.pm' => '$(INST_LIBDIR)/Eyapp.pm',
+#              'lib/Parse/Eyapp/Base.pm' => '$(INST_LIBDIR)/Eyapp/Base.pm',
+#              'lib/Parse/Eyapp/Options.pm' => '$(INST_LIBDIR)/Eyapp/Options.pm',
+#              'lib/Parse/Eyapp/Driver.pm' => '$(INST_LIBDIR)/Eyapp/Driver.pm',
+#              'lib/Parse/Eyapp/Grammar.pm' => '$(INST_LIBDIR)/Eyapp/Grammar.pm',
+#              'lib/Parse/Eyapp/Lalr.pm' => '$(INST_LIBDIR)/Eyapp/Lalr.pm',
+#              'lib/Parse/Eyapp/Output.pm' => '$(INST_LIBDIR)/Eyapp/Output.pm',
+#              'lib/Parse/Eyapp/Parse.pm' => '$(INST_LIBDIR)/Eyapp/Parse.pm',
+#              'lib/Parse/Eyapp/YATW.pm' => '$(INST_LIBDIR)/Eyapp/YATW.pm',
+#              'lib/Parse/Eyapp/Treeregexp.pm' => '$(INST_LIBDIR)/Eyapp/Treeregexp.pm',
+#              'lib/Parse/Eyapp/Scope.pm' => '$(INST_LIBDIR)/Eyapp/Scope.pm',
+#              'lib/Parse/Eyapp/_TreeregexpSupport.pm' => '$(INST_LIBDIR)/Eyapp/_TreeregexpSupport.pm',
+#              'lib/Parse/Eyapp/Node.pm' => '$(INST_LIBDIR)/Eyapp/Node.pm',
+#            },
 	'EXE_FILES' => [ 'eyapp', 'treereg', 'vgg' ],
       ($] >= 5.005 ?     
             (

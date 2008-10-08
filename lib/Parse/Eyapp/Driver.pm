@@ -16,7 +16,7 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.119';
+$VERSION = '1.120';
 $COMPATIBLE = '0.07';
 $FILENAME=__FILE__;
 
