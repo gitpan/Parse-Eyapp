@@ -1,4 +1,6 @@
 Revision history for Perl extension Eyapp.
+1.118 - new with yyprefix
+      - Avoided dependence of List::MoreUtils. It broke Eyapp in some architectures
 1.112 - Hal Finkel's patch for alias
 1.107 - Option lib in treereg
 1.106 Thu jan 17 09:31:24 WET 2008

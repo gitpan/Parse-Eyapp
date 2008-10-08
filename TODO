@@ -1,14 +1,6 @@
   * common examples generated through the text template. Idem MANIFEST
   * eyapp with prefix option
-  * new with yyprefix
   * Lexical analyzer seems to be in a mess: line count seem full of bugs
-  * I don't know if I did too much for the prefix: still it remains
-    the problem of run-time
-  * I Really did not fully understand Hal Finkel's patch. I am not
-    really inside the code now. Try to understand the full consequences.
-    Specially check bypass and alias toghether
-
-  * Avoid dependence of List::MoreUtils. It breaks Eyapp in some architectures
 
   * delete_method isn't documented
   * Document generate, new, etc. in treeregexp
@@ -44,7 +36,6 @@
   * "previous" clause for YATW objects when using "bud". The YATW will 
     be executed before visiting the children. An example of the advantage
     of doing this is to use "bud" for scope analysis
-  * Jonathan error message
   * %default action must have an scope
   * Factorize YYBuildAST and YYActionforT_TX1X2 etc.
     There is a problem with TERMINAL::save_attributes ?

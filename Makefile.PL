@@ -1,3 +1,5 @@
+use warnings;
+use strict;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
@@ -14,18 +16,35 @@ my $PUBLIC_PLACE = '/home/pl/public_html/perlexamples/';
 my $MACHINES = 'orion beowulf';
 
 # Where the remote.pl program is:
-my $REMOTETEST = '/home/pp2/LGRID_Machine/scripts/remotetest.pl';
+#my $REMOTETEST = '/home/pp2/LGRID_Machine/scripts/remotetest.pl';
+my $REMOTETEST = 'remotetest.pl';
 
 # END configuration variables
 
 WriteMakefile(
     'NAME'	=> 'Parse::Eyapp',
     'VERSION_FROM' => 'lib/Parse/Eyapp/Driver.pm', # finds $VERSION
-    #'MAN3PODS' => { 'lib/Parse/Eyapp/Tutorial.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3' },
+    'MAN3PODS' => { 
+                    #'lib/Parse/Eyapp/Tutorial.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3' 
+		    'lib/Parse/Eyapp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3',
+		    'lib/Parse/Eyapp/Base.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Base.3',
+		    'lib/Parse/Eyapp/debuggingtut.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::debuggingtut.3',
+		    'lib/Parse/Eyapp/Driver.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Driver.3',
+		    'lib/Parse/Eyapp/eyappintro.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::eyappintro.3',
+		    'lib/Parse/Eyapp/eyapplanguageref.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::eyapplanguageref.3',
+		    'lib/Parse/Eyapp/languageintro.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::languageintro.3',
+		    'lib/Parse/Eyapp/MatchingTrees.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::MatchingTrees.3',
+		    'lib/Parse/Eyapp/Node.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Node.3',
+		    'lib/Parse/Eyapp/Parse.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Parse.3',
+		    'lib/Parse/Eyapp/Scope.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Scope.3',
+		    'lib/Parse/Eyapp/translationschemestut.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::translationschemestut.3',
+		    'lib/Parse/Eyapp/Treeregexp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Treeregexp.3',
+		    'lib/Parse/Eyapp/YATW.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::YATW.3',
+                  },
     'PREREQ_PM' => { 
-                     List::Util   => "1.0", 
-                     Data::Dumper => "1.0",
-                     Pod::Usage   => "1.0", 
+                     'List::Util'   => "1.0", 
+                     'Data::Dumper' => "1.0",
+                     'Pod::Usage'   => "1.0", 
                      # Test::Warn => "0.08", # recommended
                      # Test::Exception => "0.2", # recommended
                      # Test::Pod => "1.0", # recommended
