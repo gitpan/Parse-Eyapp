@@ -2,7 +2,16 @@
 package Parse::Eyapp::Node;
 use strict;
 use Carp;
-use Parse::Eyapp::Base qw{firstval lastval};
+
+# A strange way to say:
+#                use Parse::Eyapp::Base qw{firstval lastval};
+# The reason is to support standalone modules
+BEGIN {
+  unless (Parse::Eyapp::Base->can('firstval')) {
+    require Parse::Eyapp::Base;
+  }
+  Parse::Eyapp::Base->import('firstval', 'lastval');
+}
 
 use Parse::Eyapp::YATW;
 #use base qw(Exporter);

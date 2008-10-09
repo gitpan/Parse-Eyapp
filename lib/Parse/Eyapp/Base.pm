@@ -4,26 +4,31 @@ use warnings;
 use Carp;
 use List::Util qw(first);
 
+BEGIN {
+  our @EXPORT_OK = qw(
+    compute_lines 
+    empty_method
+    slurp_file 
+    valid_keys 
+    invalid_keys 
+    write_file 
+    numbered
+    insert_function 
+    insert_method
+    delete_method
+    push_method
+    push_empty_method
+    pop_method
+    firstval
+    lastval
+    part
+  );
+  our %EXPORT_TAGS = ( 'all' => [ @EXPORT_OK ] );
+
+}
 use base qw(Exporter);
-our @EXPORT_OK = qw(
-  compute_lines 
-  empty_method
-  slurp_file 
-  valid_keys 
-  invalid_keys 
-  write_file 
-  numbered
-  insert_function 
-  insert_method
-  delete_method
-  push_method
-  push_empty_method
-  pop_method
-  firstval
-  lastval
-  part
-);
-our %EXPORT_TAGS = ( 'all' => [ @EXPORT_OK ] );
+
+our $FILENAME=__FILE__;
 
 sub firstval(&@) {
   my $handler = shift;

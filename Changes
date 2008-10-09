@@ -1,4 +1,5 @@
 Revision history for Perl extension Eyapp.
+1.121 - Standalone wasn't working: Parse::Eyapp::Base must be included
 1.118 - new with yyprefix
       - Avoided dependence of List::MoreUtils. It broke Eyapp in some architectures
 1.112 - Hal Finkel's patch for alias

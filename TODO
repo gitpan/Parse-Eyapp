@@ -1,5 +1,4 @@
   * common examples generated through the text template. Idem MANIFEST
-  * eyapp with prefix option
   * Lexical analyzer seems to be in a mess: line count seem full of bugs
 
   * delete_method isn't documented

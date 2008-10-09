@@ -87,10 +87,15 @@ sub Output {
   $FILENAME = '"'.$self->Option('inputfile').'"';
 
 	if ($self->Option('standalone')) {
-		$driver =_CopyModule($Parse::Eyapp::Driver::FILENAME);
+    # Copy Base, Driver, Node and YATW
+		$driver  =_CopyModule($Parse::Eyapp::Base::FILENAME);
+		$driver .=_CopyModule($Parse::Eyapp::Driver::FILENAME);
     $driver .= _CopyModule($Parse::Eyapp::Node::FILENAME);
+
+    # Remove the line use Parse::Eyapp::YATW
     $driver =~ s/\n\s*use Parse::Eyapp::YATW;\n//g;
     $driver .= _CopyModule($Parse::Eyapp::YATW::FILENAME);
+
     $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
   }
   else {

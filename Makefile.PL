@@ -4,23 +4,24 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-# Configuration variables: Change them if you change machine
+### Configuration variables: Change them if you change machine ###
 
 # Values in nereida
 
 # Directory where to publish file.
 
 #my $PUBLIC_PLACE = '/home/pl/public_html/perlexamples/';
-my $PUBLIC_PLACE = '/home/lusasoft/public_html/perlexamples/';
+my $PUBLIC_PLACE = "/home/$ENV{USER}/public_html/perlexamples/";
 
 # Run 'make test' in those machines via SSH
-my $MACHINES = 'orion beowulf';
+my $MACHINES = $ENV{MACHINES} || 'orion beowulf';
 
 # Where the remote.pl program is:
 #my $REMOTETEST = '/home/pp2/LGRID_Machine/scripts/remotetest.pl';
+# Be sure is in the path
 my $REMOTETEST = 'remotetest.pl';
 
-# END configuration variables
+################# END configuration variables #####################
 
 WriteMakefile(
     'NAME'	=> 'Parse::Eyapp',
