@@ -65,7 +65,7 @@ t/27unshiftinmyself.t
 t/28unshifttwoitems.t
 t/29foldinglistsofexpressions.t
 t/30complextreereg.t
-#t/32deletenodewithwarn.t
+t/32deletenodewithwarn.t
 t/33moveinvariantoutofloop.t
 t/34moveinvariantoutofloopcomplexformula.t
 t/35match.t
@@ -75,7 +75,7 @@ t/38tspostfix_resultisarray.t
 t/39tspostfix.t
 t/40wrongoptionforTreeregexp_new.t
 t/41indexbug.t
-#t/42pod.t
+t/42pod.t
 t/43dotandscalar.t
 t/44repeatedarray.t
 t/45starandarray.t
@@ -90,12 +90,17 @@ t/54alias_and_yyprefix.t
 t/55builder.t
 t/56equal.t
 t/57testequal.t
-#t/58standalone.t
+t/58standalone.t
 t/59newgrammarerrors.t
 t/60dynamicyyprefix_and_alias.t
+t/61standalonegift.t
+t/62docinsideeyapp.t
+t/63docwithdoublecut.t
+t/64standalonegiftandeyapp.t
+t/Gift.yp
 t/Calc.eyp
 #t/97podcoverage.t
-#t/99Cplusplusgrammar.t
+t/99Cplusplusgrammar.t
 examples/debuggingtut/aSb.yp
 examples/debuggingtut/bugyapp2.eyp
 examples/debuggingtut/bugyapp3.eyp

@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.121.
+#    This file was generated using Parse::Eyapp version 1.122.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -33,7 +33,15 @@ require 5.004;
 
 use Carp;
 
-my($input,$lexlevel,@lineno,$nberr,$prec,$labelno);
+my (
+  $input,
+  $lexlevel, # Used by the lexical analyzer. Controls in which section we are:
+             # head (0), body(1) or tail (2)
+  @lineno,   # Used by the lexical analyzer. $lineno[0] is the lione number for 
+             # the beginning of the token, $lineno[1] the end
+  $nberr,    # Number of errors up to now
+  $prec,
+  $labelno);
 my($syms,$head,$tail,$token,$term,$nterm,$rules,$precterm,$start,$nullable,
    $semantic);
 my($expect);
@@ -251,7 +259,7 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.121',
+    yyversion => '1.122',
     yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
@@ -1859,13 +1867,13 @@ sub _Lexer {
 
     #Skip blanks
             $lexlevel == 0
-        ?   $$input=~m{\G((?:
-                                [\t\ ]+    # Any white space char but \n
+        ?   $$input=~m{\G((?:             # Head section: \n separates declarations
+                                [\t\ ]+   # Any white space char but \n
                             |   \#[^\n]*  # Perl like comments
                             |   /\*.*?\*/ # C like comments
                             )+)}xsgc
         :   $$input=~m{\G((?:
-                                \s+       # any white space char
+                                \s+       # any white space char, including \n
                             |   \#[^\n]*  # Perl like comments
                             |   /\*.*?\*/ # C like comments
                             )+)}xsgc
@@ -1886,31 +1894,37 @@ sub _Lexer {
 
         $$input=~/\G( '                # opening apostrophe
                          (?:[^'\\]|    # an ordinary character
-                              \\\\|    # escaped \
-                               \\'|    # escaped apostrophe
-                                \\     # escape
+                              \\\\|    # escaped \ i.e. \\
+                               \\'|    # escaped apostrophe i.e. \'
+                                \\     # escape i.e. \
                         )+?            # non greedy repetitions
                       '                # closing apostrophe
                     )/gxc
     and do {
         my $string = $1;
+
+        # The string 'error' is reserved for the special token 'error'
             $string eq "'error'"
         and do {
             _SyntaxError(0,"Literal 'error' ".
                            "will be treated as error token",$lineno[0]);
             return('IDENT',[ 'error', $lineno[0] ]);
         };
+
         my $lines = $string =~ tr/\n//;
         _SyntaxError(2, "Constant string $string contains newlines",$lineno[0]) if $lines;
         $lineno[1] += $lines;
         return('LITERAL',[ $string, $lineno[0] ]);
     };
 
+    # New section: body or tail
         $$input=~/\G(%%)/gc
     and do {
         ++$lexlevel;
         return($1, [ $1, $lineno[0] ]);
     };
+
+
         $$input=~/\G%begin\s*{/gc
     and do {
         return ('BEGINCODE', &slurp_perl_code());
@@ -2194,5 +2208,11 @@ sub Parse {
 }
 
 
+
+=cut
+
+
+
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+
 1;

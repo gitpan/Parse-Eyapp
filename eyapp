@@ -40,10 +40,13 @@ if warnings are issued.
 =item I<-s>
 
 Create a standalone module in which the parsing driver is included.
-The modules including the LALR driver (C<Parse::Eyapp::Driver>),
-and those for AST manipulations (<Parse::Eyapp::Node> and
-<Parse::Eyapp::YATW>)) are included - almost verbatim - 
-inside the generated module. 
+The modules including the LALR driver (L<Parse::Eyapp::Driver>),
+those for AST manipulations (L<Parse::Eyapp::Node> and
+L<Parse::Eyapp::YATW>)) and L<Parse::Eyapp::Base> 
+are included - almost verbatim - inside the generated module. 
+
+Note that if you have more than one parser module called from a program, 
+to have it standalone, you need this option only for one of your grammars;
 
 =item I<-n>
 

@@ -28,14 +28,25 @@ use Carp;
 # Returns    : The string '{\n file contents }\n'  with pre and post comments
 # Parameters : a file name
 sub _CopyModule {
-  my $file = shift;
-
-	my $text ="\n{ ###########Included $file file\n  no warnings;\n";
+  my ($module, $function, $file) = @_;
 
   open(DRV,$file) or	die "BUG: could not open $file";
-	$text.= join('',<DRV>);
+	my $text = join('',<DRV>);
 	close(DRV);
-	$text.="\n} ###########End of include $file file\n";
+
+  my $label = $module;
+  $label =~ s/::/_/g;
+	return << "EOCODE";
+  # Loading $module
+  BEGIN {
+    unless ($module->can('$function')) {
+      eval << 'MODULE_$label'
+$text
+MODULE_$label
+    }; # Unless $module was loaded
+  } ########### End of BEGIN { load $file }
+
+EOCODE
 }
 
 ## This sub gives support to the "%tree alias" directive
@@ -74,6 +85,11 @@ sub Output {
 	$rules=$self->RulesTable();
 	$states=$self->DfaTable();
 	$tail= $self->Tail();
+
+  # In case the file ends with documentation and without a 
+  # =cut
+  #
+  $tail = $tail."\n\n=cut\n\n" unless $tail =~ /\n\n=cut\n/;
 	#local $Data::Dumper::Purity = 1;
 
   ($GRAMMAR, $PACKAGES) = $self->Rules();
@@ -88,13 +104,13 @@ sub Output {
 
 	if ($self->Option('standalone')) {
     # Copy Base, Driver, Node and YATW
-		$driver  =_CopyModule($Parse::Eyapp::Base::FILENAME);
-		$driver .=_CopyModule($Parse::Eyapp::Driver::FILENAME);
-    $driver .= _CopyModule($Parse::Eyapp::Node::FILENAME);
+		$driver  =_CopyModule('Parse::Eyapp::Base', 'firstval', $Parse::Eyapp::Base::FILENAME);
+		$driver .=_CopyModule('Parse::Eyapp::Driver','YYParse', $Parse::Eyapp::Driver::FILENAME);
+    $driver .= _CopyModule('Parse::Eyapp::Node', 'm', $Parse::Eyapp::Node::FILENAME);
 
     # Remove the line use Parse::Eyapp::YATW
     $driver =~ s/\n\s*use Parse::Eyapp::YATW;\n//g;
-    $driver .= _CopyModule($Parse::Eyapp::YATW::FILENAME);
+    $driver .= _CopyModule('Parse::Eyapp::YATW', 'm', $Parse::Eyapp::YATW::FILENAME);
 
     $makenodeclasses = '$self->make_node_classes('.$PACKAGES.');';
   }
@@ -179,7 +195,9 @@ sub new {
 }
 
 <<$tail>>
+
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+
 1;
 EOT
 }
