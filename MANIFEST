@@ -98,6 +98,7 @@ t/62docinsideeyapp.t
 t/63docwithdoublecut.t
 t/64standalonegiftandeyapp.t
 t/65yydebugandpod.t
+t/66yydebugstandaloneandpod.t
 t/Debug2.eyp
 t/Gift.yp
 t/Calc.eyp

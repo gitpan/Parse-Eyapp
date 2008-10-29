@@ -1,21 +1,28 @@
 #!/usr/bin/perl -w
 use strict;
-use Test::More tests=>4;
+use Test::More tests=>5;
 use_ok qw(Parse::Eyapp) or exit;
 
 SKIP: {
-  skip "Debug2.eyp not found", 3 unless ($ENV{DEVELOPER} && -r "t/Debug2.eyp" && -x "./eyapp");
+  skip "Debug2.eyp not found", 4 unless ($ENV{DEVELOPER} && -r "t/Debug2.eyp" && -x "./eyapp");
 
   unlink 't/Debug2.pm';
 
-  my $r = system('perl -I./lib/ eyapp t/Debug2.eyp');
+  my $r = system('perl -I./lib/ eyapp -s t/Debug2.eyp');
   
   ok(!$r, "yydebug option activated");
 
   ok(-s "t/Debug2.pm", ".pm generated with yydebug");
 
-  unshift @INC, 't/';
-  require Debug2;
+  my $eyapppath;
+  eval {
+    local $ENV{PERL5LIB};
+    $eyapppath = shift @INC; # Supress ~/LEyapp/lib from search path
+
+    require "t/Debug2.pm";
+  };
+  ok(!$@, "standalone generated module loaded");
+
 
   my $parser = Debug2->new();
 

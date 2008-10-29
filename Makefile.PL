@@ -25,7 +25,7 @@ my $REMOTETEST = 'remotetest.pl';
 
 WriteMakefile(
     'NAME'	=> 'Parse::Eyapp',
-    'VERSION' => '1.123', # finds $VERSION
+    'VERSION' => '1.124', # finds $VERSION
 #    'MAN3PODS' => { 
 #                    #'lib/Parse/Eyapp/Tutorial.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3' 
 #		    'lib/Parse/Eyapp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3',
