@@ -11,11 +11,13 @@ eyapp - A perl frontend to the Parse::Eyapp module
 
 =head1 SYNOPSYS
 
-eyapp [options] I<grammar>[.yp]
+  eyapp [options] I<grammar>[.eyp]
 
-eyapp I<-V>
+  eyapp [options] I<grammar>[.yp]
 
-eyapp I<-h>
+  eyapp I<-V>
+
+  eyapp I<-h>
 
 
 =head1 DESCRIPTION

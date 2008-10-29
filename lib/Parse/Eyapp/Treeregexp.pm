@@ -1921,6 +1921,8 @@ sub Parse::Eyapp::Treeregexp::GLOBALCODE::translate {
 
 
 
+=for None
+
 =cut
 
 

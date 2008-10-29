@@ -97,6 +97,8 @@ t/61standalonegift.t
 t/62docinsideeyapp.t
 t/63docwithdoublecut.t
 t/64standalonegiftandeyapp.t
+t/65yydebugandpod.t
+t/Debug2.eyp
 t/Gift.yp
 t/Calc.eyp
 #t/97podcoverage.t
@@ -235,4 +237,14 @@ examples/YATW/m2.pl
 examples/YATW/moveinvariantoutofloopcomplexformula.pl
 examples/YATW/Rule6.yp
 examples/YATW/Tail2.pm
+examples/Calculator/Makefile.PL
+examples/Calculator/MANIFEST
+examples/Calculator/README
+examples/Calculator/setperl5lib
+examples/Calculator/scripts/calc.pl
+examples/Calculator/t/Math-Calc.t
+examples/Calculator/lib/Math/Calc.eyp
+examples/Calculator/lib/Math/Calc.pod
+examples/Calculator/lib/Math/Calc.pm
+examples/Calculator/lib/Math/Tail.pm
 META.yml                                 Module meta-data (added by MakeMaker)

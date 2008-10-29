@@ -89,7 +89,7 @@ sub Output {
   # In case the file ends with documentation and without a 
   # =cut
   #
-  $tail = $tail."\n\n=cut\n\n" unless $tail =~ /\n\n=cut\n/;
+  $tail = $tail."\n\n=for None\n\n=cut\n\n" unless $tail =~ /\n\n=cut\n/;
 	#local $Data::Dumper::Purity = 1;
 
   ($GRAMMAR, $PACKAGES) = $self->Rules();

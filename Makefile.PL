@@ -25,7 +25,7 @@ my $REMOTETEST = 'remotetest.pl';
 
 WriteMakefile(
     'NAME'	=> 'Parse::Eyapp',
-    'VERSION_FROM' => 'lib/Parse/Eyapp/Driver.pm', # finds $VERSION
+    'VERSION' => '1.123', # finds $VERSION
 #    'MAN3PODS' => { 
 #                    #'lib/Parse/Eyapp/Tutorial.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3' 
 #		    'lib/Parse/Eyapp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3',
@@ -67,13 +67,8 @@ WriteMakefile(
 #              'lib/Parse/Eyapp/Node.pm' => '$(INST_LIBDIR)/Eyapp/Node.pm',
 #            },
 	'EXE_FILES' => [ 'eyapp', 'treereg', 'vgg' ],
-      ($] >= 5.005 ?     
-            (
-               ABSTRACT_FROM  => 'lib/Parse/Eyapp.pod', 
-               AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
-             ) 
-             : ()
-       ),
+   ABSTRACT_FROM  => 'lib/Parse/Eyapp.pod', 
+   AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
 );
 
 sub MY::postamble {

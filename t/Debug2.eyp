@@ -54,6 +54,6 @@ sub Run {
 	$input = shift;
 	
 	return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-                         yydebug => 0xF
+                         yydebug => 0x1F,
   );
 }
