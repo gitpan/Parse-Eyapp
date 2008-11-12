@@ -8,6 +8,9 @@
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 
+our $SVNREVISION = '$Rev: 2172 $';
+our $SVNDATE     = '$Date: 2008-11-04 11:11:54 +0000 (mar, 04 nov 2008) $';
+
 package Parse::Eyapp::Driver;
 
 require 5.006;
@@ -16,9 +19,10 @@ use strict;
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
-$VERSION = '1.124';
+
+$VERSION = "1.125";
 $COMPATIBLE = '0.07';
-$FILENAME=__FILE__;
+$FILENAME   =__FILE__;
 
 use Carp;
 
@@ -41,17 +45,21 @@ my(@params)=('LEX','RULES','STATES');
 
 sub new {
     my($class)=shift;
-	my($errst,$nberr,$token,$value,$check,$dotpos);
-    my($self)={ ERROR => \&_Error,
-				ERRST => \$errst,
-				NBERR => \$nberr,
-				TOKEN => \$token,
-				VALUE => \$value,
-				DOTPOS => \$dotpos,
-				STACK => [],
-				DEBUG => 0,
-				PREFIX => "",
-				CHECK => \$check };
+
+    my($errst,$nberr,$token,$value,$check,$dotpos);
+
+    my($self)={ 
+      ERROR => \&_Error,
+      ERRST => \$errst,
+      NBERR => \$nberr,
+      TOKEN => \$token,
+      VALUE => \$value,
+      DOTPOS => \$dotpos,
+      STACK => [],
+      DEBUG => 0,
+      PREFIX => "",
+      CHECK => \$check 
+    };
 
 	_CheckParams( [], \%newparams, \@_, $self );
 

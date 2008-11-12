@@ -3,11 +3,15 @@
 # source setperl5lib
 # Change the values for whatever is more convenient in your platform
 
-# To find eyapp and remotetest.pl
-export PATH=`pwd`/scripts:${PATH}:/home/pl/LEyapp/:/home/pp2/src/perl/GRID_Machine/scripts
 
-# To find Parse::Eyapp and GRID::Machine libraries
-export PERL5LIB=`pwd`/lib/:/home/pl/LEyapp/lib:/home/pp2/src/perl/GRID_Machine/lib
+# To find Math::Calc and Parse::Eyapp libraries
+#  In my machine Parse::Eyapp is two dirs above Calculator
+CP=`pwd`
+EYAPPPATH=${CP%%/examples/Calculator}
+export PERL5LIB=${CP}/lib:${EYAPPPATH}/lib:${PERL5LIB}
+#
+# To find eyapp and remotetest.pl
+export PATH=${CP}/scripts:${EYAPPPATH}:${PATH}
 
 # Used by some SKIP tests
 export DEVELOPER=1

@@ -176,6 +176,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 }; # end grammar
 
 
+unlink('main.pm', 't/main.pm');
+
 Parse::Eyapp->new_grammar(
   input=>$grammar, 
   classname=>'Alias', 
@@ -183,11 +185,13 @@ Parse::Eyapp->new_grammar(
   outputfile => 'main',
 );
 
-my $file = -d 't' ? 't/main.pm' : 'main.pm';
+#my $file = -d 't' ? 't/main.pm' : 'main.pm';
+# Please, investigate the 'ouputfile' parameter of new_grammar!!!!!!!!!!!!!!!
+my $file = 'main.pm';
 pod_file_ok( $file, "valid POD file from .yp" );
 
 my $generated = slurp_file($file);
 like($generated, 
-    qr{MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\s+=cut\s+#line}, 
+    qr{MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE\.\s+=for None\s+=cut\s+#line.*\s+1;}, 
    'documentation inside eyapp ends ok');
 }

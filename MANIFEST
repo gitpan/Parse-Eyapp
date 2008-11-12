@@ -36,6 +36,7 @@ lib/Parse/Eyapp/YATW.pm
 lib/Parse/Eyapp/YATW.pod
 lib/Parse/Eyapp.pm
 lib/Parse/Eyapp.pod
+lib/Parse/Eyapp/Cleaner.pm
 t/01calc.t
 t/03newgrammar.t
 t/04foldandzero.t
@@ -99,6 +100,7 @@ t/63docwithdoublecut.t
 t/64standalonegiftandeyapp.t
 t/65yydebugandpod.t
 t/66yydebugstandaloneandpod.t
+t/67outputfile.t
 t/Debug2.eyp
 t/Gift.yp
 t/Calc.eyp
@@ -238,14 +240,18 @@ examples/YATW/m2.pl
 examples/YATW/moveinvariantoutofloopcomplexformula.pl
 examples/YATW/Rule6.yp
 examples/YATW/Tail2.pm
+examples/Calculator/Changes
 examples/Calculator/Makefile.PL
 examples/Calculator/MANIFEST
 examples/Calculator/README
 examples/Calculator/setperl5lib
-examples/Calculator/scripts/calc.pl
-examples/Calculator/t/Math-Calc.t
 examples/Calculator/lib/Math/Calc.eyp
 examples/Calculator/lib/Math/Calc.pod
-examples/Calculator/lib/Math/Calc.pm
 examples/Calculator/lib/Math/Tail.pm
+examples/Calculator/scripts/calc.pl
+examples/Calculator/scripts/expressions1
+examples/Calculator/scripts/witherrors
+examples/Calculator/t/01smoke.t
+examples/Calculator/t/02semanticerrors.t
+examples/Calculator/t/03syntacticerrors.t
 META.yml                                 Module meta-data (added by MakeMaker)

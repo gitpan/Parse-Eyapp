@@ -5,7 +5,7 @@ use_ok qw(Parse::Eyapp) or exit;
 use_ok('Parse::Eyapp::Base', 'slurp_file') or exit;
 
 # The difference between this test and 62 is that the documentation has a =cut at the end
-#
+# and checks the 'outputfile' option of new_grammar with a full name
 
 my $test_pod_installed = 0;
 
@@ -181,17 +181,16 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 }; # end grammar
 
-unlink('main.pm', 't/main.pm');
+unlink('/tmp/main.pm');
 
 Parse::Eyapp->new_grammar(
   input=>$grammar, 
   classname=>'Alias', 
   firstline =>7,
-  outputfile => 'main',
+  outputfile => '/tmp/main.pm',
 );
 
-#my $file = -d 't' ? 't/main.pm' : 'main.pm';
-my $file = 'main.pm';
+my $file = '/tmp/main.pm';
 pod_file_ok( $file, "valid POD file from .yp" );
 
 my $generated = slurp_file($file);

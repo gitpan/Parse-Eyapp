@@ -7,6 +7,7 @@
 %{
 use Math::Tail;
 my %s; # symbol table
+our $VERSION = '1.1';
 %}
 
 %%
@@ -20,26 +21,44 @@ input: line *
 line:       
   '\n'         { undef }
   | exp '\n'   { print "$_[1]\n" if defined($_[1]); $_[1] }
+  | error  '\n'
+    {
+      $_[0]->YYErrok; # error recovery
+      undef
+    }
+
 ;
 
 exp:
-    $NUM                   { $NUM->[0]     }
-  | $VAR                   { $s{$VAR->[0]} }
-  | $VAR '=' $exp          { $s{$VAR->[0]} = $exp }
+    $NUM            { $NUM->[0] }
+  | $VAR                   
+     { 
+       my $id = $VAR->[0];
+       my $val = $s{$id};
+	 $_[0]->semantic_error("Accesing undefined variable $id at line $VAR->[1].\n") 
+       unless defined($val);
+       return $val;
+     }
+  | $VAR '=' $exp   { $s{$VAR->[0]} = $exp }
   | exp.x '+' exp.y { $x + $y }
   | exp.x '-' exp.y { $x - $y }
   | exp.x '*' exp.y { $x * $y }
-  | exp.x '/' exp.y         
+  | exp.x '/'.barr exp.y         
     {
-       $y and return($x/$y);
-       $_[0]->YYData->{ERRMSG} = "Illegal division by zero at line $_[2][1].\n";
-       $_[0]->YYError; 
+       return($x/$y) if $y;
+       $_[0]->semantic_error("Illegal division by zero at line $barr->[1].\n");
        undef
     }
   | '-' $exp %prec NEG  { -$exp }
-  | exp.x '^' exp.y { $x ** $y }
+  | exp.x '^' exp.y     { $x ** $y }
   | '(' $exp ')'        { $exp }
 ;
 
 %%
 
+sub semantic_error {
+  my ($parser, $msg) = @_;
+
+  $parser->YYData->{ERRMSG} = $msg;
+  $parser->YYError; 
+}

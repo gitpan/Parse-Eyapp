@@ -1,79 +1,67 @@
 use warnings;
 use strict;
 use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
+use File::Basename;
 
-### Configuration variables: Change them if you change machine ###
+### Configuration variables: Change them if you change machine ####
+### Depend on environment variables set via "source etc/setperl5lib" ##
 
-# Values in nereida
-
-# Directory where to publish file.
-
-#my $PUBLIC_PLACE = '/home/pl/public_html/perlexamples/';
-my $PUBLIC_PLACE = "/home/$ENV{USER}/public_html/perlexamples/";
+# Directory where to publish documentation.
+my $PUBLIC_PLACE = $ENV{PUBLIC_PLACE} || "/home/$ENV{USER}/public_html/perlexamples/";
 
 # Run 'make test' in those machines via SSH
-my $MACHINES = $ENV{MACHINES} || 'orion beowulf';
+my $MACHINES = $ENV{MACHINES} || '127.0.0.1 127.0.0.2';
 
 # Where the remote.pl program is:
-#my $REMOTETEST = '/home/pp2/LGRID_Machine/scripts/remotetest.pl';
 # Be sure is in the path
-my $REMOTETEST = 'remotetest.pl';
+my $REMOTETEST = $ENV{REMOTETEST} || 'remotetest.pl';
 
 ################# END configuration variables #####################
 
+open my $manifest ,'MANIFEST' or die "Can't find MANIFEST";
+my @PODS = grep { m{lib/Parse/.*\.pod$} } <$manifest>;
+chomp(@PODS);
+
+my @BASES = map { basename($_, '.pod') } @PODS;
+
+my $PODS = "@PODS";
+
+my $TEXS =  "@BASES";
+$TEXS =~ s/(\S+)/$1.tex/g;
+
+my $DVIS =  "@BASES";
+$DVIS =~ s/(\S+)/$1.dvi/g;
+
+my $PDFS =  "@BASES";
+$PDFS =~ s/(\S+)/$1.pdf/g;
+
+my $HTMLS =  "@BASES";
+$HTMLS =~ s/(\S+)/$1.html/g;
+
 WriteMakefile(
-    'NAME'	=> 'Parse::Eyapp',
-    'VERSION' => '1.124', # finds $VERSION
-#    'MAN3PODS' => { 
-#                    #'lib/Parse/Eyapp/Tutorial.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3' 
-#		    'lib/Parse/Eyapp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp.3',
-#		    'lib/Parse/Eyapp/Base.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Base.3',
-#		    'lib/Parse/Eyapp/debuggingtut.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::debuggingtut.3',
-#		    'lib/Parse/Eyapp/Driver.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Driver.3',
-#		    'lib/Parse/Eyapp/eyappintro.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::eyappintro.3',
-#		    'lib/Parse/Eyapp/eyapplanguageref.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::eyapplanguageref.3',
-#		    'lib/Parse/Eyapp/languageintro.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::languageintro.3',
-#		    'lib/Parse/Eyapp/MatchingTrees.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::MatchingTrees.3',
-#		    'lib/Parse/Eyapp/Node.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Node.3',
-#		    'lib/Parse/Eyapp/Parse.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Parse.3',
-#		    'lib/Parse/Eyapp/Scope.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Scope.3',
-#		    'lib/Parse/Eyapp/translationschemestut.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::translationschemestut.3',
-#		    'lib/Parse/Eyapp/Treeregexp.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::Treeregexp.3',
-#		    'lib/Parse/Eyapp/YATW.pod' => '$(INST_MAN3DIR)/Parse::Eyapp::YATW.3',
-#                  },
-    'PREREQ_PM' => { 
-                     'List::Util'   => "1.0", 
-                     'Data::Dumper' => "1.0",
-                     'Pod::Usage'   => "1.0", 
-                     # Test::Warn => "0.08", # recommended
-                     # Test::Exception => "0.2", # recommended
-                     # Test::Pod => "1.0", # recommended
-                   },
-#    'PM' => {
-#              'lib/Parse/Eyapp.pm' => '$(INST_LIBDIR)/Eyapp.pm',
-#              'lib/Parse/Eyapp/Base.pm' => '$(INST_LIBDIR)/Eyapp/Base.pm',
-#              'lib/Parse/Eyapp/Options.pm' => '$(INST_LIBDIR)/Eyapp/Options.pm',
-#              'lib/Parse/Eyapp/Driver.pm' => '$(INST_LIBDIR)/Eyapp/Driver.pm',
-#              'lib/Parse/Eyapp/Grammar.pm' => '$(INST_LIBDIR)/Eyapp/Grammar.pm',
-#              'lib/Parse/Eyapp/Lalr.pm' => '$(INST_LIBDIR)/Eyapp/Lalr.pm',
-#              'lib/Parse/Eyapp/Output.pm' => '$(INST_LIBDIR)/Eyapp/Output.pm',
-#              'lib/Parse/Eyapp/Parse.pm' => '$(INST_LIBDIR)/Eyapp/Parse.pm',
-#              'lib/Parse/Eyapp/YATW.pm' => '$(INST_LIBDIR)/Eyapp/YATW.pm',
-#              'lib/Parse/Eyapp/Treeregexp.pm' => '$(INST_LIBDIR)/Eyapp/Treeregexp.pm',
-#              'lib/Parse/Eyapp/Scope.pm' => '$(INST_LIBDIR)/Eyapp/Scope.pm',
-#              'lib/Parse/Eyapp/_TreeregexpSupport.pm' => '$(INST_LIBDIR)/Eyapp/_TreeregexpSupport.pm',
-#              'lib/Parse/Eyapp/Node.pm' => '$(INST_LIBDIR)/Eyapp/Node.pm',
-#            },
-	'EXE_FILES' => [ 'eyapp', 'treereg', 'vgg' ],
-   ABSTRACT_FROM  => 'lib/Parse/Eyapp.pod', 
-   AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
+    'NAME'         => 'Parse::Eyapp',
+    'VERSION_FROM' => 'lib/Parse/Eyapp.pm', # finds $VERSION
+    'PREREQ_PM'    => { 
+    'List::Util'   => "1.0", 
+    'Data::Dumper' => "1.0",
+    'Pod::Usage'   => "1.0", 
+    },
+    'EXE_FILES'    => [ 'eyapp', 'treereg', 'vgg' ],
+    ABSTRACT_FROM  => 'lib/Parse/Eyapp.pod', 
+    AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
 );
 
 sub MY::postamble {
 
+  return '' unless $ENV{DEVELOPER};
+
   $_ = targets();
+
+  s/<<PODS>>/$PODS/ge;
+  s/<<TEXS>>/$TEXS/ge;
+  s/<<DVIS>>/$DVIS/ge;
+  s/<<PDFS>>/$PDFS/ge;
+  s/<<HTMLS>>/$HTMLS/ge;
   s/<<PUBLIC_PLACE>>/$PUBLIC_PLACE/ge;
   s/<<MACHINES>>/$MACHINES/ge;
   s/<<REMOTETEST>>/$REMOTETEST/ge;
@@ -83,129 +71,177 @@ sub MY::postamble {
 
 sub targets {
   return <<'EOSQT';
-release: lib/Parse/Eyapp/Parse.yp
-	PERL5LIB=lib; eyapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
-	PERL5LIB=lib; $(PERL) -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
-	rm -fR Parse-Eyapp-*.tar.gz
+PODS=<<PODS>>
 
-doc:tt2/Eyapp.tt2 tt2/Treeregexp.tt2 tt2/Scope.tt2 tt2/Node.tt2 tt2/YATW.tt2 tt2/Driver.tt2 tt2/Parse.tt2 tt2/Base.tt2 tt2/debuggingtut.tt2 tt2/eyapplanguageref.tt2 tt2/eyappintro.tt2 tt2/translationschemestut.tt2
-	cd tt2; tpage  Eyapp.tt2 > ../lib/Parse/Eyapp.pod
-	cd tt2; tpage  Treeregexp.tt2 > ../lib/Parse/Eyapp/Treeregexp.pod
-	cd tt2; tpage  Scope.tt2 > ../lib/Parse/Eyapp/Scope.pod
-	cd tt2; tpage  Node.tt2 > ../lib/Parse/Eyapp/Node.pod
-	cd tt2; tpage  YATW.tt2 > ../lib/Parse/Eyapp/YATW.pod
-	cd tt2; tpage  Driver.tt2 > ../lib/Parse/Eyapp/Driver.pod
-	cd tt2; tpage  Parse.tt2 > ../lib/Parse/Eyapp/Parse.pod
-	cd tt2; tpage  Base.tt2 > ../lib/Parse/Eyapp/Base.pod
-	cd tt2; tpage  debuggingtut.tt2 > ../lib/Parse/Eyapp/debuggingtut.pod
-	cd tt2; tpage  eyapplanguageref.tt2 > ../lib/Parse/Eyapp/eyapplanguageref.pod
-	cd tt2; tpage  eyappintro.tt2 > ../lib/Parse/Eyapp/eyappintro.pod
-	cd tt2; tpage  translationschemestut.tt2 > ../lib/Parse/Eyapp/translationschemestut.pod
-	cd tt2; tpage  MatchingTrees.tt2 > ../lib/Parse/Eyapp/MatchingTrees.pod
+TEXS=<<TEXS>>
+
+DVIS=<<DVIS>>
+
+PDFS=<<PDFS>>
+
+HTMLS=<<HTMLS>>
+
+publicdist: release publichtml publicpdf dist 
+	chmod a+r Parse-Eyapp-*.tar.gz
+	cp Parse-Eyapp-*.tar.gz <<PUBLIC_PLACE>>Parse-Eyapp.tar.gz
+	cp Parse-Eyapp-*.tar.gz /tmp/
+	chmod a+r <<PUBLIC_PLACE>>Parse-Eyapp.tar.gz
+
+release: lib/Parse/Eyapp/Parse.yp
+	   yapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
+	   PERL5LIB=lib; eyapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
+	   PERL5LIB=lib; $(PERL) -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
+	   rm -fR Parse-Eyapp-*.tar.gz
 
 coverage:
 	cover -delete
 	make HARNESS_PERL_SWITCHES=-MDevel::Cover test
 	cover
 
-publicdist: release html pdf dist 
-	chmod a+r Parse-Eyapp-*.tar.gz
-	cp Parse-Eyapp-*.tar.gz <<PUBLIC_PLACE>>Parse-Eyapp.tar.gz
-	cp Parse-Eyapp-*.tar.gz /tmp/
-	chmod a+r <<PUBLIC_PLACE>>Parse-Eyapp.tar.gz
+remotetest: ${DISTVNAME}.tar.gz
+	<<REMOTETEST>> ${DISTVNAME}.tar.gz <<MACHINES>>
 
-xdvi: doc
-	pod2latex -full -prefile preamble.tex lib/Parse/Eyapp.pod
-	latex Eyapp.tex; makeindex Eyapp; latex Eyapp.tex 
-	pod2latex -full lib/Parse/Eyapp/eyapplanguageref.pod
-	latex eyapplanguageref.tex; makeindex eyapplanguageref; latex eyapplanguageref.tex 
-	pod2latex -full lib/Parse/Eyapp/eyappintro.pod
-	latex eyappintro.tex; makeindex eyappintro; latex eyappintro.tex 
-	pod2latex -full lib/Parse/Eyapp/debuggingtut.pod
-	latex debuggingtut.tex; makeindex debuggingtut; latex debuggingtut.tex 
-	pod2latex -full lib/Parse/Eyapp/Treeregexp.pod
-	latex Treeregexp.tex; makeindex Treeregexp; latex Treeregexp.tex 
-	pod2latex -full lib/Parse/Eyapp/Node.pod
-	latex Node.tex; makeindex Node; latex Node.tex 
-	pod2latex -full lib/Parse/Eyapp/YATW.pod
-	latex YATW.tex; makeindex YATW; latex YATW.tex 
-	pod2latex -full lib/Parse/Eyapp/translationschemestut.pod
-	latex translationschemestut.tex; makeindex translationschemestut; latex translationschemestut.tex 
-	pod2latex -full lib/Parse/Eyapp/Base.pod
-	latex Base.tex; makeindex Base; latex Base.tex 
-	pod2latex -full lib/Parse/Eyapp/Driver.pod
-	latex Driver.tex; makeindex Driver; latex Driver.tex 
-	pod2latex -full lib/Parse/Eyapp/MatchingTrees.pod
-	latex MatchingTrees.tex; makeindex MatchingTrees; latex MatchingTrees.tex 
+docclean:
+	rm -f *.tex *.dvi *.pdf *.toc *.ind *.ilg *.aux *.html
 
-pdf: xdvi
-	dvipdfm Eyapp.dvi
-	dvipdfm Treeregexp.dvi
-	dvipdfm debuggingtut.dvi
-	dvipdfm eyapplanguageref.dvi
-	dvipdfm eyappintro.dvi
-	dvipdfm Node.dvi
-	dvipdfm YATW.dvi
-	dvipdfm translationschemestut.dvi
-	dvipdfm Base.dvi
-	dvipdfm Driver.dvi
-	dvipdfm MatchingTrees.dvi
-	rm -f *.toc *.log *.idx *.aux
-	mv Eyapp.pdf Treeregexp.pdf \
-               debuggingtut.pdf \
-               eyapplanguageref.pdf \
-               eyappintro.pdf \
-               Node.pdf \
-               YATW.pdf \
-               translationschemestut.pdf \
-               Base.pdf \
-               Driver.pdf \
-               MatchingTrees.pdf \
-     <<PUBLIC_PLACE>>
+lib/Parse/Eyapp.pod: tt2/Eyapp.tt2
+	cd tt2; tpage  Eyapp.tt2 > ../lib/Parse/Eyapp.pod
+
+lib/Parse/Eyapp/%.pod:tt2/%.tt2
+	cd tt2; tpage  $*.tt2 > ../$@
+
+pods: ${PODS}
+
+%.dvi:%.tex
+	latex $*.tex; makeindex $*; latex $*.tex
+
+Eyapp.tex:lib/Parse/Eyapp.pod
+	pod2latex -full lib/Parse/Eyapp.pod
+
+%.tex:lib/Parse/Eyapp/%.pod
+	pod2latex -full lib/Parse/Eyapp/$*.pod
+
+texs: ${TEXS}
+
+%.html:%.pod
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc $*.pod  -o $@
+
+<<PUBLIC_PLACE>>%.pdf:%.pdf
+	cp $*.pdf <<PUBLIC_PLACE>>
 	chmod a+r <<PUBLIC_PLACE>>*.pdf
 
-html: doc
-	#rm -f Eyapp.html podindex.html podtoc.html
-	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc\
-                          lib/Parse/Eyapp.pod \
-													lib/Parse/Eyapp/Treeregexp.pod  \
-                          lib/Parse/Eyapp/Scope.pod \
-													lib/Parse/Eyapp/Node.pod \
-                          lib/Parse/Eyapp/Driver.pod \
-                          lib/Parse/Eyapp/YATW.pod\
-                          lib/Parse/Eyapp/Parse.pod\
-                          lib/Parse/Eyapp/debuggingtut.pod\
-                          lib/Parse/Eyapp/eyapplanguageref.pod\
-                          lib/Parse/Eyapp/eyappintro.pod\
-                          lib/Parse/Eyapp/Base.pod\
-                          lib/Parse/Eyapp/Driver.pod\
-                          eyapp\
-                          treereg\
-                          lib/Parse/Eyapp/MatchingTrees.pod\
-                          lib/Parse/Eyapp/translationschemestut.pod
-	#perl -e 's/^Cannot find page .*//gi' -i.bak -p Eyapp.html 
-	#perl -e 's/^Cannot find page .*//gi' -i.bak -p eyapp.html 
-	#perl -e 's/^Cannot find page .*//gi' -i.bak -p treereg.html 
-	mv Eyapp.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>Eyapp.html
-	mv eyapp.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>eyapp.html
-	mv treereg.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>treereg.html
-	mv translationschemestut.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>translationschemestut.html
-	mv Base.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>Base.html
-	mv Driver.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>Driver.html
-	mv Node.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>Node.html
-	mv YATW.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>YATW.html
-	mv MatchingTrees.html <<PUBLIC_PLACE>>
-	chmod a+r <<PUBLIC_PLACE>>MatchingTrees.html
+dvis: ${DVIS}
 
-remotetest:
-	<<REMOTETEST>> ${DISTVNAME}.tar.gz <<MACHINES>>
+%.pdf:%.dvi
+	dvipdfm $*.dvi 
+
+pdfs: ${PDFS}
+
+publicpdf: pdfs
+	mv ${PDFS} <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>*.pdf
+
+html: pods
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc\
+						${PODS} eyapp treereg
+	perl -e 's/^Cannot find .*//gi; s/\A\s+//' -p <<HTMLS>>  
+
+publichtml: html
+	mv ${HTMLS} eyapp.html treereg.html <<PUBLIC_PLACE>>
+	chmod a+r <<PUBLIC_PLACE>>/*.html
+	
 EOSQT
 }
+
+=head1 NAME 
+
+Makefile.PL - Makefile generator for Parse::Eyapp. Developer notes
+
+=head1 SYNOPSIS
+
+=over 2
+
+=item * To build a 'public release'
+
+  make release
+
+=item * Before realising a distribution in CPAN via PAUSE do:
+
+  make publicdist
+
+Remember to change the version number in L<Parse::Eyapp::Driver>
+and L<Parse::Eyapp>
+
+=item * To build the *.html files:
+
+   make html 
+
+=item * To build pdf files:
+
+   make pdfs
+
+=item * To build dvi files:
+
+   make dvis
+
+=item * To make public the *.html files:
+
+   make publichtml 
+
+=item * To make public pdf files:
+
+   make publicpdf
+
+=item * To delete generated docs (*.html, *.pdf, etc.)
+
+   make docclean
+
+=item * To run the tests on remote machines
+
+   make remotetest
+
+(Set the environment variable C<MACHINES>)
+
+=item * To use L<Devel::Cover> to study test coverage:
+
+   make coverage
+
+=back
+
+=head1 DEPENDENCIES
+
+To use this C<Makefile.PL> as developer is convenient to have installed:
+
+=over 2
+
+=item * Template toolkit
+
+=item * Pod2LaTeX
+
+=item * LaTeX
+
+=item * mpod2html
+
+=item * Devel::Cover
+
+=item * Parse::Yapp
+
+=back
+
+=head1 AUTHOR
+ 
+Casiano Rodriguez-Leon (casiano@ull.es)
+
+=head1 LICENCE AND COPYRIGHT
+ 
+Copyright (c) 2006-2008 Casiano Rodriguez-Leon (casiano@ull.es). All rights reserved.
+
+These modules are free software; you can redistribute it and/or
+modify it under the same terms as Perl itself. See L<perlartistic>.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+
+
+

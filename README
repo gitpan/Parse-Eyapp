@@ -1,7 +1,7 @@
 COPYRIGHT
 
 (c) 1998-2001 Francois Desarmenien owns the copyright for Parse::Yapp
-(c) 2006-2007 Parse::Eyapp by Casiano Rodriguez-Leon
+(c) 2006-2008 Parse::Eyapp by Casiano Rodriguez-Leon
 Parse::Eyapp uses and modifies all the files in the Parse::Yapp 1.05
 distribution.
 
@@ -20,8 +20,6 @@ using either 'perldoc treereg' or (on systems with man pages) 'man treereg'.
 Any help on improving those documentations is very welcome.
 
 DESCRIPTION
-
-This is alpha release 1.067 of the Parse::Eyapp parser generator.
 
 Parse::Eyapp (Extended yapp) is a collection of modules
 that extends Francois Desarmenien Parse::Yapp 1.05.
@@ -88,7 +86,7 @@ Send feedback, comments and bugs to:
 Casiano Rodriguez-Leon <casiano@ull.es>
 
 COPYRIGHT 
-(C) 2006-2007 by Casiano Rodriguez-Leon
+(C) 2006-2008 by Casiano Rodriguez-Leon
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.6 or,

@@ -1,6 +1,6 @@
 package Math::Tail;
 use base qw(Exporter);
-our @EXPORT = qw(_Error make_lexer Run);
+our @EXPORT = qw(_Error make_lexer Run uploadfile);
 
 sub _Error {
   my $parser = shift;
@@ -8,7 +8,7 @@ sub _Error {
 
     exists $yydata->{ERRMSG}
   and do {
-      print $yydata->{ERRMSG};
+      warn $yydata->{ERRMSG};
       delete $yydata->{ERRMSG};
       return;
   };
@@ -16,7 +16,7 @@ sub _Error {
   my($what)= $token->[0] ? "input: '$token->[0]'" : "end of input";
   my @expected = $parser->YYExpect();
   local $" = ', ';
-  print << "ERRMSG";
+  warn << "ERRMSG";
 
 Syntax error near $what (lin num $token->[1]). 
 Expected one of these terminals: @expected
@@ -31,8 +31,9 @@ sub make_lexer {
     my $parser = shift;
 
     $beginline = $lineno;
-    for ($$input) {
-      m{\G[ \t]*}gc;
+    for ($$input) {    # contextualize
+      m{\G[ \t]*(\#.*)?}gc;
+
       m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM', [$1, $beginline]);
       m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR', [$1, $beginline]);
       m{\G\n}gc                      and do { $lineno++; return ("\n", ["\n", $beginline]) };
@@ -53,6 +54,21 @@ sub Run {
       yyerror => \&_Error,
       yydebug => $yydebug, # 0x1F
     );
+}
+
+sub uploadfile {
+  my $file = shift;
+  my $msg = shift;
+
+  eval {
+    $input = Parse::Eyapp::Base::slurp_file($file) 
+  };
+  if ($@) {
+    print $msg;
+    local $/ = undef;
+    $input = <STDIN>;
+  }
+  return $input;
 }
 
 1;

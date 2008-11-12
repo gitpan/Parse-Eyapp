@@ -122,68 +122,94 @@ of declarations (C<D> stands for declaration)
 followed by lists of sentences (C<S> stands for stament)
 separated by semicolons:
 
-  pl@nereida:~/LEyapp/examples$ cat -n Debug.eyp
-   1  %token D S
-   2
-   3  %{
-   4  our $VERSION = '0.01';
-   5  %}
-   6
-   7  %%
-   8  p:
-   9                  ds ';' ss
-  10          |       ss
-  11  ;
-  12
-  13  ds:
-  14            D ';' ds
-  15          | D
-  16            {
-  17              print "Reducing by rule:\n";
-  18              print "\tds -> D\n";
-  19              $_[1];
-  20            }
-  21  ;
-  22
-  23  ss:
-  24            S ';' ss
-  25          | S
-  26  ;
-  27
-  28  %%
-  29
-  30  my $tokenline = 0;
-  31
-  32  sub _Error {
-  33          my $parser = shift;
-  34          my ($token) = $parser->YYCurval;
-  35          my ($what) = $token ? "input: '$token'" : "end of input";
-  36          die "Syntax error near $what line num $tokenline\n";
-  37  }
-  38
-  39  my $input;
-  40
-  41  sub _Lexer {
-  42
-  43          for ($input) {
-  44            s{^(\s)}{} and $tokenline += $1 =~ tr{\n}{};
-  45            return ('',undef) unless $_;
-  46            return ($1,$1) if s/^(.)//;
-  47          }
-  48          return ('',undef);
-  49  }
-  50
-  51  sub Run {
-  52          my ($self) = shift;
-  53
-  54          $input = shift;
-  55
-  56          return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-  57                           yydebug => 0xF
-  58    );
-  59  }
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n Debug.eyp
+     1  %token D S
+     2
+     3  %{
+     4  our $VERSION = '0.01';
+     5  %}
+     6
+     7  %%
+     8  p:
+     9                  ds ';' ss
+    10          |       ss
+    11  ;
+    12
+    13  ds:
+    14            D ';' ds
+    15          | D
+    16      {
+    17        print "Reducing by rule:\n";
+    18        print "\tds -> D\n";
+    19        $_[1];
+    20      }
+    21  ;
+    22
+    23  ss:
+    24            S ';' ss
+    25          | S
+    26  ;
+    27
+    28  %%
+    29
+    30  my $tokenline = 0;
+    31
+    32  sub _Error {
+    33          my $parser = shift;
+    34          my ($token) = $parser->YYCurval;
+    35          my ($what) = $token ? "input: '$token'" : "end of input";
+    36          die "Syntax error near $what line num $tokenline\n";
+    37  }
+    38
+    39  my $input;
+    40
+    41  sub _Lexer {
+    42
+    43          for ($input) {
+    44        s{^(\s)}{} and $tokenline += $1 =~ tr{\n}{};
+    45              return ('',undef) unless $_;
+    46        return ($1,$1) if s/^(.)//;
+    47          }
+    48          return ('',undef);
+    49  }
+    50
+    51  sub Run {
+    52          my ($self) = shift;
+    53
+    54          $input = shift;
+    55
+    56          return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
+    57                           yydebug => 0xF
+    58    );
+    59  }
 
-When compiling,
+Sometimes the presence of actions, attribute names and support code 
+makes more difficult the readability of the grammar. Yuo can use the C<-c>
+option of eyapp, to see only the syntactic parts:
+
+  $ eyapp -c examples/debuggingtut/Debug.eyp
+  %token D S
+
+  %%
+
+  p:
+        ds ';' ss
+      | ss
+  ;
+  ds:
+        D ';' ds
+      | D
+  ;
+  ss:
+        S ';' ss
+      | S
+  ;
+
+  $
+
+
+
+When compiling this grammar,
 C<eyapp> produces a warning message announcing the existence of a
 conflict:
 

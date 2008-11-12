@@ -1,3 +1,9 @@
+  * Implement an eyapp optioon -strip or -grammar
+    That will produce the naked grammar without semantic actions, 
+    attribute names, %name directives,e tc.
+  * Implement the directive
+       %package Math::Calc 
+    (like the option -m of eyapp)
   * common examples generated through the text template. Idem MANIFEST
   * Lexical analyzer seems to be in a mess: line count seem full of bugs
 
