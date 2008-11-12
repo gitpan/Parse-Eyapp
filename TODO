@@ -1,6 +1,4 @@
-  * Implement an eyapp optioon -strip or -grammar
-    That will produce the naked grammar without semantic actions, 
-    attribute names, %name directives,e tc.
+  * PUBLIC_PLACE implies to copy to a remote machine (nereida)
   * Implement the directive
        %package Math::Calc 
     (like the option -m of eyapp)

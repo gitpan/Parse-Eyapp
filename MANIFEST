@@ -102,10 +102,12 @@ t/65yydebugandpod.t
 t/66yydebugstandaloneandpod.t
 t/67outputfile.t
 t/68cleangrammar.t
+t/69cleanwithvgrammar.t
 t/Debug2.eyp
 t/Gift.yp
 t/Calc.eyp
 #t/97podcoverage.t
+t/98nopm.t
 t/99Cplusplusgrammar.t
 examples/debuggingtut/aSb.yp
 examples/debuggingtut/bugyapp2.eyp

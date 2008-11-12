@@ -7,7 +7,7 @@ my $lexlevel = 0;  # Used by the lexical analyzer. Controls in which section we 
 my (
   $input,
              # head (0), body(1) or tail (2)
-  @lineno,   # Used by the lexical analyzer. $lineno[0] is the lione number for 
+  @lineno,   # Used by the lexical analyzer. $lineno[0] is the line number for 
              # the beginning of the token, $lineno[1] the end
   $nberr,    # Number of errors up to now
 );
@@ -42,92 +42,102 @@ sub controller {
   print "\n";
 }
 
-my $output = '';
+{
 
-sub _generate {
-  $output .= sprintf "%s"x@_, @_;
-}
+  my $output = '';
 
-my $delete_set = qr{CODE|BLANKS|DEFAULTACTION|\n|\$};
-my $end_cr_set = qr{\n\s*$|^\s*$};
+  sub _generate {
+    $output .= sprintf "%s"x@_, @_;
+  }
 
-sub ppcontroller {
-  $input = shift;
-  my $depth = 0;
+  sub ppcontroller {
+    $input = shift;
+    my %args = @_;
 
-  my $ouput = '';
+    my $skipcomments = $args{skipcomments}? '|COMMENT' : '';
 
-  my ($ptoken, $pattr) = ('', ['', -1]);
-  while () {
+    my $depth = 0;
 
-   my ($token, $attr) =  _Lexer();
+    my $delete_set = 'CODE|BLANKS|DEFAULTACTION|\n|\$'.$skipcomments;
+    $delete_set = qr{$delete_set};
 
-   last unless $token;
+    my $end_cr_set = qr{\n\s*$|^\s*$};
 
-   next if $token eq '$';
-   next unless defined(reftype($attr)) && defined($attr->[0]);
 
-   if ($token eq '.') {                 # attribute name
-     ($token, $attr) =  _Lexer();
-   }
-   elsif ($token eq 'NAME') {
-     trim($attr->[0]);
-     my $g = ($depth == 0)? "\n      " : " ";
-     _generate $attr->[0].$g;
-   }
-   elsif ($token =~ /\b(VARIABLE)\b/) {
-     my $g = ($output =~ $end_cr_set)? '': "\n"; 
-     _generate $g.$attr->[0]."\n      ";
-   }
-   elsif ($token =~ /\b(IDENT|LITERAL)\b/) {
-     _generate $attr->[0]." ";
-   }
-   elsif ($token =~ /(PREC|STAR|PLUS|OPTION|[)(])/) {
-     $depth++ if $token eq '(';
-     $depth-- if $token eq ')';
-     _generate $attr->[0]." ";
-   }
-   elsif ($token =~ /\b(TOKEN|ASSOC|SYNTACTIC|SEMANTIC|STRICT|START)\b/) {
-     my $g = ($output =~ $end_cr_set)? '': "\n"; 
-     _generate $g.$attr->[0]." ";
-   }
-   elsif ($token =~ /TREE/) {
-     _generate "\n".$attr->[0]."\n";
-   }
-   elsif ($token eq ':') {
-     _generate ":\n      ";
-   }
-   elsif ($token eq '|') {
-     my $g = ($output =~ $end_cr_set)? '': "\n  "; 
-     _generate "$g  | ";
-     #_generate "\n  ".$attr->[0]." ";
-   }
-   elsif ($token eq ';') {
-     my $g;
-     if ($output =~ m{[:|]\s*$}) {
-       $g = "/* empty */\n";
+    my $ouput = '';
+
+    my ($ptoken, $pattr) = ('', ['', -1]);
+    while () {
+
+     my ($token, $attr) =  _Lexer();
+
+     last unless $token;
+
+     next if $token eq '$';
+     next unless defined(reftype($attr)) && defined($attr->[0]);
+
+     if ($token eq '.') {                 # attribute name
+       ($token, $attr) =  _Lexer();
      }
-     elsif ($output =~ $end_cr_set) {
-       $g = '';
+     elsif ($token eq 'NAME') {
+       trim($attr->[0]);
+       my $g = ($depth == 0)? "\n      " : " ";
+       _generate $attr->[0].$g;
+     }
+     elsif ($token =~ /\b(VARIABLE)\b/) {
+       my $g = ($output =~ $end_cr_set)? '': "\n"; 
+       _generate $g.$attr->[0]."\n      ";
+     }
+     elsif ($token =~ /\b(IDENT|LITERAL)\b/) {
+       _generate $attr->[0]." ";
+     }
+     elsif ($token =~ /(PREC|STAR|PLUS|OPTION|[)(])/) {
+       $depth++ if $token eq '(';
+       $depth-- if $token eq ')';
+       _generate $attr->[0]." ";
+     }
+     elsif ($token =~ /\b(TOKEN|ASSOC|SYNTACTIC|SEMANTIC|STRICT|START)\b/) {
+       my $g = ($output =~ $end_cr_set)? '': "\n"; 
+       _generate $g.$attr->[0]." ";
+     }
+     elsif ($token =~ /TREE/) {
+       _generate "\n".$attr->[0]."\n";
+     }
+     elsif ($token eq ':') {
+       _generate ":\n      ";
+     }
+     elsif ($token eq '|') {
+       my $g = ($output =~ $end_cr_set)? '': "\n  "; 
+       _generate "$g  | ";
+       #_generate "\n  ".$attr->[0]." ";
+     }
+     elsif ($token eq ';') {
+       my $g;
+       if ($output =~ m{[:|]\s*$}) {
+         $g = "/* empty */\n";
+       }
+       elsif ($output =~ $end_cr_set) {
+         $g = '';
+       }
+       else {
+         $g =  "\n"; 
+       }
+       _generate "$g;\n";
+     }
+     elsif ($token eq '%%') {
+       my $g = ($output =~ $end_cr_set)? '': "\n"; 
+       _generate "$g\n%%\n\n"; 
      }
      else {
-       $g =  "\n"; 
+       _generate $attr->[0] unless ($token =~ $delete_set);
      }
-     _generate "$g;\n";
-   }
-   elsif ($token eq '%%') {
-     my $g = ($output =~ $end_cr_set)? '': "\n"; 
-     _generate "$g\n%%\n\n"; 
-   }
-   else {
-     _generate $attr->[0] unless ($token =~ $delete_set);
-   }
-   ($ptoken, $pattr) =  ($token, $attr);
-  } 
-  _generate "\n";
+     ($ptoken, $pattr) =  ($token, $attr);
+    } 
+    _generate "\n";
 
-  print $output;
-}
+    print $output;
+  }
+} # end closure
 
 sub slurp_perl_code {
   my($level,$from,$code);

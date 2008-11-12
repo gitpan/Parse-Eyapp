@@ -79,7 +79,7 @@ eval {
 like($@, qr/Error in  new_grammar: Please provide a name for the grammar/, 'class not provided for new_grammar');
 
 eval {
-  Parse::Eyapp->new_grammar(input=>$grammar, classname=>'AB', firstline => 9, outputfile => 'AB.pm')
+  Parse::Eyapp->new_grammar(input=>$grammar, classname=>'AB', firstline => 9,); # outputfile => 'AB.pm')
 };
 
 like($@, qr/Error while compiling your parser:/, 'grammar has semantic errors');

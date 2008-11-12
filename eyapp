@@ -15,11 +15,13 @@ eyapp - A perl frontend to the Parse::Eyapp module
 
   eyapp [options] grammar[.yp]
 
-  eyapp -c grammar.eyp
+  eyapp -V               # Produce .output file
 
-  eyapp -V
+  eyapp -h               # help
 
-  eyapp -h
+  eyapp -c grammar.eyp   # Strip semantic actions
+
+  eyapp -vc grammar.eyp  # Strip comments also
 
 
 =head1 DESCRIPTION
@@ -71,7 +73,8 @@ I<-m A::Module::Name> (see below), to F<Name.pm>.
 =item I<-c grammar>[.eyp]
 
 Produces as output (STDOUT) the grammar without the actions. Only the syntactic
-parts are displayed
+parts are displayed. Comments will be also stripped 
+if the C<-v> option is added.
 
 
 =item I<-t filename>
@@ -234,7 +237,8 @@ and do {
      close($file);
 
      require Parse::Eyapp::Cleaner;
-     Parse::Eyapp::Cleaner::ppcontroller(\$opt_c);
+     my @args = $opt_v ? (skipcomments => 1) : ();
+     Parse::Eyapp::Cleaner::ppcontroller(\$opt_c, @args);
      exit(0);
   };
 

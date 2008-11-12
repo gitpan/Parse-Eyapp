@@ -195,3 +195,5 @@ like($generated,
     qr{MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE\.\s+=for None\s+=cut\s+#line.*\s+1;}, 
    'documentation inside eyapp ends ok');
 }
+
+unlink('main.pm', 't/main.pm');
