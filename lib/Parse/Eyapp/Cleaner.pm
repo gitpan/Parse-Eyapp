@@ -53,6 +53,7 @@ my $end_cr_set = qr{\n\s*$|^\s*$};
 
 sub ppcontroller {
   $input = shift;
+  my $depth = 0;
 
   my $ouput = '';
 
@@ -66,12 +67,13 @@ sub ppcontroller {
    next if $token eq '$';
    next unless defined(reftype($attr)) && defined($attr->[0]);
 
-   if ($token eq '.') {
+   if ($token eq '.') {                 # attribute name
      ($token, $attr) =  _Lexer();
    }
    elsif ($token eq 'NAME') {
      trim($attr->[0]);
-     _generate $attr->[0]."\n      ";
+     my $g = ($depth == 0)? "\n      " : " ";
+     _generate $attr->[0].$g;
    }
    elsif ($token =~ /\b(VARIABLE)\b/) {
      my $g = ($output =~ $end_cr_set)? '': "\n"; 
@@ -80,7 +82,9 @@ sub ppcontroller {
    elsif ($token =~ /\b(IDENT|LITERAL)\b/) {
      _generate $attr->[0]." ";
    }
-   elsif ($token =~ /\b(PREC|STAR|PLUS|OPTION|[)(])\b/) {
+   elsif ($token =~ /(PREC|STAR|PLUS|OPTION|[)(])/) {
+     $depth++ if $token eq '(';
+     $depth-- if $token eq ')';
      _generate $attr->[0]." ";
    }
    elsif ($token =~ /\b(TOKEN|ASSOC|SYNTACTIC|SEMANTIC|STRICT|START)\b/) {
@@ -113,7 +117,7 @@ sub ppcontroller {
    }
    elsif ($token eq '%%') {
      my $g = ($output =~ $end_cr_set)? '': "\n"; 
-     _generate "$g\n%%\n\n"; # unless $lexlevel > 1;
+     _generate "$g\n%%\n\n"; 
    }
    else {
      _generate $attr->[0] unless ($token =~ $delete_set);
@@ -328,9 +332,8 @@ sub _Lexer {
             $$input=~/\G((%name\s*([A-Za-z_][A-Za-z0-9_]*)\s*)?\?)/gc
         and return('OPTION',[ $1, $lineno[0] ]);
 
-            $$input=~/\G(%no\s+bypass)/gc
+            $$input=~/\G(%no\s+bypass\s+[A-Za-z_][A-Za-z0-9_]*\s*)/gc
         and do {
-          #my $bp = defined($1)?0:1; 
           return('NAME',[ $1, $lineno[0] ]);
         };
 

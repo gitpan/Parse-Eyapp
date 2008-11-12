@@ -101,6 +101,7 @@ t/64standalonegiftandeyapp.t
 t/65yydebugandpod.t
 t/66yydebugstandaloneandpod.t
 t/67outputfile.t
+t/68cleangrammar.t
 t/Debug2.eyp
 t/Gift.yp
 t/Calc.eyp
