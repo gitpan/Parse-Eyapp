@@ -35,7 +35,7 @@ exp:
      { 
        my $id = $VAR->[0];
        my $val = $s{$id};
-	 $_[0]->semantic_error("Accesing undefined variable $id at line $VAR->[1].\n") 
+       $_[0]->semantic_error("Accesing undefined variable $id at line $VAR->[1].\n") 
        unless defined($val);
        return $val;
      }

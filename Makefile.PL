@@ -1,42 +1,8 @@
 use warnings;
 use strict;
+use Carp;
 use ExtUtils::MakeMaker;
 use File::Basename;
-
-### Configuration variables: Change them if you change machine ####
-### Depend on environment variables set via "source etc/setperl5lib" ##
-
-# Directory where to publish documentation.
-my $PUBLIC_PLACE = $ENV{PUBLIC_PLACE} || "/home/$ENV{USER}/public_html/perlexamples/";
-
-# Run 'make test' in those machines via SSH
-my $MACHINES = $ENV{MACHINES} || '127.0.0.1 127.0.0.2';
-
-# Where the remote.pl program is:
-# Be sure is in the path
-my $REMOTETEST = $ENV{REMOTETEST} || 'remotetest.pl';
-
-################# END configuration variables #####################
-
-open my $manifest ,'MANIFEST' or die "Can't find MANIFEST";
-my @PODS = grep { m{lib/Parse/.*\.pod$} } <$manifest>;
-chomp(@PODS);
-
-my @BASES = map { basename($_, '.pod') } @PODS;
-
-my $PODS = "@PODS";
-
-my $TEXS =  "@BASES";
-$TEXS =~ s/(\S+)/$1.tex/g;
-
-my $DVIS =  "@BASES";
-$DVIS =~ s/(\S+)/$1.dvi/g;
-
-my $PDFS =  "@BASES";
-$PDFS =~ s/(\S+)/$1.pdf/g;
-
-my $HTMLS =  "@BASES";
-$HTMLS =~ s/(\S+)/$1.html/g;
 
 WriteMakefile(
     'NAME'         => 'Parse::Eyapp',
@@ -51,26 +17,80 @@ WriteMakefile(
     AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
 );
 
+sub listwithsuffix {
+  my $suffix = shift;
+  my $lws =  "@_";
+
+  $lws =~ s/(\S+)/$1$suffix/xg;
+  return  $lws;
+}
+
 sub MY::postamble {
 
-  return '' unless $ENV{DEVELOPER};
+  return '' unless defined($ENV{DEVELOPER}) && ($ENV{DEVELOPER} eq 'casiano');
 
-  $_ = targets();
+  ### Configuration variables: Change them if you change machine ####
+  ### Depend on environment variables set via "source etc/setperl5lib" ##
 
-  s/<<PODS>>/$PODS/ge;
-  s/<<TEXS>>/$TEXS/ge;
-  s/<<DVIS>>/$DVIS/ge;
-  s/<<PDFS>>/$PDFS/ge;
-  s/<<HTMLS>>/$HTMLS/ge;
-  s/<<PUBLIC_PLACE>>/$PUBLIC_PLACE/ge;
-  s/<<MACHINES>>/$MACHINES/ge;
-  s/<<REMOTETEST>>/$REMOTETEST/ge;
+  my ($PUBLIC_PLACE, $MACHINES, $REMOTETEST);
+
+  ################# END configuration variables #####################
+
+  my ($manifest, @PODS, @BASES);
+
+  open($manifest ,'<', 'MANIFEST') or croak "Can't find MANIFEST";
+
+    @PODS = grep { m{lib/Parse/.*\.pod$}x } <$manifest>;
+
+  close($manifest) or return '';
+
+  chomp(@PODS); # i.e. ( lib/Parse/Eyapp/Base.pod, lib/Parse/Eyapp/debuggingtut.pod, lib/Parse/Eyapp/Driver.pod ... )
+
+  return '' unless @PODS;
+
+  my ($PODS, $TEXS, $DVIS, $PDFS, $HTMLS);
+
+  # Directory where to publish documentation.
+  $PUBLIC_PLACE = $ENV{PUBLIC_PLACE} || "/home/$ENV{USER}/public_html/perlexamples/";
+
+  # Run 'make test' in those machines via SSH
+  $MACHINES = $ENV{MACHINES} || '127.0.0.1 127.0.0.2';
+
+  # Where the remote.pl program is:
+  # Be sure is in the path
+  $REMOTETEST = $ENV{REMOTETEST} || 'remotetest.pl';
+
+  @BASES = map { basename($_, '.pod') } @PODS; # i. e. ( Base.pod, debuggingtut.pod, ... )
+
+  $PODS = "@PODS";
+
+  $TEXS =  listwithsuffix(".tex", @BASES);
+
+  $DVIS =  listwithsuffix(".dvi", @BASES);
+
+  $PDFS =  listwithsuffix(".pdf", @BASES);
+
+  $HTMLS = listwithsuffix(".html", @BASES);
+
+  $_ = targets(
+    PODS         => $PODS, 
+    TEXS         => $TEXS, 
+    DVIS         => $DVIS, 
+    PDFS         => $PDFS, 
+    HTMLS        => $HTMLS, 
+    PUBLIC_PLACE => $PUBLIC_PLACE, 
+    MACHINES     => $MACHINES,
+    REMOTETEST   => $REMOTETEST
+  );
+
+
   return $_;
 }
 
-
 sub targets {
-  return <<'EOSQT';
+  my %var = @_;
+
+  $_ = <<'EOSQT';
 PODS=<<PODS>>
 
 TEXS=<<TEXS>>
@@ -81,7 +101,7 @@ PDFS=<<PDFS>>
 
 HTMLS=<<HTMLS>>
 
-publicdist: release publichtml publicpdf dist 
+publicdist: docclean release publichtml publicpdf dist 
 	chmod a+r Parse-Eyapp-*.tar.gz
 	cp Parse-Eyapp-*.tar.gz <<PUBLIC_PLACE>>Parse-Eyapp.tar.gz
 	cp Parse-Eyapp-*.tar.gz /tmp/
@@ -102,7 +122,7 @@ remotetest: ${DISTVNAME}.tar.gz
 	<<REMOTETEST>> ${DISTVNAME}.tar.gz <<MACHINES>>
 
 docclean:
-	rm -f *.tex *.dvi *.pdf *.toc *.ind *.ilg *.aux *.html
+	rm -f *.tex *.dvi *.pdf *.toc *.ind *.ilg *.aux *.html *.log *.idx
 
 lib/Parse/Eyapp.pod: tt2/Eyapp.tt2
 	cd tt2; tpage  Eyapp.tt2 > ../lib/Parse/Eyapp.pod
@@ -134,6 +154,7 @@ dvis: ${DVIS}
 
 %.pdf:%.dvi
 	dvipdfm $*.dvi 
+	rm -f $*.aux  $*.dvi  $*.idx  $*.ilg  $*.ind  $*.log  $*.tex  $*.toc
 
 pdfs: ${PDFS}
 
@@ -151,7 +172,18 @@ publichtml: html
 	chmod a+r <<PUBLIC_PLACE>>/*.html
 	
 EOSQT
+
+  # Replace variables
+  # TODO: Check that all <<variables>> are present in @_
+  for my $k (keys(%var)) {
+	  my $r = $var{$k};
+    s/<<$k>>/$r/ge;
+  }
+
+  return $_;
 }
+
+__END__
 
 =head1 NAME 
 
