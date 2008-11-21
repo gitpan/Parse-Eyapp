@@ -14,7 +14,7 @@ export PERL5LIB=${CP}/lib:${EYAPPPATH}/lib:${PERL5LIB}
 export PATH=${CP}/scripts:${EYAPPPATH}:${PATH}
 
 # Used by some SKIP tests
-export DEVELOPER=1
+export DEVELOPER=casiano
 
 # To simplify some svn commands
 export SVNR=svn+ssh://casiano@orion.pcg.ull.es/var/svn/casiano/PL/YappWithDefaultAction/trunk/examples/Calculator

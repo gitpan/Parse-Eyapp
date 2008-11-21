@@ -91,6 +91,8 @@ sub targets {
   my %var = @_;
 
   $_ = <<'EOSQT';
+PLTAGS=/usr/share/vim/vim71/tools/pltags.pl
+
 PODS=<<PODS>>
 
 TEXS=<<TEXS>>
@@ -171,6 +173,9 @@ publichtml: html
 	mv ${HTMLS} eyapp.html treereg.html <<PUBLIC_PLACE>>
 	chmod a+r <<PUBLIC_PLACE>>/*.html
 	
+tags: Makefile
+	#${PLTAGS} eyapp treereg lib/Parse/Eyapp/
+	ctags -a --exclude=examples --exclude=t --exclude=doc --exclude=tt2
 EOSQT
 
   # Replace variables

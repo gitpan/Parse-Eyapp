@@ -115,9 +115,11 @@ examples/debuggingtut/bugyapp3.eyp
 examples/debuggingtut/Debug1.eyp
 examples/debuggingtut/Debug2.eyp
 examples/debuggingtut/Debug.eyp
+examples/debuggingtut/DebugLookForward.eyp
 examples/debuggingtut/use_aSb.pl
 examples/debuggingtut/usedebug1.pl
 examples/debuggingtut/usedebug2.pl
+examples/debuggingtut/usedebuglookforward.pl
 examples/debuggingtut/reducereduceconflict.eyp
 examples/debuggingtut/reducereduceconflict_fix2.eyp
 examples/debuggingtut/shiftreduceconflict.eyp
@@ -247,7 +249,7 @@ examples/Calculator/Changes
 examples/Calculator/Makefile.PL
 examples/Calculator/MANIFEST
 examples/Calculator/README
-examples/Calculator/setperl5lib
+examples/Calculator/etc/setperl5lib
 examples/Calculator/lib/Math/Calc.eyp
 examples/Calculator/lib/Math/Calc.pod
 examples/Calculator/lib/Math/Tail.pm

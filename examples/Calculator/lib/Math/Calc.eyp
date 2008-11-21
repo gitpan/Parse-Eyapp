@@ -1,3 +1,4 @@
+%token NUM VAR
 %right  '='
 %left   '-' '+'
 %left   '*' '/'
@@ -62,3 +63,4 @@ sub semantic_error {
   $parser->YYData->{ERRMSG} = $msg;
   $parser->YYError; 
 }
+

@@ -2,7 +2,6 @@ Changes
 Makefile.PL
 MANIFEST
 README
-setperl5lib
 scripts/calc.pl
 scripts/expressions1
 scripts/witherrors

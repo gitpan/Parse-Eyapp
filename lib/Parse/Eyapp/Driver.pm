@@ -8,8 +8,8 @@
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 
-our $SVNREVISION = '$Rev: 2206 $';
-our $SVNDATE     = '$Date: 2008-11-12 15:26:56 +0000 (mié, 12 nov 2008) $';
+our $SVNREVISION = '$Rev: 2269 $';
+our $SVNDATE     = '$Date: 2008-11-21 11:36:14 +0000 (vie, 21 nov 2008) $';
 
 package Parse::Eyapp::Driver;
 
@@ -20,7 +20,7 @@ use strict;
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
-$VERSION = "1.128";
+$VERSION = "1.129";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -28,16 +28,16 @@ use Carp;
 
 #Known parameters, all starting with YY (leading YY will be discarded)
 my(%params)=(YYLEX => 'CODE', 'YYERROR' => 'CODE', YYVERSION => '',
-	     YYRULES => 'ARRAY', YYSTATES => 'ARRAY', YYDEBUG => '', 
-	     # added by Casiano
-	     #YYPREFIX  => '',  # Not allowed at YYParse time but in new
-	     YYFILENAME => '', 
+       YYRULES => 'ARRAY', YYSTATES => 'ARRAY', YYDEBUG => '', 
+       # added by Casiano
+       #YYPREFIX  => '',  # Not allowed at YYParse time but in new
+       YYFILENAME => '', 
        YYBYPASS   => '',
-	     YYGRAMMAR  => 'ARRAY', 
-	     YYTERMS    => 'HASH',
-	     YYBUILDINGTREE  => '',
+       YYGRAMMAR  => 'ARRAY', 
+       YYTERMS    => 'HASH',
+       YYBUILDINGTREE  => '',
        YYACCESSORS => 'HASH',
-	     ); 
+       ); 
 my (%newparams) = (%params, YYPREFIX => '',);
 
 #Mandatory parameters
@@ -61,13 +61,13 @@ sub new {
       CHECK => \$check 
     };
 
-	_CheckParams( [], \%newparams, \@_, $self );
+  _CheckParams( [], \%newparams, \@_, $self );
 
-		exists($$self{VERSION})
-	and	$$self{VERSION} < $COMPATIBLE
-	and	croak "Eyapp driver version $VERSION ".
-			  "incompatible with version $$self{VERSION}:\n".
-			  "Please recompile parser module.";
+    exists($$self{VERSION})
+  and $$self{VERSION} < $COMPATIBLE
+  and croak "Eyapp driver version $VERSION ".
+        "incompatible with version $$self{VERSION}:\n".
+        "Please recompile parser module.";
 
         ref($class)
     and $class=ref($class);
@@ -79,78 +79,78 @@ sub YYParse {
     my($self)=shift;
     my($retval);
 
-	_CheckParams( \@params, \%params, \@_, $self );
+  _CheckParams( \@params, \%params, \@_, $self );
 
-	if($$self{DEBUG}) {
-		_DBLoad();
-		$retval = eval '$self->_DBParse()';#Do not create stab entry on compile
+  if($$self{DEBUG}) {
+    _DBLoad();
+    $retval = eval '$self->_DBParse()';#Do not create stab entry on compile
         $@ and die $@;
-	}
-	else {
-		$retval = $self->_Parse();
-	}
+  }
+  else {
+    $retval = $self->_Parse();
+  }
     return $retval;
 }
 
 sub YYData {
-	my($self)=shift;
+  my($self)=shift;
 
-		exists($$self{USER})
-	or	$$self{USER}={};
+    exists($$self{USER})
+  or  $$self{USER}={};
 
-	$$self{USER};
-	
+  $$self{USER};
+  
 }
 
 sub YYErrok {
-	my($self)=shift;
+  my($self)=shift;
 
-	${$$self{ERRST}}=0;
+  ${$$self{ERRST}}=0;
     undef;
 }
 
 sub YYNberr {
-	my($self)=shift;
+  my($self)=shift;
 
-	${$$self{NBERR}};
+  ${$$self{NBERR}};
 }
 
 sub YYRecovering {
-	my($self)=shift;
+  my($self)=shift;
 
-	${$$self{ERRST}} != 0;
+  ${$$self{ERRST}} != 0;
 }
 
 sub YYAbort {
-	my($self)=shift;
+  my($self)=shift;
 
-	${$$self{CHECK}}='ABORT';
+  ${$$self{CHECK}}='ABORT';
     undef;
 }
 
 sub YYAccept {
-	my($self)=shift;
+  my($self)=shift;
 
-	${$$self{CHECK}}='ACCEPT';
+  ${$$self{CHECK}}='ACCEPT';
     undef;
 }
 
 sub YYError {
-	my($self)=shift;
+  my($self)=shift;
 
-	${$$self{CHECK}}='ERROR';
+  ${$$self{CHECK}}='ERROR';
     undef;
 }
 
 sub YYSemval {
-	my($self)=shift;
-	my($index)= $_[0] - ${$$self{DOTPOS}} - 1;
+  my($self)=shift;
+  my($index)= $_[0] - ${$$self{DOTPOS}} - 1;
 
-		$index < 0
-	and	-$index <= @{$$self{STACK}}
-	and	return $$self{STACK}[$index][1];
+    $index < 0
+  and -$index <= @{$$self{STACK}}
+  and return $$self{STACK}[$index][1];
 
-	undef;	#Invalid index
+  undef;  #Invalid index
 }
 
 ### Casiano methods
@@ -531,7 +531,7 @@ sub YYActionforT_single {
 ### end Casiano methods
 
 sub YYCurtok {
-	my($self)=shift;
+  my($self)=shift;
 
         @_
     and ${$$self{TOKEN}}=$_[0];
@@ -539,7 +539,7 @@ sub YYCurtok {
 }
 
 sub YYCurval {
-	my($self)=shift;
+  my($self)=shift;
 
         @_
     and ${$$self{VALUE}}=$_[0];
@@ -555,7 +555,7 @@ sub YYExpect {
 sub YYLexer {
     my($self)=shift;
 
-	$$self{LEX};
+  $$self{LEX};
 }
 
 
@@ -565,52 +565,52 @@ sub YYLexer {
 
 
 sub _CheckParams {
-	my($mandatory,$checklist,$inarray,$outhash)=@_;
-	my($prm,$value);
-	my($prmlst)={};
+  my($mandatory,$checklist,$inarray,$outhash)=@_;
+  my($prm,$value);
+  my($prmlst)={};
 
-	while(($prm,$value)=splice(@$inarray,0,2)) {
+  while(($prm,$value)=splice(@$inarray,0,2)) {
         $prm=uc($prm);
-			exists($$checklist{$prm})
-		or	croak("Unknow parameter '$prm'");
-			ref($value) eq $$checklist{$prm}
-		or	croak("Invalid value for parameter '$prm'");
+      exists($$checklist{$prm})
+    or  croak("Unknow parameter '$prm'");
+      ref($value) eq $$checklist{$prm}
+    or  croak("Invalid value for parameter '$prm'");
         $prm=unpack('@2A*',$prm);
-		$$outhash{$prm}=$value;
-	}
-	for (@$mandatory) {
-			exists($$outhash{$_})
-		or	croak("Missing mandatory parameter '".lc($_)."'");
-	}
+    $$outhash{$prm}=$value;
+  }
+  for (@$mandatory) {
+      exists($$outhash{$_})
+    or  croak("Missing mandatory parameter '".lc($_)."'");
+  }
 }
 
 sub _Error {
-	print "Parse error.\n";
+  print "Parse error.\n";
 }
 
 sub _DBLoad {
-	{
-		no strict 'refs';
+  {
+    no strict 'refs';
 
-			exists(${__PACKAGE__.'::'}{_DBParse})#Already loaded ?
-		and	return;
-	}
-	my($fname)=__FILE__;
-	my(@drv);
-	local $/ = "\n";
-	open(DRV,"<$fname") or die "Report this as a BUG: Cannot open $fname";
+      exists(${__PACKAGE__.'::'}{_DBParse})#Already loaded ?
+    and return;
+  }
+  my($fname)=__FILE__;
+  my(@drv);
+  local $/ = "\n";
+  open(DRV,"<$fname") or die "Report this as a BUG: Cannot open $fname";
   local $_;
-	while(<DRV>) {
-                	/^\s*sub\s+_Parse\s*{\s*$/ .. /^\s*}\s*#\s*_Parse\s*$/
-        	and     do {
-                	s/^#DBG>//;
-                	push(@drv,$_);
-        	}
-	}
-	close(DRV);
+  while(<DRV>) {
+                  /^\s*sub\s+_Parse\s*{\s*$/ .. /^\s*}\s*#\s*_Parse\s*$/
+          and     do {
+                  s/^#DBG>//;
+                  push(@drv,$_);
+          }
+  }
+  close(DRV);
 
-	$drv[0]=~s/_P/_DBP/;
-	eval join('',@drv);
+  $drv[0]=~s/_P/_DBP/;
+  eval join('',@drv);
 }
 
 #Note that for loading debugging version of the driver,
@@ -619,29 +619,29 @@ sub _DBLoad {
 sub _Parse {
     my($self)=shift;
 
-	my($rules,$states,$lex,$error)
+  my($rules,$states,$lex,$error)
      = @$self{ 'RULES', 'STATES', 'LEX', 'ERROR' };
-	my($errstatus,$nberror,$token,$value,$stack,$check,$dotpos)
+  my($errstatus,$nberror,$token,$value,$stack,$check,$dotpos)
      = @$self{ 'ERRST', 'NBERR', 'TOKEN', 'VALUE', 'STACK', 'CHECK', 'DOTPOS' };
 
-#DBG>	my($debug)=$$self{DEBUG};
-#DBG>	my($dbgerror)=0;
+#DBG> my($debug)=$$self{DEBUG};
+#DBG> my($dbgerror)=0;
 
-#DBG>	my($ShowCurToken) = sub {
-#DBG>		my($tok)='>';
-#DBG>		for (split('',$$token)) {
-#DBG>			$tok.=		(ord($_) < 32 or ord($_) > 126)
-#DBG>					?	sprintf('<%02X>',ord($_))
-#DBG>					:	$_;
-#DBG>		}
-#DBG>		$tok.='<';
-#DBG>	};
+#DBG> my($ShowCurToken) = sub {
+#DBG>   my($tok)='>';
+#DBG>   for (split('',$$token)) {
+#DBG>     $tok.=    (ord($_) < 32 or ord($_) > 126)
+#DBG>         ? sprintf('<%02X>',ord($_))
+#DBG>         : $_;
+#DBG>   }
+#DBG>   $tok.='<';
+#DBG> };
 
-	$$errstatus=0;
-	$$nberror=0;
-	($$token,$$value)=(undef,undef);
-	@$stack=( [ 0, undef ] );
-	$$check='';
+  $$errstatus=0;
+  $$nberror=0;
+  ($$token,$$value)=(undef,undef);
+  @$stack=( [ 0, undef ] );
+  $$check='';
 
     while(1) {
         my($actions,$act,$stateno);
@@ -649,25 +649,25 @@ sub _Parse {
         $stateno=$$stack[-1][0];
         $actions=$$states[$stateno];
 
-#DBG>	print STDERR ('-' x 40),"\n";
-#DBG>		$debug & 0x2
-#DBG>	and	print STDERR "In state $stateno:\n";
-#DBG>		$debug & 0x08
-#DBG>	and	print STDERR "Stack:[".
-#DBG>					 join(',',map { $$_[0] } @$stack).
-#DBG>					 "]\n";
+#DBG> print STDERR ('-' x 40),"\n";
+#DBG>   $debug & 0x2
+#DBG> and print STDERR "In state $stateno:\n";
+#DBG>   $debug & 0x08
+#DBG> and print STDERR "Stack:[".
+#DBG>          join(',',map { $$_[0] } @$stack).
+#DBG>          "]\n";
 
 
         if  (exists($$actions{ACTIONS})) {
 
-				defined($$token)
-            or	do {
-				($$token,$$value)=&$lex($self);
-#DBG>				$debug & 0x01
-#DBG>			and	do { 
+        defined($$token)
+            or  do {
+        ($$token,$$value)=&$lex($self);
+#DBG>       $debug & 0x01
+#DBG>     and do { 
 #DBG>       print STDERR "Need token. Got ".&$ShowCurToken."\n";
 #DBG>     };
-			};
+      };
 
             $act=   exists($$actions{ACTIONS}{$$token})
                     ?   $$actions{ACTIONS}{$$token}
@@ -677,8 +677,8 @@ sub _Parse {
         }
         else {
             $act=$$actions{DEFAULT};
-#DBG>			$debug & 0x01
-#DBG>		and	print STDERR "Don't need token.\n";
+#DBG>     $debug & 0x01
+#DBG>   and print STDERR "Don't need token.\n";
         }
 
             defined($act)
@@ -687,27 +687,27 @@ sub _Parse {
                 $act > 0
             and do {        #shift
 
-#DBG>				$debug & 0x04
-#DBG>			and	print STDERR "Shift and go to state $act.\n";
+#DBG>       $debug & 0x04
+#DBG>     and print STDERR "Shift and go to state $act.\n";
 
-					$$errstatus
-				and	do {
-					--$$errstatus;
+          $$errstatus
+        and do {
+          --$$errstatus;
 
-#DBG>					$debug & 0x10
-#DBG>				and	$dbgerror
-#DBG>				and	$$errstatus == 0
-#DBG>				and	do {
-#DBG>					print STDERR "**End of Error recovery.\n";
-#DBG>					$dbgerror=0;
-#DBG>				};
-				};
+#DBG>         $debug & 0x10
+#DBG>       and $dbgerror
+#DBG>       and $$errstatus == 0
+#DBG>       and do {
+#DBG>         print STDERR "**End of Error recovery.\n";
+#DBG>         $dbgerror=0;
+#DBG>       };
+        };
 
 
                 push(@$stack,[ $act, $$value ]);
 
-					$$token ne ''	#Don't eat the eof
-				and	$$token=$$value=undef;
+          $$token ne '' #Don't eat the eof
+        and $$token=$$value=undef;
                 next;
             };
 
@@ -715,10 +715,10 @@ sub _Parse {
             my($lhs,$len,$code,@sempar,$semval);
             ($lhs,$len,$code)=@{$$rules[-$act]};
 
-#DBG>			$debug & 0x04
-#DBG>		and	$act
-#DBG>		#and	print STDERR "Reduce using rule ".-$act." ($lhs,$len): "; # old Parse::Yapp line
-#DBG>		and	do { my @rhs = @{$self->{GRAMMAR}->[-$act]->[2]};
+#DBG>     $debug & 0x04
+#DBG>   and $act
+#DBG>   #and  print STDERR "Reduce using rule ".-$act." ($lhs,$len): "; # old Parse::Yapp line
+#DBG>   and do { my @rhs = @{$self->{GRAMMAR}->[-$act]->[2]};
 #DBG>            @rhs = ( '/* empty */' ) unless @rhs;
 #DBG>            my $rhs = "@rhs";
 #DBG>            $rhs = substr($rhs, 0, 30).'...' if length($rhs) > 30; # chomp if too large
@@ -752,47 +752,47 @@ sub _Parse {
                 $$check eq 'ACCEPT'
             and do {
 
-#DBG>			$debug & 0x04
-#DBG>		and	print STDERR "Accept.\n";
+#DBG>     $debug & 0x04
+#DBG>   and print STDERR "Accept.\n";
 
-				return($semval);
-			};
+        return($semval);
+      };
 
                 $$check eq 'ABORT'
-            and	do {
+            and do {
 
-#DBG>			$debug & 0x04
-#DBG>		and	print STDERR "Abort.\n";
+#DBG>     $debug & 0x04
+#DBG>   and print STDERR "Abort.\n";
 
-				return(undef);
+        return(undef);
 
-			};
+      };
 
-#DBG>			$debug & 0x04
-#DBG>		and	print STDERR "Back to state $$stack[-1][0], then ";
+#DBG>     $debug & 0x04
+#DBG>   and print STDERR "Back to state $$stack[-1][0], then ";
 
                 $$check eq 'ERROR'
             or  do {
-#DBG>				$debug & 0x04
-#DBG>			and	print STDERR 
-#DBG>				    "go to state $$states[$$stack[-1][0]]{GOTOS}{$lhs}.\n";
+#DBG>       $debug & 0x04
+#DBG>     and print STDERR 
+#DBG>           "go to state $$states[$$stack[-1][0]]{GOTOS}{$lhs}.\n";
 
-#DBG>				$debug & 0x10
-#DBG>			and	$dbgerror
-#DBG>			and	$$errstatus == 0
-#DBG>			and	do {
-#DBG>				print STDERR "**End of Error recovery.\n";
-#DBG>				$dbgerror=0;
-#DBG>			};
+#DBG>       $debug & 0x10
+#DBG>     and $dbgerror
+#DBG>     and $$errstatus == 0
+#DBG>     and do {
+#DBG>       print STDERR "**End of Error recovery.\n";
+#DBG>       $dbgerror=0;
+#DBG>     };
 
-			    push(@$stack,
+          push(@$stack,
                      [ $$states[$$stack[-1][0]]{GOTOS}{$lhs}, $semval ]);
                 $$check='';
                 next;
             };
 
-#DBG>			$debug & 0x04
-#DBG>		and	print STDERR "Forced Error recovery.\n";
+#DBG>     $debug & 0x04
+#DBG>   and print STDERR "Forced Error recovery.\n";
 
             $$check='';
 
@@ -807,71 +807,71 @@ sub _Parse {
                 $$errstatus # if 0, then YYErrok has been called
             or  next;       # so continue parsing
 
-#DBG>			$debug & 0x10
-#DBG>		and	do {
-#DBG>			print STDERR "**Entering Error recovery.\n";
-#DBG>			{ 
+#DBG>     $debug & 0x10
+#DBG>   and do {
+#DBG>     print STDERR "**Entering Error recovery.\n";
+#DBG>     { 
 #DBG>       local $" = ", "; 
 #DBG>       my @expect = map { ">$_<" } $self->YYExpect();
 #DBG>       print STDERR "Expecting one of: @expect\n";
 #DBG>     };
-#DBG>			++$dbgerror;
-#DBG>		};
+#DBG>     ++$dbgerror;
+#DBG>   };
 
             ++$$nberror;
 
         };
 
-			$$errstatus == 3	#The next token is not valid: discard it
-		and	do {
-				$$token eq ''	# End of input: no hope
-			and	do {
-#DBG>				$debug & 0x10
-#DBG>			and	print STDERR "**At eof: aborting.\n";
-				return(undef);
-			};
+      $$errstatus == 3  #The next token is not valid: discard it
+    and do {
+        $$token eq '' # End of input: no hope
+      and do {
+#DBG>       $debug & 0x10
+#DBG>     and print STDERR "**At eof: aborting.\n";
+        return(undef);
+      };
 
-#DBG>			$debug & 0x10
-#DBG>		and	print STDERR "**Discard invalid token ".&$ShowCurToken.".\n";
+#DBG>     $debug & 0x10
+#DBG>   and print STDERR "**Discard invalid token ".&$ShowCurToken.".\n";
 
-			$$token=$$value=undef;
-		};
+      $$token=$$value=undef;
+    };
 
         $$errstatus=3;
 
-		while(	  @$stack
-			  and (		not exists($$states[$$stack[-1][0]]{ACTIONS})
-			        or  not exists($$states[$$stack[-1][0]]{ACTIONS}{error})
-					or	$$states[$$stack[-1][0]]{ACTIONS}{error} <= 0)) {
+    while(    @$stack
+        and (   not exists($$states[$$stack[-1][0]]{ACTIONS})
+              or  not exists($$states[$$stack[-1][0]]{ACTIONS}{error})
+          or  $$states[$$stack[-1][0]]{ACTIONS}{error} <= 0)) {
 
-#DBG>			$debug & 0x10
-#DBG>		and	print STDERR "**Pop state $$stack[-1][0].\n";
+#DBG>     $debug & 0x10
+#DBG>   and print STDERR "**Pop state $$stack[-1][0].\n";
 
-			pop(@$stack);
-		}
+      pop(@$stack);
+    }
 
-			@$stack
-		or	do {
+      @$stack
+    or  do {
 
-#DBG>			$debug & 0x10
-#DBG>		and	print STDERR "**No state left on stack: aborting.\n";
+#DBG>     $debug & 0x10
+#DBG>   and print STDERR "**No state left on stack: aborting.\n";
 
-			return(undef);
-		};
+      return(undef);
+    };
 
-		#shift the error token
+    #shift the error token
 
-#DBG>			$debug & 0x10
-#DBG>		and	print STDERR "**Shift \$error token and go to state ".
-#DBG>						 $$states[$$stack[-1][0]]{ACTIONS}{error}.
-#DBG>						 ".\n";
+#DBG>     $debug & 0x10
+#DBG>   and print STDERR "**Shift \$error token and go to state ".
+#DBG>            $$states[$$stack[-1][0]]{ACTIONS}{error}.
+#DBG>            ".\n";
 
-		push(@$stack, [ $$states[$$stack[-1][0]]{ACTIONS}{error}, undef ]);
+    push(@$stack, [ $$states[$$stack[-1][0]]{ACTIONS}{error}, undef ]);
 
     }
 
     #never reached
-	croak("Error in driver logic. Please, report it as a BUG");
+  croak("Error in driver logic. Please, report it as a BUG");
 
 }#_Parse
 #DO NOT remove comment

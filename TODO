@@ -1,3 +1,6 @@
+  * Not sure: eyappoption -t will generate a 'tag' file
+  * Generate via an eyapp option the script that tests the grammar, i.e.
+    the Use_Rule6.pl script
   * target 'version' in Makefile.PL: make a vim script
   * PUBLIC_PLACE implies to copy to a remote machine (nereida)
   * Implement the directive

@@ -1229,6 +1229,70 @@ in the attributes C<symboltable> and C<types> the call to C<equal> returns C<fal
 
 
 
+=head1 FORMATTING L<Parse::Eyapp> PROGRAMS
+
+I use these rules for indenting L<Parse::Eyapp> programs:
+
+=over 2
+
+=item * Use uppercase identifiers for tokens, lowecase identifiers for 
+syntactic variables
+
+=item * The syntactic variable that defines the rule must be at in a single line 
+at the leftmost position:
+
+  synvar:
+       'a' othervar 'c'
+    |  'b' anothervar SOMETOKEN
+  ;
+
+The separation bar C<|> goes indented relative to the left side of the rule.
+Each production starts two spaces from the bar.
+The first right hand side is aligned with the rest.
+ 
+=item * The semicolon C<;> must also be in its own line at column 0
+
+=item * If there is an empty production it must be the first one and must be commented
+
+  syntacvar:
+       /* empty */
+    |  'a' othervar 'c'
+    |  'b' anothervar 
+  ;
+
+=item * Only very short semantic actions can go in the same line than the production.
+Semantic actions requiring more than one line must go in its own idented block
+like in:
+
+
+  exp:
+      $NUM            { $NUM->[0] }
+    | $VAR
+       {
+	 my $id = $VAR->[0];
+	 my $val = $s{$id};
+	 $_[0]->semantic_error("Accesing undefined variable $id at line $VAR->[1].\n")
+	 unless defined($val);
+	 return $val;
+       }
+    | $VAR '=' $exp   { $s{$VAR->[0]} = $exp }
+    | exp.x '+' exp.y { $x + $y }
+    | exp.x '-' exp.y { $x - $y }
+    | exp.x '*' exp.y { $x * $y }
+    | exp.x '/'.barr exp.y
+      {
+	 return($x/$y) if $y;
+	 $_[0]->semantic_error("Illegal division by zero at line $barr->[1].\n");
+	 undef
+      }
+    | '-' $exp %prec NEG  { -$exp }
+    | exp.x '^' exp.y     { $x ** $y }
+    | '(' $exp ')'        { $exp }
+  ;
+
+ 
+=back
+
 =head1 SEE ALSO
 
 =over

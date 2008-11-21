@@ -28,7 +28,7 @@ ss:
 
 %%
 
-my $tokenline = 0;
+my $tokenline = 1;
 
 sub _Error {
 	my $parser = shift;
