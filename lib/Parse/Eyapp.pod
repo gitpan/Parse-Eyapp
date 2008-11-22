@@ -634,7 +634,7 @@ L<Parse::Eyapp::eyapplanguageref>,
 L<Parse::Eyapp::debugingtut>,
 L<Parse::Eyapp::translationschemestut>,
 L<Parse::Eyapp::Driver>,
-L<Parse::Eyapp:Node>,
+L<Parse::Eyapp::Node>,
 L<Parse::Eyapp::YATW>,
 L<Parse::Eyapp::Treeregexp>,
 L<Parse::Eyapp::Scope>,
@@ -673,6 +673,9 @@ perldoc L<treereg>,
 
 =item *
 perldoc L<vgg>,
+
+=item * The Syntax Highlight file for vim at L<http://www.vim.org/scripts/script.php?script_id=2453>
+and L<http://nereida.deioc.ull.es/~vim/>
 
 =item * I<Analisis Lexico y Sintactico>, (Notes for a course in compiler 
 construction) by  Casiano Rodriguez-Leon. 

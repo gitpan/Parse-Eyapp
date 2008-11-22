@@ -4,6 +4,8 @@ use Carp;
 use ExtUtils::MakeMaker;
 use File::Basename;
 
+my @exe_files = qw{eyapp treereg vgg};
+
 WriteMakefile(
     'NAME'         => 'Parse::Eyapp',
     'VERSION_FROM' => 'lib/Parse/Eyapp.pm', # finds $VERSION
@@ -12,7 +14,7 @@ WriteMakefile(
     'Data::Dumper' => "1.0",
     'Pod::Usage'   => "1.0", 
     },
-    'EXE_FILES'    => [ 'eyapp', 'treereg', 'vgg' ],
+    'EXE_FILES'    => \@exe_files,
     ABSTRACT_FROM  => 'lib/Parse/Eyapp.pod', 
     AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
 );
@@ -36,7 +38,7 @@ sub MY::postamble {
 
   ################# END configuration variables #####################
 
-  my ($manifest, @PODS, @BASES);
+  my ($manifest, @PODS, @BASES, @NOEXT);
 
   open($manifest ,'<', 'MANIFEST') or croak "Can't find MANIFEST";
 
@@ -61,6 +63,7 @@ sub MY::postamble {
   $REMOTETEST = $ENV{REMOTETEST} || 'remotetest.pl';
 
   @BASES = map { basename($_, '.pod') } @PODS; # i. e. ( Base.pod, debuggingtut.pod, ... )
+  @NOEXT = map { m{(.*)\.pod$}; $1 } @PODS;    # i. e. ( lib/Parse/Eyapp/Base, lib/Parse/Eyapp/debuggingtut, lib/Parse/Eyapp/Driver ... )
 
   $PODS = "@PODS";
 
@@ -70,7 +73,7 @@ sub MY::postamble {
 
   $PDFS =  listwithsuffix(".pdf", @BASES);
 
-  $HTMLS = listwithsuffix(".html", @BASES);
+  $HTMLS = listwithsuffix(".html", @NOEXT);
 
   $_ = targets(
     PODS         => $PODS, 
@@ -134,8 +137,14 @@ lib/Parse/Eyapp/%.pod:tt2/%.tt2
 
 pods: ${PODS}
 
+forcepods: 
+	touch tt2/*.tt2
+	make pods
+
 %.dvi:%.tex
 	latex $*.tex; makeindex $*; latex $*.tex
+
+dvis: ${DVIS}
 
 Eyapp.tex:lib/Parse/Eyapp.pod
 	pod2latex -full lib/Parse/Eyapp.pod
@@ -145,36 +154,42 @@ Eyapp.tex:lib/Parse/Eyapp.pod
 
 texs: ${TEXS}
 
+treereg.html:treereg
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc treereg  -o $@
+
+eyapp.html:eyapp
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp  -o $@
+
+vgg.html:vgg
+	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc vgg  -o $@
+
 %.html:%.pod
 	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc $*.pod  -o $@
+	#perl -e 's/^Cannot find .*//gi; s/\A\s+//' -p -i.bak $@
+
+htmls: ${HTMLS} eyapp.html treereg.html vgg.html
 
 <<PUBLIC_PLACE>>%.pdf:%.pdf
 	cp $*.pdf <<PUBLIC_PLACE>>
 	chmod a+r <<PUBLIC_PLACE>>*.pdf
 
-dvis: ${DVIS}
-
 %.pdf:%.dvi
 	dvipdfm $*.dvi 
-	rm -f $*.aux  $*.dvi  $*.idx  $*.ilg  $*.ind  $*.log  $*.tex  $*.toc
+	#rm -f $*.aux  $*.dvi  $*.idx  $*.ilg  $*.ind  $*.log  $*.tex  $*.toc
 
 pdfs: ${PDFS}
 
 publicpdf: pdfs
-	mv ${PDFS} <<PUBLIC_PLACE>>
+	cp ${PDFS} <<PUBLIC_PLACE>>
 	chmod a+r <<PUBLIC_PLACE>>*.pdf
 
-html: pods
-	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc\
-						${PODS} eyapp treereg
-	perl -e 's/^Cannot find .*//gi; s/\A\s+//' -p <<HTMLS>>  
-
-publichtml: html
-	mv ${HTMLS} eyapp.html treereg.html <<PUBLIC_PLACE>>
+publichtml: htmls
+	cp ${HTMLS} eyapp.html treereg.html vgg.html <<PUBLIC_PLACE>>
 	chmod a+r <<PUBLIC_PLACE>>/*.html
 	
+.PHONY: tags
 tags: Makefile
-	#${PLTAGS} eyapp treereg lib/Parse/Eyapp/
+	${PLTAGS} eyapp treereg vgg lib/Parse/Eyapp/*.pm lib/Parse/Eyapp/*.yp lib/Parse/Eyapp.pm 
 	ctags -a --exclude=examples --exclude=t --exclude=doc --exclude=tt2
 EOSQT
 

@@ -256,10 +256,9 @@ L<Default actions>.
 
 C<Parse::Eyapp> facilitates the construction of concrete syntax trees and 
 abstract syntax trees (abbreviated AST from now on) through the C<%tree>
-C<%metatree> directives. See sections
+C<%metatree> directives. See section
 L<Abstract Syntax Trees : %tree and %name>
-and
-L<Translation Schemes and the %metatree directive>. 
+and L<Parse::Eyapp::translationschemestut>.
 
 =head3 Syntactic and Semantic Tokens
 
@@ -364,7 +363,8 @@ Just as C<$1> to C<$n> in L<yacc>,
 C<$_[0]> is the parser object itself.
 Having C<$_[0]> beeing the parser object itself allows you to call
 parser methods. Most L<yacc> macros have been converted into
-parser methods. See section L</Methods Available in the Generated Class>.
+parser methods. See section 'Methods Available in the Generated Class'
+in L<Parse::Eyapp>.
 
 =back 
 
@@ -1188,7 +1188,7 @@ explictly constructed:
   28  %%
 
 To know more about C<Parse::Eyapp::Node-E<gt>new>
-see the section L<Parse::Eyapp::Node-E<gt>new>
+see the L<Parse::Eyapp::Node> section about C<new>
 
 When the former eyapp program is executed produces the following
 output:
@@ -1994,7 +1994,7 @@ All nodes in the AST created by C<%tree> are C<Parse::Eyapp::Node> nodes.
 The only reserved field is C<children> which is a reference to the
 array of children. You can always create a C<Node> class 
 I<by hand> by inheriting from C<Parse::Eyapp::Node>. See 
-section L<Compiling with eyapp and treereg> for an example.
+section 'Compiling with eyapp and treereg' in L<Parse::Eyapp> for an example.
 
 =head3 TERMINAL Nodes
 
@@ -2011,7 +2011,7 @@ also have the attribute C<children> but is - almost always - empty.
 =head3 Explicit Actions Inside C<%tree>
 
 Explicit actions can be specified by the programmer like in this line
-from the L</SYNOPSIS> example: 
+from the L<Parse::Eyapp> C<SYNOPSIS> example: 
 
       |   '(' exp ')'  { $_[2] }  /* Let us simplify a bit the tree */
 
@@ -2149,7 +2149,7 @@ like C<'+'>, C<'='>)
 are considered I<syntactic tokens>. Tokens declared by an identifier
 (like C<NUM> or C<VAR>) are by default considered
 I<semantic tokens>. B<Syntactic tokens do not yield to nodes in the
-syntactic tree>. Thus, the first print in the former L</SYNOPSIS> example:
+syntactic tree>. Thus, the first print in the former L<Parse::Eyapp> C</SYNOPSIS> example:
 
               $parser->YYData->{INPUT} = "2*-3+b*0;--2\n"; 
               my $t = $parser->Run;                    
@@ -2317,7 +2317,7 @@ production:
                                  '-' $exp %prec NEG
 
 The following example (file C<examples/bypass.pl>) 
-is the equivalent of the L</SYNOPSIS> example
+is the equivalent of the L<Parse::Eyapp> C</SYNOPSIS> example
 but using the C<bypass> clause instead:
 
  use Parse::Eyapp;
@@ -2547,23 +2547,36 @@ of a small calculator:
 
 =item * 
 L<Parse::Eyapp>, 
-L<Parse::Eyapp::languageintro>, 
+L<Parse::Eyapp::eyapplanguageref>, 
 L<Parse::Eyapp::debugingtut>,
+L<Parse::Eyapp::translationschemestut>,
 L<Parse::Eyapp::Driver>,
-L<Parse::Eyapp:Node>,
+L<Parse::Eyapp::Node>,
 L<Parse::Eyapp::YATW>,
 L<Parse::Eyapp::Treeregexp>,
 L<Parse::Eyapp::Scope>,
 L<Parse::Eyapp::Base>,
 
 
-=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/languageintro.pdf> 
 
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/debuggingtut.pdf> 
 
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/eyapplanguageref.pdf> 
+
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Treeregexp.pdf> 
 
-=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/languageintro.pdf> 
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Node.pdf> 
+
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/YATW.pdf> 
+
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Eyapp.pdf> 
+
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/Base.pdf> 
+
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/translationschemestut.pdf> 
+
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/MatchingTrees.pdf> 
 
 =item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
 (An Introduction to Compiler Construction in seven pages) in
@@ -2578,7 +2591,10 @@ perldoc L<treereg>,
 =item *
 perldoc L<vgg>,
 
-=item * I<Análisis Léxico y Sintáctico>, (Notes for a course in compiler 
+=item * The Syntax Highlight file for vim at L<http://www.vim.org/scripts/script.php?script_id=2453>
+and L<http://nereida.deioc.ull.es/~vim/>
+
+=item * I<Analisis Lexico y Sintactico>, (Notes for a course in compiler 
 construction) by  Casiano Rodriguez-Leon. 
 Available at  L<http://nereida.deioc.ull.es/~pl/perlexamples/>
 Is the more complete and reliable source for Parse::Eyapp. However is in Spanish.
@@ -2604,6 +2620,9 @@ L<HOP::Parser>
 =item *
 L<HOP::Lexer>
 
+=item * ocamlyacc tutorial at 
+L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocamlyacc-tutorial.html>
+
 =back
 
 =head1 REFERENCES
@@ -2616,7 +2635,6 @@ by Alfred V. Aho, Ravi Sethi and
 Jeffrey D. Ullman (Addison-Wesley 1986)
 
 =back
-
 
 
 =head1 AUTHOR

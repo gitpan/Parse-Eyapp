@@ -1244,7 +1244,7 @@ explictly constructed:
   28  %%
 
 To know more about C<Parse::Eyapp::Node-E<gt>new>
-see the section L<Parse::Eyapp::Node-E<gt>new>
+see the section for C<Parse::Eyapp::Node-E<gt>new>
 
 When the former eyapp program is executed produces the following
 output:
@@ -2065,8 +2065,7 @@ knows that they are hashes that can be decorated with new keys/attributes.
 All nodes in the AST created by C<%tree> are C<Parse::Eyapp::Node> nodes.
 The only reserved field is C<children> which is a reference to the
 array of children. You can always create a C<Node> class 
-I<by hand> by inheriting from C<Parse::Eyapp::Node>. See 
-section L<Compiling with eyapp and treereg> for an example.
+I<by hand> by inheriting from C<Parse::Eyapp::Node>. 
 
 =head2 TERMINAL Nodes
 
@@ -2083,7 +2082,7 @@ also have the attribute C<children> but is - almost always - empty.
 =head2 Explicit Actions Inside C<%tree>
 
 Explicit actions can be specified by the programmer like in this line
-from the L</SYNOPSIS> example: 
+from the L<Parse::Eyapp> SYNOPSIS example: 
 
       |   '(' exp ')'  { $_[2] }  /* Let us simplify a bit the tree */
 
@@ -2244,7 +2243,7 @@ like C<'+'>, C<'='>)
 are considered I<syntactic tokens>. Tokens declared by an identifier
 (like C<NUM> or C<VAR>) are by default considered
 I<semantic tokens>. B<Syntactic tokens do not yield to nodes in the
-syntactic tree>. Thus, the first print in the section L<Parse::Eyapp/SYNOPSIS> example:
+syntactic tree>. Thus, the first print in the section L<Parse::Eyapp> SYNOPSIS example:
 
   $ cat -n synopsis.pl
      1  #!/usr/bin/perl -w
@@ -2513,7 +2512,7 @@ production:
                                  '-' $exp %prec NEG
 
 The following example (file C<examples/bypass.pl>) 
-is the equivalent of the L</SYNOPSIS> example
+is the equivalent of the Parse::Eyapp SYNOPSIS example
 but using the C<bypass> clause instead:
 
  use Parse::Eyapp;
@@ -2844,7 +2843,7 @@ L<Parse::Eyapp::eyapplanguageref>,
 L<Parse::Eyapp::debugingtut>,
 L<Parse::Eyapp::translationschemestut>,
 L<Parse::Eyapp::Driver>,
-L<Parse::Eyapp:Node>,
+L<Parse::Eyapp::Node>,
 L<Parse::Eyapp::YATW>,
 L<Parse::Eyapp::Treeregexp>,
 L<Parse::Eyapp::Scope>,
@@ -2883,6 +2882,9 @@ perldoc L<treereg>,
 
 =item *
 perldoc L<vgg>,
+
+=item * The Syntax Highlight file for vim at L<http://www.vim.org/scripts/script.php?script_id=2453>
+and L<http://nereida.deioc.ull.es/~vim/>
 
 =item * I<Analisis Lexico y Sintactico>, (Notes for a course in compiler 
 construction) by  Casiano Rodriguez-Leon. 

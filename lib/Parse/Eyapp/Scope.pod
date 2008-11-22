@@ -190,7 +190,7 @@ To take advantage of C<Parse::Eyapp::Scope>,
 the compiler writer must mark at the appropriate time 
 (for example a new block or new subroutine for I<identifier scope analysis>,
 a new loop for I<loop scope analysis>, etc.) the I<beginning of a new scope>
-calling the method L<begin_scope|/$scope-E<gt>begin_scope>.
+calling the method C<begin_scope>.
 For example, the following code deals with the declaration of functions
 
   funcDef:
@@ -215,7 +215,7 @@ From that point on, any I<ocurring instance> of an object
 (for example,
 variables in expressions for I<identifier scope analysis>, breaks and continues
 for I<loop scope analysis>, etc.) must be declared 
-calling the method L<scope_instance|/$scope-E<gt>scope_instance>.
+calling the method C<scope_instance>.
 For example, the following rules deal with the use of 
 of variables and functions inside expressions:
 
@@ -311,7 +311,7 @@ that owns the scope.
 Argument a Node
 
 For each I<ocurring instance> of an object C<$x>
-that occurred since the last call to  L<begin_scope|/$scope-E<gt>begin_scope>
+that occurred since the last call to C<begin_scope>
 the call to 
 
   $scope->end_scope(\%symboltable, $definition_node, 'attr1', 'attr2', ... )
@@ -363,7 +363,7 @@ C<exists $symboltable{$_-E<gt>key}>.
 a Symbol Table and Remaining Arguments strings
 
 For each I<ocurring instance> of an object C<$x>
-that occurred since the last call to  L<begin_scope|/$scope-E<gt>begin_scope>
+that occurred since the last call to  C<begin_scope>
 the call to 
 
   $scope->end_scope(\%symboltable, 'attr1', 'attr2', ... )
@@ -474,7 +474,7 @@ L<Parse::Eyapp::eyapplanguageref>,
 L<Parse::Eyapp::debugingtut>,
 L<Parse::Eyapp::translationschemestut>,
 L<Parse::Eyapp::Driver>,
-L<Parse::Eyapp:Node>,
+L<Parse::Eyapp::Node>,
 L<Parse::Eyapp::YATW>,
 L<Parse::Eyapp::Treeregexp>,
 L<Parse::Eyapp::Scope>,
@@ -513,6 +513,9 @@ perldoc L<treereg>,
 
 =item *
 perldoc L<vgg>,
+
+=item * The Syntax Highlight file for vim at L<http://www.vim.org/scripts/script.php?script_id=2453>
+and L<http://nereida.deioc.ull.es/~vim/>
 
 =item * I<Analisis Lexico y Sintactico>, (Notes for a course in compiler 
 construction) by  Casiano Rodriguez-Leon. 
