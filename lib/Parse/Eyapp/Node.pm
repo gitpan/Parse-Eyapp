@@ -785,7 +785,6 @@ sub _str {
   return $class;
 }
 
-#use overload q{""} => \&stringify;
 
 sub translation_scheme {
   my $self = CORE::shift; # root of the subtree

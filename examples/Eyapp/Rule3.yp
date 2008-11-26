@@ -3,6 +3,7 @@ use Data::Dumper;
 $Data::Dumper::Indent=1;
 sub build_node { 
   my $self = shift;
+
   my @children = @_;
   my @right = $self->YYRightside();
   my $var = $self->YYLhs;

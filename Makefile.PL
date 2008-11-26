@@ -106,7 +106,7 @@ PDFS=<<PDFS>>
 
 HTMLS=<<HTMLS>>
 
-publicdist: docclean release publichtml publicpdf dist 
+publicdist: docclean release forcepods publichtml publicpdf dist 
 	chmod a+r Parse-Eyapp-*.tar.gz
 	cp Parse-Eyapp-*.tar.gz <<PUBLIC_PLACE>>Parse-Eyapp.tar.gz
 	cp Parse-Eyapp-*.tar.gz /tmp/

@@ -322,3 +322,5 @@ compute_lines(\$text, $outfile, $Parse::Eyapp::Output::pattern) if $opt_n;
 print OUT $text;
 
 close(OUT);
+
+chmod(0755, $outfile) if $opt_b;

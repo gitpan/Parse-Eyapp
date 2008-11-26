@@ -9,6 +9,7 @@ vgg
 lib/Parse/Eyapp/Base.pm
 lib/Parse/Eyapp/Base.pod
 lib/Parse/Eyapp/debuggingtut.pod
+lib/Parse/Eyapp/defaultactionsintro.pod
 lib/Parse/Eyapp/Driver.pm
 lib/Parse/Eyapp/Driver.pod
 lib/Parse/Eyapp/eyappintro.pod
@@ -259,4 +260,8 @@ examples/Calculator/scripts/witherrors
 examples/Calculator/t/01smoke.t
 examples/Calculator/t/02semanticerrors.t
 examples/Calculator/t/03syntacticerrors.t
+examples/recycle/calcu.pl
+examples/recycle/Noactions.eyp
+examples/recycle/postf.pl
+examples/recycle/README
 META.yml                                 Module meta-data (added by MakeMaker)

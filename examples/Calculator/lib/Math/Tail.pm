@@ -1,6 +1,7 @@
 package Math::Tail;
-use base qw(Exporter);
-our @EXPORT = qw(_Error make_lexer Run uploadfile);
+use warnings;
+use strict;
+use Getopt::Long;
 
 sub _Error {
   my $parser = shift;
@@ -60,6 +61,7 @@ sub uploadfile {
   my $file = shift;
   my $msg = shift;
 
+  my $input = '';
   eval {
     $input = Parse::Eyapp::Base::slurp_file($file) 
   };
@@ -69,6 +71,34 @@ sub uploadfile {
     $input = <STDIN>;
   }
   return $input;
+}
+
+sub main {
+  my $package = shift;
+
+  my $debug = 0;
+  my $file = '';
+  my $result = GetOptions (
+    "debug!" => \$debug,  
+    "file=s" => \$file,
+  );
+
+  $debug = 0x1F if $debug;
+  $file = shift if !$file && @ARGV; 
+
+  my $prompt = "Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:\n";
+  my $input;
+  $input = uploadfile($file, $prompt);
+
+  my $parser = $package->new();
+  $parser->Run( \$input, $debug );
+}
+
+sub semantic_error {
+  my ($parser, $msg) = @_;
+
+  $parser->YYData->{ERRMSG} = $msg;
+  $parser->YYError; 
 }
 
 1;

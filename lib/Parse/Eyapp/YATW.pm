@@ -179,7 +179,7 @@ sub make_delete_effective {
   my $i = -1+$node->children;
   while ($i >= 0) {
     if (UNIVERSAL::isa($node->child($i), 'Parse::Eyapp::Node::DELETE')) {
-      $self->{CHANGES}++ if splice @{$node->{children}}, $i, 1;
+      $self->{CHANGES}++ if defined(splice(@{$node->{children}}, $i, 1));
     }
     $i--;
   }
