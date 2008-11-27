@@ -54,14 +54,16 @@ sub _Lexer {
 }
 
 sub Run {
-  
-  $input = <>;
+  my $debug = shift || 0;
+  $debug = 0x1F if $debug;
+
+  $input = <STDIN>;
 
   my $self = __PACKAGE__->new();
 
   return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-                         # yydebug => 0x1F
+                         yydebug => $debug,
   );
 }
 
-Run() unless caller;
+Run(@ARGV) unless caller;

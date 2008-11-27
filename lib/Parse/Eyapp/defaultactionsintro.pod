@@ -264,126 +264,114 @@ grammars.  Here is one solution:
      4  %defaultaction {
      5    my $self = shift;
      6
-     7    my $class = $self->YYName;
-     8
-     9    $class->action(@_);
-    10  }
-    11
-    12  %%
-    13  exp:        %name NUM
-    14                NUM
-    15          |   %name PLUS
-    16                exp '+' exp
-    17          |   %name TIMES
-    18                exp '*' exp
-    19          |   '(' exp ')'
-    20                { $_[2] }
-    21  ;
-    22
-    23  %%
-    24
-    25  sub _Error {
-    26    my($token)=$_[0]->YYCurval;
-    27    my($what)= $token ? "input: '$token'" : "end of input";
-    28    my @expected = $_[0]->YYExpect();
-    29
-    30    local $" = ', ';
-    31    die "Syntax error near $what. Expected one of these tokens: @expected\n";
-    32  }
-    33
+     7    my $class = $self->YYPrefix;
+     8    $class .=  $self->YYName;
+     9
+    10    $class->action(@_);
+    11  }
+    12
+    13  %%
+    14  exp:        %name NUM
+    15                NUM
+    16          |   %name PLUS
+    17                exp '+' exp
+    18          |   %name TIMES
+    19                exp '*' exp
+    20          |   '(' exp ')'
+    21                { $_[2] }
+    22  ;
+    23
+    24  %%
+    25
+    26  sub _Error {
+    27    my($token)=$_[0]->YYCurval;
+    28    my($what)= $token ? "input: '$token'" : "end of input";
+    29    my @expected = $_[0]->YYExpect();
+    30
+    31    local $" = ', ';
+    32    die "Syntax error near $what. Expected one of these tokens: @expected\n";
+    33  }
     34
-    35  my $x = '';
-    36
-    37  sub _Lexer {
-    38    my($parser)=shift;
-    39
-    40    for ($x) {
-    41      s/^\s+//;
-    42      $_ eq '' and return('',undef);
-    43
-    44      s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
-    45      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-    46      s/^(.)//s                    and return($1,$1);
-    47    }
-    48  }
-    49
-    50  sub Run {
-    51    my($self)=shift;
-    52    $x = shift;
-    53    my $debug = shift;
-    54
-    55    $self->YYParse(
-    56      yylex => \&_Lexer,
-    57      yyerror => \&_Error,
-    58      yydebug => $debug,
-    59    );
-    60  }
+    35
+    36  my $x = '';
+    37
+    38  sub _Lexer {
+    39    my($parser)=shift;
+    40
+    41    for ($x) {
+    42      s/^\s+//;
+    43      $_ eq '' and return('',undef);
+    44
+    45      s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+    46      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+    47      s/^(.)//s                    and return($1,$1);
+    48    }
+    49  }
+    50
+    51  sub Run {
+    52    my($self)=shift;
+    53    $x = shift;
+    54    my $debug = shift;
+    55
+    56    $self->YYParse(
+    57      yylex    => \&_Lexer,
+    58      yyerror  => \&_Error,
+    59      yydebug  => $debug,
+    60    );
+    61  }
 
-This grammar can be reused by a program that implements a calculator:
 
-  pl@europa:~/LEyapp/examples/recycle$ cat -n calcu.pl
+This grammar is reused by the following program to implement a calculator:
+and a translator from infix to postfix:
+
+  pl@europa:~/LEyapp/examples/recycle$ cat -n calcu_and_post.pl
      1  #!/usr/bin/perl
      2  use warnings;
      3  use Noactions;
      4
-     5  sub NUM::action {
+     5  sub Calc::NUM::action {
      6    return $_[1];
      7  }
      8
-     9  sub PLUS::action {
+     9  sub Calc::PLUS::action {
     10    $_[1]+$_[3];
     11  }
     12
-    13  sub TIMES::action {
+    13  sub Calc::TIMES::action {
     14    $_[1]*$_[3];
     15  }
     16
-    17  my $parser = Noactions->new();
-    18  print "Write an expression: ";
-    19  my $x;
-    20  {
-    21    local $/ = undef;
-    22    $x = <>;
+    17  sub Post::NUM::action {
+    18    return $_[1];
+    19  }
+    20
+    21  sub Post::PLUS::action {
+    22    "$_[1] $_[3] +";
     23  }
-    24  my $t = $parser->Run($x);
-    25
-    26  print "$t\n";
-
-But it also can be used by a program that translates infix
-to postfix expressions:
-
-  pl@europa:~/LEyapp/examples/recycle$ cat -n postf.pl
-     1  #!/usr/bin/perl
-     2  use warnings;
-     3  use Noactions;
-     4
-     5  sub NUM::action {
-     6    return $_[1];
-     7  }
-     8
-     9  sub PLUS::action {
-    10    "$_[1] $_[3] +";
-    11  }
-    12
-    13  sub TIMES::action {
-    14    "$_[1] $_[3] *";
-    15  }
-    16
-    17  my $parser = Noactions->new();
-    18  print "Write an expression: ";
-    19  my $x;
-    20  {
-    21    local $/ = undef;
-    22    $x = <>;
-    23  }
-    24  my $t = $parser->Run($x);
-    25
-    26  print "$t\n";
+    24
+    25  sub Post::TIMES::action {
+    26    "$_[1] $_[3] *";
+    27  }
+    28
+    29  my $debug = shift || 0;
+    30  my $pparser = Noactions->new( yyprefix => 'Post::');
+    31  print "Write an expression: ";
+    32  my $x = <STDIN>;
+    33  my $t = $pparser->Run($x, $debug);
+    34
+    35  print "$t\n";
+    36
+    37  my $cparser = Noactions->new(yyprefix => 'Calc::');
+    38  my $e = $cparser->Run($x, $debug);
+    39
+    40  print "$e\n";
 
 =head2 Reusing Grammars Using Inheritance
 
-An laternative method is to use inheritance. The
-grammar inherits the action methods from the client:
+An alternative method is to use inheritance. 
+The client inherits the grammar and expands it 
+with methods that implement the actions.
+Here is the grammar:
 
   pl@europa:~/LEyapp/examples/recycle$ cat -n NoacInh.eyp
      1  %left   '+'
@@ -447,77 +435,60 @@ grammar inherits the action methods from the client:
     59    );
     60  }
 
+The following program defines two classes: C<CalcActions>
+that implements the actions for the calculator
+and package C<PostActions> that implements the actions
+for the infix to postfix translation:
 
-This programs C<icalcu.pl> injects the actions
-into the parser package, implementing this way a calculator:
-
-  pl@europa:~/LEyapp/examples/recycle$ cat -n icalcu.pl
-     1  #!/usr/bin/perl
-     2  use warnings;
-     3  use NoacInh;
-     4
-     5  package Actions;
-     6  push @NoacInh::ISA, 'Actions';
-     7
-     8  sub NUM {
-     9    return $_[1];
-    10  }
-    11
-    12  sub PLUS {
-    13    $_[1]+$_[3];
-    14  }
-    15
-    16  sub TIMES {
-    17    $_[1]*$_[3];
-    18  }
-    19
-    20  package main;
+  pl@europa:~/LEyapp/examples/recycle$ cat -n icalcu_and_ipost.pl
+     1  #!/usr/bin/perl -w
+     2  package CalcActions;
+     3  use strict;
+     4  use base qw{NoacInh};
+     5
+     6  sub NUM {
+     7    return $_[1];
+     8  }
+     9
+    10  sub PLUS {
+    11    $_[1]+$_[3];
+    12  }
+    13
+    14  sub TIMES {
+    15    $_[1]*$_[3];
+    16  }
+    17
+    18  package PostActions;
+    19  use strict;
+    20  use base qw{NoacInh};
     21
-    22  my $parser = NoacInh->new();
-    23  print "Write an expression: ";
-    24  my $x;
-    25  {
-    26    local $/ = undef;
-    27    $x = <>;
+    22  sub NUM {
+    23    return $_[1];
+    24  }
+    25
+    26  sub PLUS {
+    27    "$_[1] $_[3] +";
     28  }
-    29  my $t = $parser->Run($x);
-    30
-    31  print "$t\n";
+    29
+    30  sub TIMES {
+    31    "$_[1] $_[3] *";
+    32  }
+    33
+    34  package main;
+    35  use strict;
+    36
+    37  my $calcparser = CalcActions->new();
+    38  print "Write an expression: ";
+    39  my $x = <STDIN>;
+    40  my $e = $calcparser->Run($x);
+    41
+    42  print "$e\n";
+    43
+    44  my $postparser = PostActions->new();
+    45  my $p = $postparser->Run($x);
+    46
+    47  print "$p\n";
 
-In the same way this program implements the translator:
-
-  pl@europa:~/LEyapp/examples/recycle$ cat -n ipostf.pl
-     1  #!/usr/bin/perl
-     2  use warnings;
-     3  use NoacInh;
-     4
-     5  package Actions;
-     6  push @NoacInh::ISA, 'Actions';
-     7
-     8  sub NUM {
-     9    return $_[1];
-    10  }
-    11
-    12  sub PLUS {
-    13    "$_[1] $_[3] +";
-    14  }
-    15
-    16  sub TIMES {
-    17    "$_[1] $_[3] *";
-    18  }
-    19
-    20  package main;
-    21
-    22  my $parser = NoacInh->new();
-    23  print "Write an expression: ";
-    24  my $x;
-    25  {
-    26    local $/ = undef;
-    27    $x = <>;
-    28  }
-    29  my $t = $parser->Run($x);
-    30
-    31  print "$t\n";
 
 =head1 SEE ALSO
 
@@ -527,6 +498,7 @@ In the same way this program implements the translator:
 L<Parse::Eyapp>, 
 L<Parse::Eyapp::eyapplanguageref>, 
 L<Parse::Eyapp::debugingtut>,
+L<Parse::Eyapp::defaultactionsintro>,
 L<Parse::Eyapp::translationschemestut>,
 L<Parse::Eyapp::Driver>,
 L<Parse::Eyapp::Node>,

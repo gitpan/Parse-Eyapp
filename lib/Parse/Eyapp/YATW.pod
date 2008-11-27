@@ -437,6 +437,7 @@ See the documentation in L<Parse::Eyapp::MatchingTrees>
 L<Parse::Eyapp>, 
 L<Parse::Eyapp::eyapplanguageref>, 
 L<Parse::Eyapp::debugingtut>,
+L<Parse::Eyapp::defaultactionsintro>,
 L<Parse::Eyapp::translationschemestut>,
 L<Parse::Eyapp::Driver>,
 L<Parse::Eyapp::Node>,

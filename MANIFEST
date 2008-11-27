@@ -261,7 +261,13 @@ examples/Calculator/t/01smoke.t
 examples/Calculator/t/02semanticerrors.t
 examples/Calculator/t/03syntacticerrors.t
 examples/recycle/calcu.pl
+examples/recycle/icalcu_and_ipost.pl
+examples/recycle/icalcu.pl
+examples/recycle/ipostf.pl
+examples/recycle/ManualTree.yp
+examples/recycle/NoacInh.eyp
 examples/recycle/Noactions.eyp
+examples/recycle/Postfix.eyp
 examples/recycle/postf.pl
 examples/recycle/README
 META.yml                                 Module meta-data (added by MakeMaker)

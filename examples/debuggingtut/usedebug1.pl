@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# usetreebypass.pl prueba2.exp
 use strict;
 use Debug1;
 

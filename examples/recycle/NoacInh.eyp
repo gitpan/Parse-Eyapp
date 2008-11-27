@@ -4,10 +4,9 @@
 %defaultaction { 
   my $self = shift;
 
-  my $class = $self->YYPrefix;
-  $class .=  $self->YYName; 
-
-  $class->action(@_);
+  my $action = $self->YYName;
+  
+  $self->$action(@_);
 }
 
 %%
@@ -54,9 +53,9 @@ sub Run {
   my $debug = shift;
 
   $self->YYParse( 
-    yylex    => \&_Lexer, 
-    yyerror  => \&_Error,
-    yydebug  => $debug,
+    yylex => \&_Lexer, 
+    yyerror => \&_Error,
+    yydebug => $debug,
   );
 }
 
