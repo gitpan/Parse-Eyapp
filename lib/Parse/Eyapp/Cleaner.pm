@@ -86,6 +86,7 @@ sub controller {
      }
      elsif ($token =~ /\b(VARIABLE)\b/) {
        my $g = ($output =~ $end_cr_set)? '': "\n"; 
+       $attr->[0] =~ s/\s*:\s*$/:/; # remove blanks before and after colon
        _generate $g.$attr->[0]."\n      ";
      }
      elsif ($token =~ /\b(IDENT|LITERAL)\b/) {
@@ -107,8 +108,9 @@ sub controller {
        _generate ":\n      ";
      }
      elsif ($token eq '|') {
-       my $g = ($output =~ $end_cr_set)? '': "\n  "; 
-       _generate "$g  | ";
+       $output =~ s/[ \t]*$//;
+       my $g = ($output =~ $end_cr_set)? '': "\n"; 
+       _generate "$g    | ";
        #_generate "\n  ".$attr->[0]." ";
      }
      elsif ($token eq ';') {
@@ -135,7 +137,8 @@ sub controller {
     } 
     _generate "\n";
 
-    print $output;
+    $output =~ s/\s*\Z/\n/;
+    return $output;
   }
 } # end closure
 

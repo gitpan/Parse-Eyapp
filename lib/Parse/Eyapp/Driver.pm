@@ -8,8 +8,8 @@
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 
-our $SVNREVISION = '$Rev: 2290 $';
-our $SVNDATE     = '$Date: 2008-11-26 15:28:49 +0000 (mié, 26 nov 2008) $';
+our $SVNREVISION = '$Rev: 2320 $';
+our $SVNDATE     = '$Date: 2008-12-01 17:43:00 +0000 (lun, 01 dic 2008) $';
 
 package Parse::Eyapp::Driver;
 
@@ -20,11 +20,12 @@ use strict;
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
-$VERSION = "1.132";
+$VERSION = "1.133";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
 use Carp;
+use Scalar::Util qw{reftype looks_like_number};
 
 #Known parameters, all starting with YY (leading YY will be discarded)
 my(%params)=(YYLEX => 'CODE', 'YYERROR' => 'CODE', YYVERSION => '',
@@ -155,6 +156,96 @@ sub YYSemval {
 
 ### Casiano methods
 
+sub YYRule { 
+  # returns the list of rules
+  # counting the super rule as rule 0
+  my $self = shift;
+  my $index = shift;
+
+  if ($index) {
+    $index = $self->YYIndex($index) unless (looks_like_number($index));
+    return wantarray? @{$self->{RULES}[$index]} : $self->{RULES}[$index]
+  }
+
+  return wantarray? @{$self->{RULES}} : $self->{RULES}
+}
+
+# TODO: make it work with a list of indices ...
+sub YYGrammar { 
+  my $self = shift;
+  my $index = shift;
+
+  if ($index) {
+    $index = $self->YYIndex($index) unless (looks_like_number($index));
+    return wantarray? @{$self->{GRAMMAR}[$index]} : $self->{GRAMMAR}[$index]
+  }
+  return wantarray? @{$self->{GRAMMAR}} : $self->{GRAMMAR}
+}
+
+# Return the list of production names
+sub YYNames { 
+  my $self = shift;
+
+  my @names = map { $_->[0] } @{$self->{GRAMMAR}};
+
+  return wantarray? @names : \@names;
+}
+
+# Return the hash of indices  for each production name
+# Initializes the INDICES attribute of the parser
+# Returns the index of the production rule with name $name
+sub YYIndex {
+  my $self = shift;
+
+  # Already computed
+  if ($self->{INDICES} && reftype($self->{INDICES}) eq 'HASH') {
+    if (@_) {
+      my @indices = map { $self->{INDICES}{$_} } @_;
+      return wantarray? @indices : $indices[0];
+    }
+    return wantarray? %{$self->{INDICES}} : $self->{INDICES};
+  }
+
+  my @names = $self->YYNames;
+  my %index;
+  my $i = 0;
+  $index{$_} = $i++ for (@names);
+
+  $self->{INDICES} = \%index;
+  
+  if (@_) {
+    my @indices = map { $index{$_} } @_;
+    return wantarray? @indices : $indices[0];
+  }
+  return wantarray? %index : \%index;
+}
+
+sub YYAction {
+  my $self = shift;
+  my $index = shift;
+  my $newaction = shift;
+
+  croak "YYAction error: Expecting an index" unless $index;
+
+  # If $index is the production 'name' find the actual index
+  $index = $self->YYIndex($index) unless looks_like_number($index);
+  my $rule = $self->{RULES}->[$index];
+  $rule->[2] = $newaction if $newaction && (reftype($newaction) eq 'CODE');
+
+  return $rule->[2];
+}
+
+sub YYSetaction {
+  my $self = shift;
+  my %newaction = @_;
+
+  for my $n (keys(%newaction)) {
+    my $m = looks_like_number($n) ? $n : $self->YYIndex($n);
+    my $rule = $self->{RULES}->[$m];
+    $rule->[2] = $newaction{$n} if ($newaction{$n} && (reftype($newaction{$n}) eq 'CODE'));
+  }
+}
+
 sub YYLhs { 
   # returns the syntax variable on
   # the left hand side of the current production
@@ -193,7 +284,6 @@ sub YYIssemantic {
   $self->{TERMS}->{$symbol} = shift if @_;
   return ($self->{TERMS}->{$symbol});
 }
-
 
 sub YYName {
   my $self = shift;
@@ -242,6 +332,18 @@ sub YYFirstline {
 
   $self->{FIRSTLINE} = $_[0] if @_;
   $self->{FIRSTLINE};
+}
+
+# Used as default action when writing a reusable grammar.
+# See files examples/recycle/NoacInh.eyp 
+# and examples/recycle/icalcu_and_ipost.pl 
+# in the Parse::Eyapp distribution
+sub YYDelegateaction {
+  my $self = shift;
+
+  my $action = $self->YYName;
+  
+  $self->$action(@_);
 }
 
 # Influences the behavior of YYActionforT_X1X2
@@ -662,7 +764,8 @@ sub _Parse {
 
         defined($$token)
             or  do {
-        ($$token,$$value)=&$lex($self);
+        #($$token,$$value)=&$lex($self);
+        ($$token,$$value)=$self->$lex;
 #DBG>       $debug & 0x01
 #DBG>     and do { 
 #DBG>       print STDERR "Need token. Got ".&$ShowCurToken."\n";
@@ -744,7 +847,7 @@ sub _Parse {
 
             $self->{CURRENT_LHS} = $lhs;
             $self->{CURRENT_RULE} = -$act; # count the super-rule?
-            $semval = $code ? &$code( $self, @sempar )
+            $semval = $code ? $self->$code( @sempar )
                             : @sempar ? $sempar[0] : undef;
 
             splice(@$stack,-$len,$len);

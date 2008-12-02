@@ -2,6 +2,11 @@
  
 Parse::Eyapp::defaultactionsintro - Introduction to Default Actions and Grammar Reuse
  
+=head1 Introduction
+
+The examples used in this tutorial can be found in the
+directory C<examples/recycle> accompanying this distribution
+
 =head1 Default Actions
 
 =head2 Default actions
@@ -252,6 +257,21 @@ of the C<SUBSTRACT> nodes:
 
 =head1 Grammar Reuse
 
+Terence Parr in his talk "Reuse of Grammars with Embedded Semantic Actions"
+(see L<http://www.cs.vu.nl/icpc2008/docs/Parr.pdf>)
+explains the problem:
+
+ "Because many applications deal with the same language, the reuse of a common
+syntax specification with different semantics provides a number of advantages.
+While the advantages are obvious, the mechanism for grammar reuse is not so
+clear.  To go beyond syntax checking, grammars must have some way to specify
+the translation or interpretation logic (the semantics). Unfortunately, the act
+of specifying the semantics can lock a grammar into one specific application
+since the grammar is often modified to suit (e.g., programmers often want to
+embed unrestricted semantic actions)." 
+
+The incoming sections deal with different solutions to the problem.
+
 =head2 An Action Method for each Production
 
 Default actions provide a way to write reusable
@@ -489,6 +509,140 @@ for the infix to postfix translation:
     46
     47  print "$p\n";
 
+The subroutine used as default action in C<NoacInh.eyp> is so useful 
+that is packed as the L<Parse::Eyapp::Driver> method 
+C<YYDelegateaction>. See files C<examples/recycle/NoacYYDelegateaction.eyp>
+and C<examples/recycle/icalcu_and_ipost_yydel.pl>
+for an example of use of C<YYDelegateaction>.
+
+=head2 Reusing Grammars by Dynamic Substitution of Semantic Actions
+
+The methods C<YYSetaction> and C<YYAction> of the parser object provide a way
+to selectively substitute some actions of a given grammar.
+Let us consider once more a postfix to infix translator:
+
+  pl@europa:~/LEyapp/examples/recycle$ cat -n PostfixWithActions.eyp
+     1  # File PostfixWithActions.eyp
+     2  %right  '='
+     3  %left   '-' '+'
+     4  %left   '*' '/'
+     5  %left   NEG
+     6
+     7  %%
+     8  line: $exp  { print "$exp\n" }
+     9  ;
+    10
+    11  exp:        $NUM
+    12                  { $NUM }
+    13          |   $VAR
+    14                  { $VAR }
+    15          |   %name ASSIGN
+    16                VAR.left '='exp.right
+    17                  { "$_[3] &$_[1] ASSIGN"; }
+    18          |   %name PLUS
+    19                exp.left '+'exp.right
+    20                  { "$_[1] $_[3] PLUS"; }
+    21          |   %name MINUS
+    22                exp.left '-'exp.right
+    23                  { "$_[1] $_[3] MINUS"; }
+    24          |   %name TIMES
+    25                exp.left '*'exp.right
+    26                  { "$_[1] $_[3] TIMES"; }
+    27          |   %name DIV
+    28                exp.left '/'exp.right
+    29                  { "$_[1] $_[3] DIV"; }
+    30          |   %name NEG '-' $exp %prec NEG
+    31                  { "$exp NEG" }
+    32          |   '(' $exp ')'
+    33                  { $exp }
+    34  ;
+    35
+    36  %%
+    37
+    38  sub _Error {
+    39    my($token)=$_[0]->YYCurval;
+    40    my($what)= $token ? "input: '$token'" : "end of input";
+    41    my @expected = $_[0]->YYExpect();
+    42
+    43    local $" = ', ';
+    44    die "Syntax error near $what. Expected one of these tokens: @expected\n";
+    45  }
+    46
+    47  my $x;
+    48
+    49  sub _Lexer {
+    50    my($parser)=shift;
+    51
+    52    for ($x) {
+    53      s/^\s+//;
+    54      $_ eq '' and return('',undef);
+    55
+    56      s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+    57      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+    58      s/^(.)//s                    and return($1,$1);
+    59    }
+    60  }
+    61
+    62  sub Run {
+    63    my($self)=shift;
+    64    $x = shift;
+    65    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
+    66      #yydebug => 0xFF
+    67    );
+    68  }
+
+The program C<rewritepostfixwithactions.pl> selectively substitutes
+the semantic actions for the productions named 
+
+=over 2
+
+=item * ASSIGN
+
+=item * PLUS
+
+=item * TIMES
+
+=item * DIV
+
+=item * NEG
+
+=back
+
+While leaving the other semantic actions unchanged:
+
+  pl@europa:~/LEyapp/examples/recycle$ cat -n rewritepostfixwithactions.pl
+     1  #!/usr/bin/perl
+     2  use warnings;
+     3  use PostfixWithActions;
+     4
+     5  my $debug = shift || 0;
+     6  my $pparser = PostfixWithActions->new();
+     7  print "Write an expression: ";
+     8  my $x = <STDIN>;
+     9
+    10  # First, trasnlate to postfix ...
+    11  $pparser->Run($x, $debug);
+    12
+    13  # And then selectively substitute
+    14  # some semantic actions
+    15  # to obtain an infix calculator ...
+    16  my %s;
+    17  $pparser->YYSetaction(
+    18    ASSIGN => sub { $s{$_[1]} = $_[3] },
+    19    PLUS   => sub { $_[1] + $_[3] },
+    20    TIMES  => sub { $_[1] * $_[3] },
+    21    DIV    => sub { $_[1] / $_[3] },
+    22    NEG    => sub { -$_[2] },
+    23  );
+    24
+    25  $pparser->Run($x, $debug);
+
+When running this program the output is:
+
+  pl@europa:~/LEyapp/examples/recycle$ ./rewritepostfixwithactions.pl
+  Write an expression: 2*3+4
+  2 3 TIMES 4 PLUS
+  10
 
 =head1 SEE ALSO
 

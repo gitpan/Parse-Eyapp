@@ -238,7 +238,7 @@ and do {
 
      require Parse::Eyapp::Cleaner;
      my @args = $opt_v ? (skipcomments => 1) : ();
-     Parse::Eyapp::Cleaner::ppcontroller(\$opt_c, @args);
+     print Parse::Eyapp::Cleaner::ppcontroller(\$opt_c, @args);
      exit(0);
   };
 

@@ -39,4 +39,6 @@ SKIP: {
   };
   ok(!$warning, "Parse::Eyapp loaded on top of standalone without warnings");
 
+  unlink 't/Calc.pm';
+
 }

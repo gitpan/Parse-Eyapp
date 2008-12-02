@@ -1,0 +1,69 @@
+# File PostfixWithActions.eyp
+%right  '='
+%left   '-' '+'
+%left   '*' '/'
+%left   NEG
+
+%%
+line: $exp  { print "$exp\n" }
+;
+
+exp:        $NUM  
+                { $NUM }            
+        |   $VAR  
+                { $VAR }            
+        |   %name ASSIGN  
+              VAR.left '='exp.right         
+                { "$_[3] &$_[1] ASSIGN"; }
+        |   %name PLUS    
+              exp.left '+'exp.right         
+                { "$_[1] $_[3] PLUS"; }
+        |   %name MINUS   
+              exp.left '-'exp.right        
+                { "$_[1] $_[3] MINUS"; }
+        |   %name TIMES   
+              exp.left '*'exp.right       
+                { "$_[1] $_[3] TIMES"; }
+        |   %name DIV     
+              exp.left '/'exp.right      
+                { "$_[1] $_[3] DIV"; }
+        |   %name NEG '-' $exp %prec NEG 
+                { "$exp NEG" }
+        |   '(' $exp ')' 
+                { $exp }      
+;
+
+%%
+
+sub _Error {
+  my($token)=$_[0]->YYCurval;
+  my($what)= $token ? "input: '$token'" : "end of input";
+  my @expected = $_[0]->YYExpect();
+
+  local $" = ', ';
+  die "Syntax error near $what. Expected one of these tokens: @expected\n";
+}
+
+my $x;
+
+sub _Lexer {
+  my($parser)=shift;
+
+  for ($x) {
+    s/^\s+//;
+    $_ eq '' and return('',undef);
+
+    s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+    s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+    s/^(.)//s                    and return($1,$1);
+  }
+}
+
+sub Run {
+  my($self)=shift;
+  $x = shift;
+  $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
+    #yydebug => 0xFF
+  );
+}
+

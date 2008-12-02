@@ -104,9 +104,11 @@ t/66yydebugstandaloneandpod.t
 t/67outputfile.t
 t/68cleangrammar.t
 t/69cleanwithvgrammar.t
+t/70dos2unix.t
 t/Debug2.eyp
 t/Gift.yp
 t/Calc.eyp
+t/pascal.yp
 #t/97podcoverage.t
 t/98nopm.t
 t/99Cplusplusgrammar.t
@@ -270,4 +272,9 @@ examples/recycle/Noactions.eyp
 examples/recycle/Postfix.eyp
 examples/recycle/postf.pl
 examples/recycle/README
+examples/recycle/calcu_and_post.pl
+examples/recycle/NoacYYDelegateaction.eyp
+examples/recycle/icalcu_and_ipost_yydel.pl
+examples/recycle/PostfixWithActions.eyp
+examples/recycle/rewritepostfixwithactions.pl
 META.yml                                 Module meta-data (added by MakeMaker)

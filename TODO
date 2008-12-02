@@ -1,3 +1,22 @@
+  * Combine Flex and eyapp
+  * Grammar Reuse: Write methods YYActions, YYAction($index) YYAction($productionname)
+  * Grammar Reuse: named semantic actions combined with inheritance will solve the problem of grammar reuse
+
+  * Grammar reuse, grammars as subroutines/methods: a grammar subroutine for variable B 
+    is implemented via 
+
+             B -> FIRST(B) { CALL PARSER FOR B}
+
+     The sublanguage is a set of tokens from the superlanguage perspective. The token attribute is the value
+     returned by the parser. The lexer must be changed to finish when a FOLLOW(B) is found. Line number
+     and input require special consideration
+  *  Introduce the directive %input FILE. We need to control line numbers and file names for this.
+     May be we need a full preprocessor for this
+
+  * When using option %delegateaction we must check that the client must have 
+  methods with names the names of the production rules (see example in the Simon's book
+  Advanced programming for this). In fact is a case of "abstract method"
+
   * There is a generic 'Error' routine: provide it
   * Not sure: eyappoption -t will generate a 'tag' file
   * Generate via an eyapp option a Modulino 

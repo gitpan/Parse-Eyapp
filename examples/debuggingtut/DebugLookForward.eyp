@@ -45,7 +45,7 @@ sub _Lexer {
   for ($input) {
      s{^(\s+)}{} and $tokenline += $1 =~ tr{\n}{};
      return ('',undef) unless $_;
-     return ($1,$1) if s/^([sSDd])//;
+
      return ('SEMICOLOND', 'SEMICOLOND') if s/^;\s*D/D/;
      return ('SEMICOLONS', 'SEMICOLONS') if s/^;\s*S/S/;
      die "Syntax error at line num $tokenline:".substr($_,0,10)."\n";

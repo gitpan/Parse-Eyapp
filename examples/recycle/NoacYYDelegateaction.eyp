@@ -1,0 +1,57 @@
+%left   '+'
+%left   '*'
+
+%defaultaction { 
+  goto &Parse::Eyapp::Driver::YYDelegateaction;
+}
+
+%%
+exp:        %name NUM
+              NUM 
+        |   %name PLUS
+              exp '+' exp         
+        |   %name TIMES
+              exp '*' exp         
+        |   '(' exp ')'
+              { $_[2] }
+;
+
+%%
+
+sub _Error {
+  my($token)=$_[0]->YYCurval;
+  my($what)= $token ? "input: '$token'" : "end of input";
+  my @expected = $_[0]->YYExpect();
+
+  local $" = ', ';
+  die "Syntax error near $what. Expected one of these tokens: @expected\n";
+}
+
+
+my $x = '';
+
+sub _Lexer {
+  my($parser)=shift;
+
+  for ($x) {
+    s/^\s+//;
+    $_ eq '' and return('',undef);
+
+    s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+    s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+    s/^(.)//s                    and return($1,$1);
+  }
+}
+
+sub Run {
+  my($self)=shift;
+  $x = shift;
+  my $debug = shift;
+
+  $self->YYParse( 
+    yylex => \&_Lexer, 
+    yyerror => \&_Error,
+    yydebug => $debug,
+  );
+}
+

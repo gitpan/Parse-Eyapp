@@ -42,4 +42,7 @@ BEGDEB
   my $x = `cat t/err`;
 
   like($x, qr{$begideb}, 'yydebug output looks ok');
+
+
+  unlink 't/Debug2.pm';
 }

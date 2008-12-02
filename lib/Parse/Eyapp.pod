@@ -105,6 +105,19 @@ Parse::Eyapp - Extensions for Parse::Yapp
 
   local $Parse::Eyapp::Node::INDENT=0;
   print "\nSyntax Tree after transformations:\n",$t->str,"\n";
+  
+=head1 INTRODUCTION
+
+
+Parse::Eyapp (Extended yapp) is a collection of modules that extends Francois
+Desarmenien Parse::Yapp 1.05.  Eyapp extends yacc/yapp syntax with
+functionalities like named attributes, EBNF-like expressions, modifiable
+default action, grammar reusability, automatic syntax tree building,
+semi-automatic abstract syntax tree building, translation schemes, tree regular
+expressions, tree transformations, scope analysis support, directed acyclic
+graphs and a few more.
+
+
 
 =head1 THE DOCUMENTATION OF L<Parse::Eyapp>
 
@@ -114,9 +127,12 @@ The documentation is distributed among several files:
 
 =item * To get familiar with  C<eyapp> read L<Parse::Eyapp::eyappintro>
 and  L<Parse::Eyapp::debuggingtut>.
-It assumes a reader familiar with parsing techniques
-and with some knowledge of C<yacc> or C<yapp> or C<RecDescent> or
-similar tools.
+It assumes a reader familiar with parsing techniques.
+Familiarity with C<yacc> or C<yapp>, C<RecDescent>, C<ANTLR> or
+similar tools will help but it is not indispensable.
+
+=item *  The document L<Parse::Eyapp::defaultactionsintro> describes the use of
+default actions and how to deal with I<grammar reuse> and factorization.
 
 =item *  The document L<Parse::Eyapp::eyapplanguageref> 
 describes the Eyapp language. 
@@ -124,11 +140,8 @@ describes the Eyapp language.
 =item *  The document L<Parse::Eyapp::translationschemestut> 
 describes the use of Translation Schemes inside the Eyapp language. 
 
-=item *
-The Treeregexp language 
-is described in L<Parse::Eyapp::Treeregexp>.
-Treeregexp is a language to describe transformations
-of abstract syntax trees.
+=item * The Treeregexp language is described in L<Parse::Eyapp::Treeregexp>.
+Treeregexp is a language to describe transformations of abstract syntax trees.
 
 =item * Read L<Parse::Eyapp::Scope> to know
 about the functionalities provided for Scope Analysis.
@@ -144,27 +157,6 @@ and subroutines.
 
 The examples used in this document can be found in
 the directory C<examples/Eyapp> accompanying this distribution.
-  
-=head1 INTRODUCTION
-
-
-Parse::Eyapp (Extended yapp) is a collection of modules
-that extends Francois Desarmenien Parse::Yapp 1.05.
-Eyapp extends yacc/yapp syntax with 
-functionalities like named attributes,
-EBNF-like expressions, modifiable default action,
-automatic syntax tree building,
-semi-automatic abstract syntax tree building,
-translation schemes, tree regular expressions,
-tree transformations, scope analysis support,
-directed acyclic graphs and a few more.
-
-
-
-For a more detailed introduction to C<yacc>/C<eyapp> 
-programming see L<Parse::Eyapp::eyappintro>
-and  L<Parse::Eyapp::debuggingtut>.
-
 
 =head1 THE EYAPP LANGUAGE
 

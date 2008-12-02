@@ -4,7 +4,7 @@ Parse::Eyapp::Driver - The LALR parser
  
 =head1 INTRODUCTION
 
-This class has the method C<yyparse> implementing the LR generic
+This class has the method C<YYParse> implementing the LR generic
 parsing algorithm plus the methods that give support to the generated
 parser.
 
@@ -296,7 +296,7 @@ It accepts almost the same arguments as C<Class-E<gt>new> with the exception
 of C<yyprefix> which can be used only with C<new>.
 
 =head2 
-$parser->YYErrok 
+          $parser->YYErrok 
 
 Works as yacc/bison C<yyerrok>. 
 Modifies the error status
@@ -456,6 +456,204 @@ when executed an output similar to this is produced:
    ]
  }, 'Rule3::exp_11' );
 
+=head2 $parser->YYRule
+
+Return the list of rules. 
+The following debugger session illustartes its use:
+
+  pl@europa:~/LEyapp/examples/recycle$ perl -wd usepostfix.pl
+  main::(usepostfix.pl:5):        my $parser = new Postfix();
+  main::(usepostfix.pl:6):        $parser->Run;
+  0  ARRAY(0xa068e0)
+     0  '$start'
+     1  2
+     2  undef
+  1  ARRAY(0xa06940)
+     0  'line'
+     1  1
+     2  CODE(0xc22360)
+        -> &Postfix::__ANON__[Postfix.eyp:10] in Postfix.eyp:227-10
+  ... etc, etc.
+
+Each item has three components: the LHS of the production, the number os symbols
+in the RHS and the CODE reference to the semantic action.
+
+If an index is specified as argument it returns the corresponding item:
+
+     DB<2> x $parser->YYRule(7)
+  0  'exp'
+  1  3
+  2  CODE(0xc1fce0)
+     -> &Postfix::__ANON__[Postfix.eyp:7] in Postfix.eyp:276-7
+
+To know to what production an item is associated we can use the C<YYGrammar> method:
+
+     DB<3> x $parser->YYGrammar('exp_7')
+  0  'exp_7'
+  1  'exp'
+  2  ARRAY(0xa05290)
+     0  'exp'
+     1  '*'
+     2  'exp'
+  3  0
+
+We can also use the name of the rule to get the item:
+
+   DB<4> x $parser->YYRule('exp_7')
+  0  'exp'
+  1  3
+  2  CODE(0xc1fce0)
+     -> &Postfix::__ANON__[Postfix.eyp:7] in Postfix.eyp:276-7
+
+
+=head2 $parser->YYGrammar
+
+Return the list of grammar items.
+Each item is an anonymous list containing
+
+=over 2
+
+=item * The name of the production
+
+=item * The LHS of the production
+
+=item * An anonymous list containing the symbols in the RHS
+
+=back
+
+If it receives an index as argument returns the corresponding item
+The following debugger session explain its use:
+
+  pl@europa:~/LEyapp/examples/recycle$ perl -wd usepostfix.pl
+  main::(usepostfix.pl:5):        my $parser = new Postfix();
+    DB<1> n
+  main::(usepostfix.pl:6):        $parser->Run;
+    DB<1> x $parser->YYGrammar
+  0  ARRAY(0xde5e20)
+     0  '_SUPERSTART'
+     1  '$start'
+     2  ARRAY(0xc85e80)
+        0  'line'
+        1  '$end'
+     3  0
+  1  ARRAY(0xe2b6b0)
+     0  'line_1'
+     1  'line'
+     2  ARRAY(0xe3abc0)
+        0  'exp'
+     3  0
+  2  ARRAY(0xa05530)
+     0  'exp_2'
+     1  'exp'
+     2  ARRAY(0x75bdc0)
+        0  'NUM'
+     3  0
+
+     ...  etc, etc
+
+If an index is provided it returns the item for such number:
+
+    DB<2> x $parser->YYGrammar(10)
+  0  'exp_10'
+  1  'exp'
+  2  ARRAY(0xa05f80)
+     0  '('
+     1  'exp'
+     2  ')'
+  3  0
+
+You can also use a production name as argument:
+
+    DB<3> x $parser->YYGrammar('exp_7')
+  0  'exp_7'
+  1  'exp'
+  2  ARRAY(0xa05890)
+     0  'exp'
+     1  '*'
+     2  'exp'
+  3  0
+
+=head2 $parser->YYNames
+
+Return the list of production names. In a scalar context returns
+a reference to such list.
+
+  pl@europa:~/LEyapp/examples/recycle$ eyapp Postfix
+  pl@europa:~/LEyapp/examples/recycle$ perl -wd usepostfix.pl
+  main::(usepostfix.pl:5):        my $parser = new Postfix();
+  main::(usepostfix.pl:6):        $parser->Run;
+  DB<1> x $parser->YYNames
+  0  '_SUPERSTART'
+  1  'line_1'
+  2  'exp_2'
+  3  'exp_3'
+  4  'exp_4'
+  5  'exp_5'
+  6  'exp_6'
+  7  'exp_7'
+  8  'exp_8'
+  9  'exp_9'
+  10  'exp_10'
+
+
+=head2 $parser->YYIndex
+
+Receives the name of production (right hand side).
+Returns the index in the grammar of the production with such name.
+When called in a list context and without a name return the hash
+containing the relation 
+
+           production name => production index
+
+The following debugger session illustrates its use:
+
+  pl@europa:~/LEyapp/examples/recycle$ perl -wd usepostfix.pl
+  main::(usepostfix.pl:5):        my $parser = new Postfix();
+  main::(usepostfix.pl:6):        $parser->Run;
+  DB<1> x $parser->YYIndex
+  0  'line_1'
+  1  1
+  2  'exp_3'
+  3  3
+  4  'exp_6'
+  5  6
+  6  'exp_4'
+  7  4
+  8  'exp_10'
+  9  10
+  10  'exp_8'
+  11  8
+  12  'exp_5'
+  13  5
+  14  'exp_7'
+  15  7
+  16  'exp_2'
+  17  2
+  18  '_SUPERSTART'
+  19  0
+  20  'exp_9'
+  21  9
+
+We can specify a list of names:
+
+  DB<2> x $parser->YYIndex(qw{exp_4 exp_7})
+  0  4
+  1  7
+  DB<3> x $parser->YYIndex(qw{exp_4})
+  0  4
+
+
+
+=head2 $parser->YYAction
+
+Receives the name of a production and a subroutine reference implementing the new semantic action.
+If no subroutine reference is set returns the reference to the current semantic action
+
+=head2 $parser->YYSetaction
+
+Receives a hash with keys the names of the production rules (right hand sides) and values
+the new semantic actions. Used to reuse a grammar without overwriting all the semantic actions
+
 
 =head2  $parser->YYIssemantic
 
@@ -489,6 +687,24 @@ gave place to the execution of the current semantic action).
 
 Return and/or sets the C<yyprefix> attribute. This a string that will be concatenated
 as a prefix to any C<Parse::Eyapp::Node> nodes in the syntax tree.
+
+=head2  $parser->YYDelegateaction
+
+Use it as C<defaultaction> if you want to recycle your grammar.
+It is equivalent to:
+
+
+  sub YYDelegateaction {
+    my $self = shift;
+
+    my $action = $self->YYName;
+
+    $self->$action(@_);
+  }
+
+For a full example, see files examples/recycle/NoacInh.eyp
+and examples/recycle/icalcu_and_ipost.pl
+in the Parse::Eyapp distribution
 
 =head2 $parser->YYBypass
 

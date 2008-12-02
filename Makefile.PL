@@ -1,8 +1,6 @@
 use warnings;
 use strict;
-use Carp;
 use ExtUtils::MakeMaker;
-use File::Basename;
 
 my @exe_files = qw{eyapp treereg vgg};
 
@@ -19,17 +17,19 @@ WriteMakefile(
     AUTHOR         => 'Casiano Rodriguez-Leon <casiano@ull.es>',
 );
 
-sub listwithsuffix {
-  my $suffix = shift;
-  my $lws =  "@_";
-
-  $lws =~ s/(\S+)/$1$suffix/xg;
-  return  $lws;
-}
-
 sub MY::postamble {
 
   return '' unless defined($ENV{DEVELOPER}) && ($ENV{DEVELOPER} eq 'casiano');
+
+  require File::Basename;
+  
+  my $listwithsuffix = sub {
+    my $suffix = shift;
+    my $lws =  "@_";
+
+    $lws =~ s/(\S+)/$1$suffix/xg;
+    return  $lws;
+  };
 
   ### Configuration variables: Change them if you change machine ####
   ### Depend on environment variables set via "source etc/setperl5lib" ##
@@ -40,7 +40,7 @@ sub MY::postamble {
 
   my ($manifest, @PODS, @BASES, @NOEXT);
 
-  open($manifest ,'<', 'MANIFEST') or croak "Can't find MANIFEST";
+  open($manifest ,'<', 'MANIFEST') or die "Can't find MANIFEST";
 
     @PODS = grep { m{lib/Parse/.*\.pod$}x } <$manifest>;
 
@@ -62,18 +62,18 @@ sub MY::postamble {
   # Be sure is in the path
   $REMOTETEST = $ENV{REMOTETEST} || 'remotetest.pl';
 
-  @BASES = map { basename($_, '.pod') } @PODS; # i. e. ( Base.pod, debuggingtut.pod, ... )
+  @BASES = map { File::Basename::basename($_, '.pod') } @PODS; # i. e. ( Base.pod, debuggingtut.pod, ... )
   @NOEXT = map { m{(.*)\.pod$}; $1 } @PODS;    # i. e. ( lib/Parse/Eyapp/Base, lib/Parse/Eyapp/debuggingtut, lib/Parse/Eyapp/Driver ... )
 
   $PODS = "@PODS";
 
-  $TEXS =  listwithsuffix(".tex", @BASES);
+  $TEXS =  $listwithsuffix->(".tex", @BASES);
 
-  $DVIS =  listwithsuffix(".dvi", @BASES);
+  $DVIS =  $listwithsuffix->(".dvi", @BASES);
 
-  $PDFS =  listwithsuffix(".pdf", @BASES);
+  $PDFS =  $listwithsuffix->(".pdf", @BASES);
 
-  $HTMLS = listwithsuffix(".html", @NOEXT);
+  $HTMLS = $listwithsuffix->(".html", @NOEXT);
 
   $_ = targets(
     PODS         => $PODS, 
@@ -188,7 +188,7 @@ publichtml: htmls
 	chmod a+r <<PUBLIC_PLACE>>/*.html
 	
 .PHONY: tags
-tags: Makefile
+tags: 
 	${PLTAGS} eyapp treereg vgg lib/Parse/Eyapp/*.pm lib/Parse/Eyapp/*.yp lib/Parse/Eyapp.pm 
 	ctags -a --exclude=examples --exclude=t --exclude=doc --exclude=tt2
 EOSQT

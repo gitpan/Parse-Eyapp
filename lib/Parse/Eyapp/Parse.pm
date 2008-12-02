@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.132.
+#    This file was generated using Parse::Eyapp version 1.133.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -259,7 +259,7 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.132',
+    yyversion => '1.133',
     yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
@@ -2028,10 +2028,14 @@ sub _Lexer {
         $$input=~/\G(.)/sg
     or  die "Parse::Eyapp::Grammar::Parse: Match (.) failed: report as a BUG";
 
-        $1 eq "\n"
+    my $char = $1;
+
+    $char =~ s/\cM/\n/; # dos to unix
+
+        $char eq "\n"
     and ++$lineno[1];
 
-    ( $1 ,[ $1, $lineno[0] ]);
+    ( $char ,[ $char, $lineno[0] ]);
 
 }
 

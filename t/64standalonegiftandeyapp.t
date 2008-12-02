@@ -22,4 +22,6 @@ SKIP: {
     require "t/Gift.pm";
   };
   ok(!$@, "standalone generated module loaded");
+
+  unlink 't/Gift.pm';
 }
