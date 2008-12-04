@@ -1,0 +1,16 @@
+%right word redirect
+%%
+sequence: /* empty */
+       | sequence words      %prec word
+       | sequence redirects  %prec redirect
+       ;
+
+words:    word
+       | words word
+       ;
+
+redirects:redirect
+       | redirects redirect
+       ;
+%%
+

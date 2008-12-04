@@ -1,0 +1,9 @@
+%%
+A: 
+    BorE c d 
+  | BorE c f 
+;
+BorE: 
+    x y 
+;
+%%

@@ -591,8 +591,12 @@ Let us consider once more a postfix to infix translator:
     67    );
     68  }
 
-The program C<rewritepostfixwithactions.pl> selectively substitutes
-the semantic actions for the productions named 
+The program C<rewritepostfixwithactions.pl> uses the former grammar
+to translate infix expressions to postfix expressions.
+It also implements a calculator reusing the grammar in
+C<PostfixWithActions.eyp>. It does so using
+the C<YYSetaction> method.
+The semantic actions for the productions named 
 
 =over 2
 
@@ -608,7 +612,8 @@ the semantic actions for the productions named
 
 =back
 
-While leaving the other semantic actions unchanged:
+are selectively substituted by the appropriate actions, while the other
+semantic actions remain unchanged:
 
   pl@europa:~/LEyapp/examples/recycle$ cat -n rewritepostfixwithactions.pl
      1  #!/usr/bin/perl
@@ -626,7 +631,7 @@ While leaving the other semantic actions unchanged:
     13  # And then selectively substitute
     14  # some semantic actions
     15  # to obtain an infix calculator ...
-    16  my %s;
+    16  my %s;            # symbol table
     17  $pparser->YYSetaction(
     18    ASSIGN => sub { $s{$_[1]} = $_[3] },
     19    PLUS   => sub { $_[1] + $_[3] },
@@ -737,6 +742,12 @@ L<http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/ocam
 The classic Dragon's book I<Compilers: Principles, Techniques, and Tools> 
 by Alfred V. Aho, Ravi Sethi and
 Jeffrey D. Ullman (Addison-Wesley 1986)
+
+=item *
+I<CS2121: The Implementation and Power of Programming Languages>
+(See L<http://www.cs.man.ac.uk/~pjj>, L<http://www.cs.man.ac.uk/~pjj/complang/g2lr.html> 
+and L<http://www.cs.man.ac.uk/~pjj/cs2121/ho/ho.html>) by 
+Pete Jinks
 
 =back
 

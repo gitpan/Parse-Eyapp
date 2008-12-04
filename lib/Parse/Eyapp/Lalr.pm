@@ -227,6 +227,9 @@ sub ShowDfa {
                     $ruleno = -$ruleno;
                 };
 
+                    $term eq chr(0)
+                and $term = '$end';
+
                 $text.= "\t$term\t".($discard  ? "[" : "");
                 if($ruleno) {
                     $text.= "reduce using rule $ruleno ".

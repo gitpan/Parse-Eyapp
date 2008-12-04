@@ -16,7 +16,7 @@ SKIP: {
 
 skip "Developer test: Test::Pod is installed?", 2 unless $test_pod_installed && $ENV{DEVELOPER};
 
-my $grammar = q{
+my $grammar =<< 'EYAPP_GRAMMAR';
 %right  '='
 %left   '-' '+'
 %left   '*' '/'
@@ -173,10 +173,9 @@ This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 
-}; # end grammar
+EYAPP_GRAMMAR
 
-
-unlink('main.pm', 't/main.pm');
+unlink('main.pm', 't/main.pm', 'main.output', 't/main.output');
 
 Parse::Eyapp->new_grammar(
   input=>$grammar, 
@@ -196,4 +195,4 @@ like($generated,
    'documentation inside eyapp ends ok');
 }
 
-unlink('main.pm', 't/main.pm');
+unlink('main.pm', 't/main.pm', 'main.output', 't/main.output');

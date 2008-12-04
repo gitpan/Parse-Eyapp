@@ -8,8 +8,8 @@
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 
-our $SVNREVISION = '$Rev: 2320 $';
-our $SVNDATE     = '$Date: 2008-12-01 17:43:00 +0000 (lun, 01 dic 2008) $';
+our $SVNREVISION = '$Rev: 2328 $';
+our $SVNDATE     = '$Date: 2008-12-04 13:05:29 +0000 (jue, 04 dic 2008) $';
 
 package Parse::Eyapp::Driver;
 
@@ -20,7 +20,8 @@ use strict;
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
-$VERSION = "1.133";
+# $VERSION is also in Parse/Eyapp.pm
+$VERSION = "1.134";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
