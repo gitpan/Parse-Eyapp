@@ -1,0 +1,20 @@
+%right ID NUM
+%%
+s: 
+     /* empty */
+   | s ws  %prec ID
+   | s ns  %prec NUM
+ ;
+
+ws:
+     ID
+   | ws ID
+;
+
+ns:
+    NUM
+  | ns NUM
+;
+
+%%
+

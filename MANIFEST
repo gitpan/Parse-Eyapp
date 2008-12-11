@@ -129,10 +129,13 @@ examples/debuggingtut/shiftreduceconflict.eyp
 examples/debuggingtut/shiftreduceconflict_fixed.eyp
 examples/debuggingtut/typicalrr.eyp
 examples/debuggingtut/correcttypicalrr.eyp
-examples/debuggingtut/nomemptylists.eyp
+examples/debuggingtut/typicalrr_fixed.eyp
 examples/debuggingtut/confusing.eyp
 examples/debuggingtut/nolr_k_grammar.eyp
 examples/debuggingtut/lr_1_grammar.eyp
+examples/debuggingtut/rrconflictnamefirst.eyp
+examples/debuggingtut/rrconflictnamefirst_fix1.eyp
+examples/debuggingtut/nonslrgrammar.eyp
 examples/Driver/aSb.yp
 examples/Driver/paste.pl
 examples/Driver/Postfix.eyp

@@ -1,0 +1,31 @@
+%token VAR ',' ':'
+
+%{
+use base q{Tail};
+%}
+
+%%
+def:    param_spec return_spec ','
+        ;
+param_spec:
+             type
+        |    name_list ':' type
+        ;
+return_spec:
+             typeafter
+        |    name ':' typeafter
+        ;
+name:        VAR
+        ;
+type:        VAR
+        ;
+typeafter:        VAR
+        ;
+name_list:
+             name
+        |    name ',' name_list
+        ;
+%%
+
+__PACKAGE__->main unless caller();
+

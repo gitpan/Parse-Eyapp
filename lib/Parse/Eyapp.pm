@@ -10,7 +10,7 @@ BEGIN {
     our @ISA = qw(Parse::Eyapp::Output);
     require Parse::Eyapp::Output;
     # $VERSION is also in Parse/Eyapp/Driver.pm
-    our $VERSION = '1.134';
+    our $VERSION = '1.135';
   }
 }
 

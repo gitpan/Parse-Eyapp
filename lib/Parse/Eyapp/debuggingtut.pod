@@ -114,7 +114,118 @@ It is a good practice to use C<%strict> at the beginning of your grammar.
 
 
 
-=head1 CONFLICT ERRORS 
+=head1 CONFLICTS
+
+=head2 Understanding Priorities
+
+Token and production priorities are used to solve conflicts.
+Recall the main points of yacc-like parsers related to priorities:
+
+=over 2
+
+=item * The directives
+
+            %left
+            %right
+            %nonassoc
+
+can be used in the head section to declare the priority of a token
+
+=item * The later the declaration line the higher the priority
+
+=item * The precedence of a production rule (right hand side) is the precedence
+of the last token in the right hand side
+
+=item * In a shift-reduce conflict the default action is to shift. This action can be changed
+if the production and the token have explicit priorities
+
+=item * If the precedence of the production rule is higher the shift-reduce conflict is solved 
+in favor of the reduction
+
+=item * If the precedence of the token is higher the shift-reduce conflict is solved 
+in favor of the shift
+
+=item * If the precedence of the token is the same than the precedence of the rule, and is left 
+the shift-reduce conflict is solved in favor of the reduction
+
+=item * If the precedence of the token is the same than the precedence of the rule, and is right 
+the shift-reduce conflict is solved in favor of the shift
+
+=item * If the precedence of the token is the same than the precedence of the rule, and is nonassoc 
+the presence of a shift-reduce conflict means an error.
+This is used to describe operators, like the operator C<.LT.> in FORTRAN, 
+that may not associate with themselves. That is, because
+
+                             A .LT. B .LT. C
+
+is invalid in FORTRAN, C<.LT.> would be described with the keyword C<%nonassoc> in eyapp. 
+
+=item * The default precedence of a production can be changed using the C<%prec TOKEN> directive.
+Now the rule has the precedence and associativity of the specified C<TOKEN>.
+
+=back
+
+The program C<Precedencia.eyp> illustrates the way priorities work in C<eyapp>:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -c Precedencia.eyp
+  %token NUM
+  %left '@'
+  %right '&' dummy
+  %tree
+
+  %%
+
+  list:
+      | list '\n'
+      | list e
+  ;
+  e:
+        %name NUM
+        NUM
+      | %name AMPERSAND
+        e '&' e
+      | %name AT
+        e '@' e %prec dummy
+  ;
+
+  %%
+
+See an execution:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ ./Precedencia.pm
+  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
+  2@3@4
+  2@3&4
+  2&3@4
+  2&3&4
+  <CTRL-D>
+  AT(AT(NUM(TERMINAL[2]),NUM(TERMINAL[3])),NUM(TERMINAL[4]))
+  AT(NUM(TERMINAL[2]),AMPERSAND(NUM(TERMINAL[3]),NUM(TERMINAL[4])))
+  AT(AMPERSAND(NUM(TERMINAL[2]),NUM(TERMINAL[3])),NUM(TERMINAL[4]))
+  AMPERSAND(NUM(TERMINAL[2]),AMPERSAND(NUM(TERMINAL[3]),NUM(TERMINAL[4])))
+
+See if you are able to understand the output:
+
+=over 2
+
+=item * C<2@3@4>: The phrase is interpreted as C<(2@3)@4> 
+since the rule C<e '@' e> has the precedecence of the token C<dummy> which is stronger  
+that then priority of token C<@>. The conflict is solved in favor of the reduction
+
+=item * C<2@3&4>: The rule C<e '@' e> has the precedence of C<dummy>
+which is the same than the token C<&>. The asociativity decides. Since they were declared C<%right>
+the conflict is solved in favor of the shift. The phrase is interpreted as
+C<2@(3&4)>
+
+=item * C<2&3@4>: The rule C<e '&' e> has more precedence than the token C<@>. The 
+phrase is interpreted as C<(2&3)@4>
+
+=item * C<2&3&4>: Both the rule and the token have the same precedence. Since they were declared
+C<%right>, the conflict is solved in favor of the shift. The phrase is interpreted as C<2&(3&4)>
+
+=back
+
+=head2 An C<eyapp> Program with Errors
 
 The following simplified C<eyapp> program has some errors.
 The generated language is made of lists 
@@ -334,7 +445,7 @@ somewhere in its right hand side.
 If the parser is in state 4 
 is because the production rules C<ds -E<gt> D ';' ds>
 and C<ds -E<gt> D> are potential candidates 
-to build the syntax tree. That they will be or not
+to build the syntax tree. That they will win or not
 depends on what will happen next when more
 input is processed.
 
@@ -365,23 +476,42 @@ will be state 8:
 As we see state 8 has the item C<ds -E<gt> D ';' . ds> which
 means that we have already seen a C<D> and a semicolon.
 
-The fact
-that C<ds -E<gt> D .>
-is in state 4 means that we have already seen 
-C<D> and since
-the dot is at the end of the rule,
+The fact that C<ds -E<gt> D .> is in state 4 means that we have already seen 
+C<D> and since the dot is at the end of the rule,
 this production can be the right one, even if
-a semicolon is just waiting in the input.
+a semicolon is just waiting in the input. 
+An example that it will be correct to "reduce" by the rule
+C<ds -E<gt> D .> in the presence of a semicolon is given by the
+input C<D ; S>. A rightmost derivation for such input is:
 
-That is why C<eyapp> talks about a shift/reduce 
-conflict with C<';'> because in state 4 there are two
+  p => ds ; ss => ds ; S => D ; S
+
+that is processed by the LALR(1) algorithm 
+following this sequence of actions:
+
+ +----------+---------+---------+
+ | rule     | read    | input   |
+ |          |         | D ; S $ |
+ |          | D       |   ; S $ |
+ | ds->d    | ds      |   ; S $ |
+ |          | ds ;    |     S $ |
+ |          | ds ; S  |       $ |
+ | ss->s    | ds ; ss |       $ |
+ | p->ds;ss | p       |         |
+ +----------+---------+---------+
+
+Since it is correct to reduce in some cases
+by the production C<ds -E<gt> D .>
+and others in which is correct to shift the semicolon,
+C<eyapp> complains about a shift/reduce 
+conflict with C<';'>. State 4 has two
 rules that compete to be the right one:
 
   pl@nereida:~/LEyapp/examples$ eyapp Debug.eyp
   1 shift/reduce conflict (see .output file)
 
-We can guess that the right item (the states 
-of the automata are called LR(0) items in the jargon)  is 
+We can guess that the right item (the rules with the dot, i.e. the states 
+of the automata are called LALR(0) items in the yacc jargon)  is 
 C<ds -E<gt> D .';' ds> and 
 I<shift to state 8> consuming the semicolon,
 expecting to see something derivable from C<ds> later
@@ -400,7 +530,7 @@ For both phrases, after consuming the C<D>
 the parser will go to state 4 and the current token will be the semicolon.
 
 For the first phrase 
-C<D;S> the correct decison
+C<D;S> the correct decision
 is to use rule 4 C<ds -E<gt> D> (to I<reduce> in the jargon).
 For the second phrase 
 C<D;D;S> the correct decision is to follow rule 3
@@ -466,9 +596,26 @@ Since no C<ds>  production starts with C<S>,
 the presence of C<S> is (erroneously)
 interpreted as an error.
 
-=head2 Solving Conflicts by Factorizing
+You may wonder why the productions
 
-To solve the conflict the C<Eyapp> programmer
+
+  ss:
+        S ';' ss
+      | S
+  ;
+
+do not also produce a shift-reduce conflict with the semicolon. This is because the reduction
+by C<ss -E<gt> S> always corresponds to the last C<S> in a derivation:
+
+   ss => S ; ss => S ; S ; ss => S ; S; S
+
+and thus, the reduction by C<ss -E<gt> S> only occurs in the presence
+of the C<end of input> token and never with the semicolon.
+
+
+=head2 Solving Shift-Reduce Conflicts by Factorizing
+
+To solve the former conflict the C<Eyapp> programmer
 has to reformulate the grammar modifying
 priorities and reorganizing the rules.
 Rewriting the recursive rule for C<ds> to
@@ -506,7 +653,7 @@ When we recompile the modified grammar no warnings appear:
   pl@nereida:~/LEyapp/examples$ eyapp Debug1.eyp
   pl@nereida:~/LEyapp/examples$ 
 
-=head2 Solving Conflicts By Looking Ahead 
+=head2 Solving Shift-Reduce Conflicts By Looking Ahead 
 
 The problem here is that Eyapp/Yapp/Yacc etc. are LALR(1) parsers.
 They only look the next token. 
@@ -582,10 +729,205 @@ Here is a solution based in this idea:
     63    );
     64  }
 
+=head2 Reduce-Reduce Conflicts
+
+Most of the time reduce-reduce conflicts are due to some ambiguity in
+the grammar. In this example the programmer has attempted to define
+a language made of mixed lists IDs and NUMbers :
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n typicalrr.eyp
+     1  %token ID NUM
+     2
+     3  %%
+     4  s:
+     5        /* empty */
+     6      | s ws
+     7      | s ns
+     8  ;
+     9  ws:
+    10        /* empty */
+    11      | ws ID
+    12  ;
+    13  ns:
+    14        /* empty */
+    15      | ns NUM
+    16  ;
+    17
+    18  %%
+
+The grammar has several reduce-reduce conflicts:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp typicalrr.eyp
+  3 shift/reduce conflicts (see .output file)
+  State 2: reduce by rule 3: s -> s ns (default action)
+  State 2: shifts:
+    to state    5 with NUM  and 3 reduce/reduce conflicts
+
+In fact we have infinite ways to rightmost derive the empty string.
+
+The problem is easily solved designing an equivalent non ambiguous grammar:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n correcttypicalrr.eyp
+     1  %token ID NUM
+     2
+     3  %%
+     4  s:
+     5        /* empty */
+     6      | s ID
+     7      | s NUM
+     8  ;
+     9
+    10  %%
+
+
+=head2 Reduce-Reduce Conflicts with Unambiguous Grammars
+
+Though not common, it may occur that a reduce-reduce conflict
+is not due to ambiguity but to the limitations of the LALR(1)
+algorithm. The following example illustrates the point:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n rrconflictnamefirst.eyp
+     1  %token VAR ',' ':'
+     2
+     3  %{
+     4  use base q{Tail};
+     5  %}
+     6
+     7  %%
+     8  def:    param_spec return_spec ','
+     9          ;
+    10  param_spec:
+    11               type
+    12          |    name_list ':' type
+    13          ;
+    14  return_spec:
+    15               type
+    16          |    name ':' type
+    17          ;
+    18  name:        VAR
+    19          ;
+    20  type:        VAR
+    21          ;
+    22  name_list:
+    23               name
+    24          |    name ',' name_list
+    25          ;
+    26  %%
+    27
+    28  __PACKAGE__->main unless caller();
+
+
+This non ambiguous grammar generates a language of sequences like
+   
+                 a, b : e f : e,
+
+The conflict is due to the final comma in:
+
+      def:    param_spec return_spec ','
+
+If you supress such comma there is no conflict (try it).
+When compiling with eyapp we get the warning:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp rrconflictnamefirst.eyp
+  1 reduce/reduce conflict
+
+Editing the C<.output> file we can see the conflict is in state 2:
+
+   46 State 2:
+   47
+   48         name -> VAR .   (Rule 6)
+   49         type -> VAR .   (Rule 7)
+   50
+   51         ','     [reduce using rule 7 (type)]
+   52         VAR     reduce using rule 7 (type)
+   53         $default        reduce using rule 6 (name)
+
+
+If we look at the grammar we can see that a reduction by 
+
+                   type -> VAR .
+
+may occur with a comma as incoming token but only after 
+the reduction by C<param_spec> has taken place. The problem
+is that the automata forgets about it. Look the 
+automata transitions in the C<.outputfile>.
+By making explict the difference between the first and second C<type>
+we solve the conflict:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n rrconflictnamefirst_fix1.eyp
+     1  %token VAR ',' ':'
+     2
+     3  %{
+     4  use base q{Tail};
+     5  %}
+     6
+     7  %%
+     8  def:    param_spec return_spec ','
+     9          ;
+    10  param_spec:
+    11               type
+    12          |    name_list ':' type
+    13          ;
+    14  return_spec:
+    15               typeafter
+    16          |    name ':' typeafter
+    17          ;
+    18  name:        VAR
+    19          ;
+    20  type:        VAR
+    21          ;
+    22  typeafter:        VAR
+    23          ;
+    24  name_list:
+    25               name
+    26          |    name ',' name_list
+    27          ;
+    28  %%
+    29
+    30  __PACKAGE__->main unless caller();
+
+A reduce-reduce conflict is solved in favor of the first production
+found in the text. If we execute the grammar with the conflict C<./rrconflictnamefirst.pm>,
+we get the correct behavior:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -b '' rrconflictnamefirst.eyp
+  1 reduce/reduce conflict
+  pl@europa:~/LEyapp/examples/debuggingtut$ ./rrconflictnamefirst.pm
+  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
+  a,b:c d:e,
+  <CTRL-D>
+  $
+
+The program accepts the correct language - in spite of the conflict -
+due to the fact that the  production
+
+                      name:        VAR
+
+is listed first. 
+
+The parser rejects the correct phrases if we swap the order 
+of the productions writing the C<type: VAR> production first,
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ ./reducereduceconflict.pm
+  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
+  a,b:c d:e,
+  <CTRL-D>
+
+  Syntax error near input: ',' (lin num 1).
+  Incoming text:
+  ===
+  b:c d
+  ===
+  Expected one of these terminals: VAR
+
+
+Files C<reducereduceconflict_fix1.eyp> and C<reducereduceconflict_fix2.eyp>
+offer other solutions to the problem.
 
 =head1 ERRORS DURING TREE CONSTRUCTION
 
-Let us write the typical client program:
+Let us write the typical client program for the parser 
+in C<Debug1>:
 
   pl@nereida:~/LEyapp/examples$ cat -n usedebug1.pl
    1  #!/usr/bin/perl -w

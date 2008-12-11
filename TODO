@@ -1,6 +1,18 @@
+  * Automatic naming scheme.
+    %namingscheme : defines an automatic naming cheme 
+    Examples:
+       A : B ',' C  ----->  A::B_COMMA_C  or may be A__B_COMMA_C assuming the entry for ',' is COMMA
+       A : /* empty */ ----> A::EMPTY empty becomes a reserved name
+       A_B : C_D becomes AB_CD
+
+    Factorize naming code, then allow the user to change the 'naming' function. 
+    Parameters: LHS, RHS, index, parser object, what else?
+
+  * Language generation example: Use YYExpect method!
+
+  * Check that all the production names (given with %name directives) are different. Emit a warning if not
+
   * Combine Flex and eyapp
-  * Grammar Reuse: Write methods YYActions, YYAction($index) YYAction($productionname)
-  * Grammar Reuse: named semantic actions combined with inheritance will solve the problem of grammar reuse
 
   * Grammar reuse, grammars as subroutines/methods: a grammar subroutine for variable B 
     is implemented via 
@@ -10,6 +22,7 @@
      The sublanguage is a set of tokens from the superlanguage perspective. The token attribute is the value
      returned by the parser. The lexer must be changed to finish when a FOLLOW(B) is found. Line number
      and input require special consideration
+
   *  Introduce the directive %input FILE. We need to control line numbers and file names for this.
      May be we need a full preprocessor for this
 
@@ -18,14 +31,19 @@
   Advanced programming for this). In fact is a case of "abstract method"
 
   * There is a generic 'Error' routine: provide it
+
   * Not sure: eyappoption -t will generate a 'tag' file
-  * Generate via an eyapp option a Modulino 
+
   * target 'version' in Makefile.PL: make a vim script
+
   * PUBLIC_PLACE implies to copy to a remote machine (nereida)
+
   * Implement the directive
        %package Math::Calc 
     (like the option -m of eyapp)
+
   * common examples generated through the text template. Idem MANIFEST
+
   * Lexical analyzer seems to be in a mess: line count seem full of bugs
 
   * delete_method isn't documented

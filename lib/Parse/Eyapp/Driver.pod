@@ -459,7 +459,7 @@ when executed an output similar to this is produced:
 =head2 $parser->YYRule
 
 Return the list of rules. 
-The following debugger session illustartes its use:
+The following debugger session illustrates its use:
 
   pl@europa:~/LEyapp/examples/recycle$ perl -wd usepostfix.pl
   main::(usepostfix.pl:5):        my $parser = new Postfix();
@@ -505,6 +505,36 @@ We can also use the name of the rule to get the item:
   2  CODE(0xc1fce0)
      -> &Postfix::__ANON__[Postfix.eyp:7] in Postfix.eyp:276-7
 
+=head2 $parser->YYState
+
+C<YYState> returns the list of states containing the LALR(1) tables: the 
+action and GOTO tables.  Each state is an anonymous hash:
+
+  DB<4> x $parser->YYState(2)
+  0  HASH(0xfa7120)
+     'ACTIONS' => HASH(0xfa70f0) # token => state
+           ':' => '-7'
+     'DEFAULT' => '-6'
+
+A negative number means reduction using the corresponding production 
+rule (opposite) number. The former example tells to reduce by rule 7
+when in state 2 and seeing token C<':'>. By default, the action when
+in state 2 is to reduce by rule number 6.
+
+There are three keys: ACTIONS, GOTOS and  DEFAULT
+
+  DB<7> x $parser->YYState(13)
+ 0  HASH(0xfa8b50)
+    'ACTIONS' => HASH(0xfa7530)
+       'VAR' => 17
+    'GOTOS' => HASH(0xfa8b20)
+       'type' => 19
+
+The GOTOS tables contains the DFA transition tables for
+the syntactic variables. The former example tells
+to move to state 19 when in state 13 after seeing
+the syntactic variable C<type> (i.e. if after reducing by a 
+rule of C<type> we are in state 13).
 
 =head2 $parser->YYGrammar
 

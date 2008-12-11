@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.134";
+$VERSION = "1.135";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -169,6 +169,31 @@ sub YYRule {
   }
 
   return wantarray? @{$self->{RULES}} : $self->{RULES}
+}
+
+# YYState returns the list of states. Each state is an anonymous hash
+#  DB<4> x $parser->YYState(2)
+#  0  HASH(0xfa7120)
+#     'ACTIONS' => HASH(0xfa70f0) # token => state
+#           ':' => '-7'
+#     'DEFAULT' => '-6'
+# There are three keys: ACTIONS, GOTOS and  DEFAULT
+#  DB<7> x $parser->YYState(13)
+# 0  HASH(0xfa8b50)
+#    'ACTIONS' => HASH(0xfa7530)
+#       'VAR' => 17
+#    'GOTOS' => HASH(0xfa8b20)
+#       'type' => 19
+sub YYState {
+  my $self = shift;
+  my $index = shift;
+
+  if ($index) {
+    die "YYState error. Expecting a number, found <$index>" unless (looks_like_number($index));
+    return $self->{STATES}[$index]
+  }
+
+  return $self->{STATES}
 }
 
 # TODO: make it work with a list of indices ...
