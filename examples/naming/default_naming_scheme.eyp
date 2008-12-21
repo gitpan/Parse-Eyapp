@@ -1,0 +1,35 @@
+%strict
+%token VAR ASSIGN POINTER
+
+%tree
+
+%{
+use base q{Tail};
+Tail->set_lexemename(
+  '=' => 'ASSIGN',
+  '*' => 'POINTER',
+);
+%}
+
+%%
+s:
+    l ASSIGN r
+  | r
+;
+
+l:
+    POINTER r
+  | VAR
+;
+
+r:
+    l
+;
+
+%%
+
+unless (caller) {
+  my $t = __PACKAGE__->main(@ARGV);
+  print $t->str."\n";
+}
+

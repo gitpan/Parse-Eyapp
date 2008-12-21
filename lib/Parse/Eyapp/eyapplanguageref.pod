@@ -1,77 +1,178 @@
 =head1 NAME
  
 Parse::Eyapp::eyapplanguageref - The Eyapp language reference manual
- 
+
 =head1 THE EYAPP LANGUAGE
 
-=head2 Eyapp Grammar 
-
+=head2 Eyapp Grammar
 
 This section describes the syntax of the Eyapp language using its own notation.
-The grammar extends L<yacc> and L<yapp> grammars.
-Semicolons have been omitted to save space.
-Between C-like comments you can find an (informal) 
-explanation of the language 
-associated with each token.
+The grammar extends L<yacc> and L<yapp> grammars.  Semicolons have been omitted
+to save space.  Between C-like comments you can find an (informal) explanation
+of the language associated with each token.
 
+  lusasoft@LusaSoft:~/src/perl/Eyapp$ eyapp -c lib/Parse/Eyapp/Parse.yp
+  %token ASSOC         /* is %(left|right|nonassoc) */
+  %token BEGINCODE     /* is %begin { Perl code ... } */
+  %token CODE          /* is { Perl code ... } */
+  %token DEFAULTACTION /* is %defaultaction */
+  %token EXPECT        /* is %expect */
+  %token HEADCODE      /* is %{ Perl code ... %} */
+  %token IDENT         /* is [A-Za-z_][A-Za-z0-9_]* */
+  %token LITERAL       /* is a string literal like 'hello' */
+  %token METATREE      /* is %metatree */
+  %token NAME          /* is %name */
+  %token NUMBER        /* is \d+ */
+  %token OPTION        /* is (%name\s*([A-Za-z_]\w*)\s*)?\? */
+  %token PLUS          /* is (%name\s*([A-Za-z_]\w*)\s*)?\+ */
+  %token PREC          /* is %prec */
+  %token SEMANTIC      /* is %semantic\s+token */
+  %token STAR          /* is (%name\s*([A-Za-z_]\w*)\s*)?\* */
+  %token START         /* is %start */
+  %token SYNTACTIC     /* is %syntactic\s+token */
+  %token TAILCODE      /* is { Perl code ... } */
+  %token TOKEN         /* is %token */
+  %token TREE          /* is %tree */
+  %token TYPE          /* is %type */
+  %token UNION         /* is %union */
 
-  eyapp: head body tail ;
-  symbol: LITERAL  /* A string literal like 'hello' */
-      |   ident   
-  ident:  IDENT  /* IDENT is [A-Za-z_][A-Za-z0-9_]* */ 
-  head: headsec '%%'
-  headsec:  decl *
-  decl:  '\n'      
-      |   SEMANTIC typedecl symlist '\n'  /* SEMANTIC  is %semantic\s+token      */
-      |   SYNTACTIC typedecl symlist '\n' /* SYNTACTIC is %syntactic\s+token     */
-      |   TOKEN typedecl symlist '\n'     /* TOKEN     is %token                 */
-      |   ASSOC typedecl symlist '\n'     /* ASSOC     is %(left|right|nonassoc) */
-      |   START ident '\n'                /* START     is %start                 */
-      |   HEADCODE '\n'                   /* HEADCODE  is %{ Perl code ... %}    */
-      |   UNION CODE '\n'                 /* UNION CODE  see yacc/bison          */
-      |   DEFAULTACTION CODE '\n'         /* DEFAULTACTION is %defaultaction     */
-      |   TREE treeclauses? '\n'          /* TREE      is %tree                  */
-      |   METATREE '\n'                   /* METATREE  is %metatree              */
-      |   TYPE typedecl identlist '\n'    /* TYPE      is %type                  */
-      |   EXPECT NUMBER '\n'              /* EXPECT    is %expect                */
-                                          /* NUMBER    is \d+                    */
-  typedecl:   /* empty */
-      |       '<' IDENT '>'
-  treeclauses: BYPASS ALIAS? | ALIAS BYPASS?
-  symlist:    symbol + 
-  identlist:  ident +
-  body: rules * '%%'
-  rules: IDENT ':' rhss ';'  
-  rhss: rule <+ '|'>  
-  rule:   optname rhs (prec epscode)?
-  rhs:  rhseltwithid *
-  rhseltwithid : 
-        rhselt '.' IDENT 
-      | '$' rhselt  
+  %start eyapp
+
+  %%
+
+  eyapp:
+        head body tail
+  ;
+  symbol:
+        LITERAL
+      | ident 
+  ;
+  ident:
+        IDENT
+  ;
+  # Head section:
+  head:
+        headsec '%%'
+  ;
+  headsec:
+        #empty  
+      | decls 
+  ;
+  decls:
+        decls decl 
+      | decl 
+  ;
+  decl:
+        '\n' 
+      | SEMANTIC typedecl symlist '\n'
+      | SYNTACTIC typedecl symlist '\n'
+      | TOKEN typedecl symlist '\n'
+      | ASSOC typedecl symlist '\n'
+      | START ident '\n'
+      | PREFIX '\n'
+      | NAMINGSCHEME CODE '\n'
+      | HEADCODE '\n'
+      | UNION CODE '\n'  #ignore
+      | DEFAULTACTION CODE '\n'
+      | TREE '\n'
+      | METATREE '\n'
+      | STRICT '\n'
+      | TYPE typedecl identlist '\n'
+      | EXPECT NUMBER '\n'
+      | error '\n'
+  ;
+  typedecl:
+        #empty
+      | '<' IDENT '>'
+  ;
+  symlist:
+        symlist symbol
+      | symbol
+  ;
+  identlist:
+        identlist ident
+      | ident
+  ;
+  # Rule section
+  body:
+        rulesec '%%'
+      | '%%'
+  ;
+  rulesec:
+        rulesec rules 
+      | startrules 
+  ;
+  startrules:
+        IDENT ':'  rhss ';'
+      | error ';'
+  ;
+  rules:
+        IDENT ':' rhss ';'
+      | error ';'
+  ;
+  rhss:
+        rhss '|' rule
+      | rule
+  ;
+  rule:
+        optname rhs prec epscode
+      | optname rhs
+  ;
+  rhs:
+        #empty    
+      | rhselts 
+  ;
+  rhselts:
+        rhselts rhseltwithid
+      | rhseltwithid
+  ;
+  rhseltwithid:
+        rhselt '.' IDENT
+      | '$' rhselt
+      | '$' error
       | rhselt
-  rhselt:     symbol    
-      | code    
-      | '(' optname rhs ')' 
-      | rhselt STAR               /* STAR   is (%name\s*([A-Za-z_]\w*)\s*)?\*  */
-      | rhselt '<' STAR symbol '>' 
-      | rhselt OPTION             /* OPTION is (%name\s*([A-Za-z_]\w*)\s*)?\?  */
+  ;
+  rhselt:
+        symbol
+      | code
+      | '(' optname rhs ')'
+      | rhselt STAR
+      | rhselt '<' STAR symbol '>'
+      | rhselt OPTION
       | rhselt '<' PLUS symbol '>'
-      | rhselt PLUS               /* PLUS   is (%name\s*([A-Za-z_]\w*)\s*)?\+  */
-  optname: (NAME IDENT)?          /* NAME is %name */
-         | NOBYPASS IDENT         /* NOBYPASS is %no\s+bypass */
-  prec: PREC symbol               /* PREC is %prec */
-  epscode:  code ?   
-  code:   
-      CODE           /* CODE     is { Perl code ... }         */
-    | BEGINCODE      /* BEGINCODE is %begin { Perl code ... } */
-  tail:  TAILCODE ?  /* TAILCODE is { Perl code ... } */
+      | rhselt PLUS
+  ;
+  optname:
+        /* empty */
+      | NAME IDENT
+  ;
+  prec:
+        PREC symbol
+  ;
+  epscode:
+      | code
+  ;
+  code:
+        CODE
+      | BEGINCODE
+  ;
+  # Tail section:
+  tail:
+        /*empty*/
+      | TAILCODE
+  ;
 
-The semantic of C<Eyapp> agrees with the semantic of C<yacc> and C<yapp>
-for all the common constructions. 
+  %%
 
 
 
 
+The semantic of C<Eyapp> agrees with the semantic of C<yacc> and C<yapp> for
+all the common constructions. 
+
+
+
+ 
 =head2 Comments
 
 Comments are either Perl style, from C<#>
@@ -854,8 +955,6 @@ a C<rhs> expression as in:
                        optname: (NAME IDENT)?
 
 =back
-
-=head1 THE SEMANTIC OF LISTS OPERATORS
 
 
 =head2 The C<+> operator
@@ -1933,45 +2032,331 @@ of the C<SUBSTRACT> nodes:
     }, 'SUBSTRACT' )
   ];
 
+=head1 GRAMMAR REUSE
+
+=head2 Reusing Grammars Using Inheritance
+
+An alternative method is to use inheritance. 
+The client inherits the grammar and expands it 
+with methods that implement the actions.
+Here is the grammar:
+
+  pl@europa:~/LEyapp/examples/recycle$ cat -n NoacInh.eyp
+     1  %left   '+'
+     2  %left   '*'
+     3
+     4  %defaultaction {
+     5    my $self = shift;
+     6
+     7    my $action = $self->YYName;
+     8
+     9    $self->$action(@_);
+    10  }
+    11
+    12  %%
+    13  exp:        %name NUM
+    14                NUM
+    15          |   %name PLUS
+    16                exp '+' exp
+    17          |   %name TIMES
+    18                exp '*' exp
+    19          |   '(' exp ')'
+    20                { $_[2] }
+    21  ;
+    22
+    23  %%
+    24
+    25  sub _Error {
+    26    my($token)=$_[0]->YYCurval;
+    27    my($what)= $token ? "input: '$token'" : "end of input";
+    28    my @expected = $_[0]->YYExpect();
+    29
+    30    local $" = ', ';
+    31    die "Syntax error near $what. Expected one of these tokens: @expected\n";
+    32  }
+    33
+    34
+    35  my $x = '';
+    36
+    37  sub _Lexer {
+    38    my($parser)=shift;
+    39
+    40    for ($x) {
+    41      s/^\s+//;
+    42      $_ eq '' and return('',undef);
+    43
+    44      s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+    45      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+    46      s/^(.)//s                    and return($1,$1);
+    47    }
+    48  }
+    49
+    50  sub Run {
+    51    my($self)=shift;
+    52    $x = shift;
+    53    my $debug = shift;
+    54
+    55    $self->YYParse(
+    56      yylex => \&_Lexer,
+    57      yyerror => \&_Error,
+    58      yydebug => $debug,
+    59    );
+    60  }
+
+The following program defines two classes: C<CalcActions>
+that implements the actions for the calculator
+and package C<PostActions> that implements the actions
+for the infix to postfix translation:
+
+  pl@europa:~/LEyapp/examples/recycle$ cat -n icalcu_and_ipost.pl
+     1  #!/usr/bin/perl -w
+     2  package CalcActions;
+     3  use strict;
+     4  use base qw{NoacInh};
+     5
+     6  sub NUM {
+     7    return $_[1];
+     8  }
+     9
+    10  sub PLUS {
+    11    $_[1]+$_[3];
+    12  }
+    13
+    14  sub TIMES {
+    15    $_[1]*$_[3];
+    16  }
+    17
+    18  package PostActions;
+    19  use strict;
+    20  use base qw{NoacInh};
+    21
+    22  sub NUM {
+    23    return $_[1];
+    24  }
+    25
+    26  sub PLUS {
+    27    "$_[1] $_[3] +";
+    28  }
+    29
+    30  sub TIMES {
+    31    "$_[1] $_[3] *";
+    32  }
+    33
+    34  package main;
+    35  use strict;
+    36
+    37  my $calcparser = CalcActions->new();
+    38  print "Write an expression: ";
+    39  my $x = <STDIN>;
+    40  my $e = $calcparser->Run($x);
+    41
+    42  print "$e\n";
+    43
+    44  my $postparser = PostActions->new();
+    45  my $p = $postparser->Run($x);
+    46
+    47  print "$p\n";
+
+The subroutine used as default action in C<NoacInh.eyp> is so useful 
+that is packed as the L<Parse::Eyapp::Driver> method 
+C<YYDelegateaction>. See files C<examples/recycle/NoacYYDelegateaction.eyp>
+and C<examples/recycle/icalcu_and_ipost_yydel.pl>
+for an example of use of C<YYDelegateaction>.
+
+
+
+
+=head2 Reusing Grammars by Dynamic Substitution of Semantic Actions
+
+The methods C<YYSetaction> and C<YYAction> of the parser object provide a way
+to selectively substitute some actions of a given grammar.
+Let us consider once more a postfix to infix translator:
+
+  pl@europa:~/LEyapp/examples/recycle$ cat -n PostfixWithActions.eyp
+     1  # File PostfixWithActions.eyp
+     2  %right  '='
+     3  %left   '-' '+'
+     4  %left   '*' '/'
+     5  %left   NEG
+     6
+     7  %%
+     8  line: $exp  { print "$exp\n" }
+     9  ;
+    10
+    11  exp:        $NUM
+    12                  { $NUM }
+    13          |   $VAR
+    14                  { $VAR }
+    15          |   %name ASSIGN
+    16                VAR.left '='exp.right
+    17                  { "$_[3] &$_[1] ASSIGN"; }
+    18          |   %name PLUS
+    19                exp.left '+'exp.right
+    20                  { "$_[1] $_[3] PLUS"; }
+    21          |   %name MINUS
+    22                exp.left '-'exp.right
+    23                  { "$_[1] $_[3] MINUS"; }
+    24          |   %name TIMES
+    25                exp.left '*'exp.right
+    26                  { "$_[1] $_[3] TIMES"; }
+    27          |   %name DIV
+    28                exp.left '/'exp.right
+    29                  { "$_[1] $_[3] DIV"; }
+    30          |   %name NEG '-' $exp %prec NEG
+    31                  { "$exp NEG" }
+    32          |   '(' $exp ')'
+    33                  { $exp }
+    34  ;
+    35
+    36  %%
+    37
+    38  sub _Error {
+    39    my($token)=$_[0]->YYCurval;
+    40    my($what)= $token ? "input: '$token'" : "end of input";
+    41    my @expected = $_[0]->YYExpect();
+    42
+    43    local $" = ', ';
+    44    die "Syntax error near $what. Expected one of these tokens: @expected\n";
+    45  }
+    46
+    47  my $x;
+    48
+    49  sub _Lexer {
+    50    my($parser)=shift;
+    51
+    52    for ($x) {
+    53      s/^\s+//;
+    54      $_ eq '' and return('',undef);
+    55
+    56      s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+    57      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+    58      s/^(.)//s                    and return($1,$1);
+    59    }
+    60  }
+    61
+    62  sub Run {
+    63    my($self)=shift;
+    64    $x = shift;
+    65    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
+    66      #yydebug => 0xFF
+    67    );
+    68  }
+
+The program C<rewritepostfixwithactions.pl> uses the former grammar
+to translate infix expressions to postfix expressions.
+It also implements a calculator reusing the grammar in
+C<PostfixWithActions.eyp>. It does so using
+the C<YYSetaction> method.
+The semantic actions for the productions named 
+
+=over 2
+
+=item * ASSIGN
+
+=item * PLUS
+
+=item * TIMES
+
+=item * DIV
+
+=item * NEG
+
+=back
+
+are selectively substituted by the appropriate actions, while the other
+semantic actions remain unchanged:
+
+  pl@europa:~/LEyapp/examples/recycle$ cat -n rewritepostfixwithactions.pl
+     1  #!/usr/bin/perl
+     2  use warnings;
+     3  use PostfixWithActions;
+     4
+     5  my $debug = shift || 0;
+     6  my $pparser = PostfixWithActions->new();
+     7  print "Write an expression: ";
+     8  my $x = <STDIN>;
+     9
+    10  # First, trasnlate to postfix ...
+    11  $pparser->Run($x, $debug);
+    12
+    13  # And then selectively substitute
+    14  # some semantic actions
+    15  # to obtain an infix calculator ...
+    16  my %s;            # symbol table
+    17  $pparser->YYSetaction(
+    18    ASSIGN => sub { $s{$_[1]} = $_[3] },
+    19    PLUS   => sub { $_[1] + $_[3] },
+    20    TIMES  => sub { $_[1] * $_[3] },
+    21    DIV    => sub { $_[1] / $_[3] },
+    22    NEG    => sub { -$_[2] },
+    23  );
+    24
+    25  $pparser->Run($x, $debug);
+
+When running this program the output is:
+
+  pl@europa:~/LEyapp/examples/recycle$ ./rewritepostfixwithactions.pl
+  Write an expression: 2*3+4
+  2 3 TIMES 4 PLUS
+  10
+
+
+
 
 =head1 ABSTRACT SYNTAX TREES: C<%tree> AND C<%name>
 
+=head2 C<%tree> Default Names
+
 C<Parse::Eyapp> facilitates the construction of concrete syntax trees and 
 abstract syntax trees (abbreviated AST from now on) through the C<%tree>
-directive. 
-Nodes in the AST are blessed in the production
-C<name>. 
-By default the name of a production is the concatenation
+directive. Actually, the C<%tree> directive is equivalent to a call
+to the C<YYBuildAST> method of the parser object. 
+
+Any production production rule C<A-E<gt>XYZ> 
+can be named using a directive C<%name someclass>.
+
+When reducing by a production rule C<A-E<gt>XYZ> 
+the C<%tree> directive (i.e., the C<YYBuildAST> method) 
+builds an anonymous hash blessed in C<someclass>.
+The hash has an attribute C<children> containing the references
+to the AST trees associated with the symbols in the right hand
+side C<X>, C>Y>, etc.
+
+If no explict name was given to the production rule,
+C<YYBuildAST> blesses the node in the class name resulting 
+from the concatenation
 of the left hand side and the production number. The production number
 is the ordinal number of the production as they appear in the associated 
 C<.output> file (see option C<-v> of L<eyapp>). For example,
 given the grammar:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '9,28p' treewithoutnames.pl
- my $grammar = q{
-   %right  '='     # Lowest precedence
-   %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
-   %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
-   %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
-   %tree           # Let us build an abstract syntax tree ...
+  pl@europa:~/LEyapp/examples/eyapplanguageref$ sed -ne '8,27p' treewithoutnames.pl
+  my $grammar = q{
+    %right  '='     # Lowest precedence
+    %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
+    %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
+    %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
+    %tree           # Let us build an abstract syntax tree ...
 
-   %%
-   line: exp <+ ';'>  { $_[1] } /* list of expressions separated by ';' */
-   ;
+    %%
+    line: exp <+ ';'>  { $_[1] } /* list of expressions separated by ';' */
+    ;
 
-   exp:
-        NUM           |   VAR       | VAR '=' exp
-     | exp '+' exp    | exp '-' exp |  exp '*' exp
-     | exp '/' exp
-     | '-' exp %prec NEG
-     |   '(' exp ')'  { $_[2] }
-   ;
+    exp:
+         NUM           |   VAR       | VAR '=' exp
+      | exp '+' exp    | exp '-' exp |  exp '*' exp
+      | exp '/' exp
+      | '-' exp %prec NEG
+      |   '(' exp ')'  { $_[2] }
+    ;
+
+    %%
 
 
 The tree produced by the parser when feed with input C<a=2*b>
 is:
 
-  $ treewithoutnames.pl
+  pl@europa:~/LEyapp/examples/eyapplanguageref$ ./treewithoutnames.pl
 
   ************
   _PLUS_LIST(exp_6(TERMINAL[a],exp_9(exp_4(TERMINAL[2]),exp_5(TERMINAL[b]))))
@@ -1991,22 +2376,23 @@ of C<Parse::Eyapp>:
 
 The grammar with the expanded rules appears in the C<.output> file:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '28,42p' treewithoutnames.output
- Rules:
- ------
- 0:      $start -> line $end
- 1:      PLUS-1 -> PLUS-1 ';' exp
- 2:      PLUS-1 -> exp
- 3:      line -> PLUS-1
- 4:      exp -> NUM
- 5:      exp -> VAR
- 6:      exp -> VAR '=' exp
- 7:      exp -> exp '+' exp
- 8:      exp -> exp '-' exp
- 9:      exp -> exp '*' exp
- 10:     exp -> exp '/' exp
- 11:     exp -> '-' exp
- 12:     exp -> '(' exp ')'
+  lusasoft@LusaSoft:~/src/perl/Eyapp/examples/eyapplanguageref$ sed -ne '28,42p' treewithoutnames.output
+  Rules:
+  ------
+  0:      $start -> line $end
+  1:      PLUS-1 -> PLUS-1 ';' exp
+  2:      PLUS-1 -> exp
+  3:      line -> PLUS-1
+  4:      exp -> NUM
+  5:      exp -> VAR
+  6:      exp -> VAR '=' exp
+  7:      exp -> exp '+' exp
+  8:      exp -> exp '-' exp
+  9:      exp -> exp '*' exp
+  10:     exp -> exp '/' exp
+  11:     exp -> '-' exp
+  12:     exp -> '(' exp ')'
+
 
 We can see now that the node C<exp_9> corresponds to the production C<exp -E<gt> exp '*' exp>.
 Observe also that the Eyapp production:
@@ -2019,64 +2405,57 @@ actually produces the productions:
 
 and that the name of the class associated with the non empty list is C<_PLUS_LIST>.
 
-A production rule can be 
-I<named> using the C<%name IDENTIFIER> directive. 
-For each production rule a 
-namespace/package is created. I<The> C<IDENTIFIER>
-I<is the name of the associated package>.
-Therefore, by modifying the former grammar with 
-additional C<%name> directives:
+=head2 C<%tree> Giving Explicit Names
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '8,26p' treewithnames.pl
- my $grammar = q{
-   %right  '='     # Lowest precedence
-   %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
-   %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
-   %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
-   %tree           # Let us build an abstract syntax tree ...
+A production rule can be I<named> using the C<%name IDENTIFIER> directive.  For
+each production rule a namespace/package is created. I<The> C<IDENTIFIER> 
+I<is the name of the associated package>.  Therefore, by modifying the former
+grammar with additional C<%name> directives:
 
-   %%
-   line: exp <%name EXPS + ';'>  { $_[1] } /* list of expressions separated by ';' */
-   ;
+  lusasoft@LusaSoft:~/src/perl/Eyapp/examples/eyapplanguageref$ sed -ne '8,26p' treewithnames.pl
+  my $grammar = q{
+    %right  '='     # Lowest precedence
+    %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
+    %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
+    %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
+    %tree           # Let us build an abstract syntax tree ...
 
-   exp:
-       %name NUM    NUM           | %name VAR   VAR         | %name ASSIGN VAR '=' exp
-     | %name PLUS   exp '+' exp   | %name MINUS exp '-' exp | %name TIMES  exp '*' exp
-     | %name DIV    exp '/' exp
-     | %name UMINUS '-' exp %prec NEG
-     |   '(' exp ')'  { $_[2] }
-   ;
+    %%
+    line: exp <%name EXPS + ';'>  { $_[1] } /* list of expressions separated by ';' */
+    ;
+
+    exp:
+        %name NUM    NUM           | %name VAR   VAR         | %name ASSIGN VAR '=' exp
+      | %name PLUS   exp '+' exp   | %name MINUS exp '-' exp | %name TIMES  exp '*' exp
+      | %name DIV    exp '/' exp
+      | %name UMINUS '-' exp %prec NEG
+      |   '(' exp ')'  { $_[2] }
+    ;
 
 
 we are explictly naming the productions. Thus, all the node instances 
-corresponding to the 
-production C<exp: VAR '=' exp> will belong to the class C<ASSIGN>. Now 
-the tree for C<a=2*b> becomes:
+corresponding to the production C<exp: VAR '=' exp> will belong to the class C<ASSIGN>. 
+Now the tree for C<a=2*b> becomes:
 
-          EXPS(ASSIGN(TERMINAL[a],TIMES(NUM(TERMINAL[2]),VAR(TERMINAL[b]))))
+  lusasoft@LusaSoft:~/src/perl/Eyapp/examples/eyapplanguageref$ ./treewithnames.pl
+
+  ************
+  EXPS(ASSIGN(TERMINAL[a],TIMES(NUM(TERMINAL[2]),VAR(TERMINAL[b]))))
+  ************
+
 
 Observe how the list has been named C<EXPS>. The C<%name> directive prefixes the 
 list operator (C<[+*?]>).
 
-=head2 About the Encapsulation of Nodes
-
-There is no encapsulation of nodes. The user/client 
-knows that they are hashes that can be decorated with new keys/attributes.
-All nodes in the AST created by C<%tree> are C<Parse::Eyapp::Node> nodes.
-The only reserved field is C<children> which is a reference to the
-array of children. You can always create a C<Node> class 
-I<by hand> by inheriting from C<Parse::Eyapp::Node>. 
-
 =head2 TERMINAL Nodes
 
-Nodes named C<TERMINAL> are built from the
-tokens provided by the lexical analyzer. 
-C<Parse::Eyapp> follows the same protocol
-than L<Parse::Yapp> for communication between the parser and the lexical analyzer:
-A couple C<($token, $attribute)> is returned by the lexical analyzer.
-These values are stored under the keys C<token> and C<attr>.
-C<TERMINAL> nodes as all C<Parse::Eyapp::Node> nodes
-also have the attribute C<children> but is - almost always - empty.
+Nodes named C<TERMINAL> are built from the tokens provided by the lexical
+analyzer.  C<Parse::Eyapp> follows the same protocol than L<Parse::Yapp> for
+communication between the parser and the lexical analyzer: A couple C<($token,
+$attribute)> is returned by the lexical analyzer.  These values are stored
+under the keys C<token> and C<attr>.  C<TERMINAL> nodes as all
+C<Parse::Eyapp::Node> nodes also have the attribute C<children> but is - almost
+always - empty.
 
 
 =head2 Explicit Actions Inside C<%tree>
@@ -2234,7 +2613,7 @@ have been effectively changed by the intermediate actions
 from C<'a'> to C<'A'>.
 However no further children have been inserted.
 
-=head3 Syntactic and Semantic tokens
+=head2 Syntactic and Semantic tokens
 
 C<Parse::Eyapp> diferences between C<syntactic tokens>
 and C<semantic tokens>. By default all tokens
@@ -2392,7 +2771,7 @@ using an identifer, like C<NUM> or C<VAR> are, by default,  I<semantic tokens>
 and appear in the AST.
 
 
-=head3 Changing the Status of a Token 
+=head2 Changing the Status of a Token 
 
 The new token declaration directives C<%syntactic token> and
 C<%semantic token> can change the status of a token.
@@ -2427,7 +2806,7 @@ given the grammar:
 the tree build for input C<abc> will be 
 C<ABC(A(TERMINAL[a]),B,C(TERMINAL[c]))>.
 
-=head3 Saving the Information of Syntactic Tokens in their Father
+=head2 Saving the Information of Syntactic Tokens in their Father
 
 The reason for the adjective C<%syntactic> applied to a token is to 
 state that the token influences the shape of the syntax tree
@@ -2459,7 +2838,7 @@ of use:
               }
 
 
-=head3 The  C<bypass> clause and the C<%no bypass> directive
+=head2 The  C<bypass> clause and the C<%no bypass> directive
 
 The shape of the tree can be also modified using some C<%tree> clauses
 as C<%tree bypass> which will produce an automatic I<bypass> of any
@@ -2595,7 +2974,7 @@ we obtain the following output:
 As you can see the trees are more compact when using the C<bypass> directive.
 
 
-=head3 The C<alias> clause of the C<%tree> directive
+=head2 The C<alias> clause of the C<%tree> directive
 
 Access to children in L<Parse::Eyapp> is made through the C<child> and C<children>
 methods.
@@ -2829,6 +3208,190 @@ C<a = -(2*3+5-1)> which is:
 
 The children of the binary nodes can be accessed through the C<left>
 and C<right> methods.
+
+=head2 About the Encapsulation of Nodes
+
+There is no encapsulation of nodes. The user/client 
+knows that they are hashes that can be decorated with new keys/attributes.
+All nodes in the AST created by C<%tree> are C<Parse::Eyapp::Node> nodes.
+The only reserved field is C<children> which is a reference to the
+array of children. You can always create a C<Node> class 
+I<by hand> by inheriting from C<Parse::Eyapp::Node>. 
+
+
+
+
+=head1 NAMING SCHEMES
+
+
+Explict names can be given to grammar productions
+via the C<%name> directive. An alternative to explictly gave 
+names to rules is to define a I<naming scheme> via the Eyapp directive
+C<%namingscheme>.
+
+The Eyapp directive C<%namingscheme> is followed by some Perl code. Such Perl
+code must return a reference to a subroutine that will be called each time a new
+production right hand side is parsed. This Perl code receives a C<Parse::Eyapp> object
+that describes the grammar. Observe that the code after the C<%namingscheme>
+directive is evaluated during the early phases of the compilation of the input 
+grammar. As an example, see lines 22-38 below (the example can be found in the directory
+C<examples/naming> of the accompanying distribution):
+
+  lusasoft@LusaSoft:~/src/perl/Eyapp/examples/naming$ cat -n GiveNamesToCalc.eyp
+     1  # GiveNamesToCalc.eyp
+     2  %right  '='
+     3  %left   '-' '+'
+     4  %left   '*' '/'
+     5  %left   NEG
+     6  %right  '^'
+     7
+     8  %tree bypass
+     9
+    10  %{
+    11  use base q{Tail};
+    12
+    13  sub exp_is_NUM::info {
+    14    my $self = shift;
+    15
+    16    $self->{attr}[0];
+    17  }
+    18
+    19  *exp_is_VAR::info = *var_is_VAR::info = \&exp_is_NUM::info;
+    20  %}
+    21
+    22  %namingscheme {
+    23    #Receives a Parse::Eyapp object describing the grammar
+    24    my $self = shift;
+    25
+    26    $self->tokennames(
+    27      '=' => 'ASSIGN',
+    28      '+' => 'PLUS',
+    29      '*' => 'TIMES',
+    30      '-' => 'MINUS',
+    31      '/' => 'DIV',
+    32      '^' => 'EXP',
+    33    );
+    34
+    35    # returns the handler that will give names
+    36    # to the right hand sides
+    37    \&give_token_name;
+    38  }
+    39  %%
+    40
+    41  line:
+    42      exp
+    43  ;
+    44
+    45  exp:
+    46      NUM
+    47    | VAR
+    48    | var '=' exp
+    49    | exp '+' exp
+    50    | exp '-' exp
+    51    | exp '*' exp
+    52    | exp '/' exp
+    53    | %no bypass exp_is_NEG
+    54       '-' exp %prec NEG
+    55    | exp '^' exp
+    56    | '(' exp ')'
+    57  ;
+    58
+    59  var:
+    60      VAR
+    61  ;
+    62  %%
+    63
+    64  unless (caller) {
+    65    my $t = __PACKAGE__->main(@ARGV);
+    66    print $t->str."\n";
+    67  }
+
+The example uses a naming scheme that is provided by C<Parse::Eyapp>: C<Parse::Eyapp::Grammar::give_token_name>.
+The current provided naming schemes handlers are:
+
+=over 2
+
+=item * C<give_default_name>: The name of the production is the name of the Left Hand Side of the Production Rule
+concatenated with an underscore and the index of the production
+
+=item * C<give_lhs_name>: The name of the production is the name of the Left Hand Side of the Production Rule
+
+=item * C<give_token_name>: The name of the production is the Left Hand Side of the Production Rule followed by the 
+word C<_is_> followed by the concatenation of the names of the tokens in the right and side (separated by underscores).
+
+=back
+
+All of these handlers are implemented inside the class C<Parse::Eyapp::Grammar>. There is no need at line 
+37 to explicit the class name prefix since the naming scheme code is evaluated inside such class:
+
+    22  %namingscheme {
+    23    #Receives a Parse::Eyapp object describing the grammar
+    24    my $self = shift;
+    25
+    26    $self->tokennames(
+    27      '=' => 'ASSIGN',
+    28      '+' => 'PLUS',
+    29      '*' => 'TIMES',
+    30      '-' => 'MINUS',
+    31      '/' => 'DIV',
+    32      '^' => 'EXP',
+    33    );
+    34
+    35    # returns the handler that will give names
+    36    # to the right hand sides
+    37    \&give_token_name;
+    38  }
+
+As it is illustrated in the example, the method C<tokennames> of C<Parse::Eyapp>
+objects provide a way to give identifier names to tokens that are defined by strings.
+When we execute the former program with input C<a=2*-3> we got the following
+output:
+
+  lusasoft@LusaSoft:~/src/perl/Eyapp/examples/naming$ eyapp -b '' GiveNamesToCalc.eyp
+  lusasoft@LusaSoft:~/src/perl/Eyapp/examples/naming$ ./GiveNamesToCalc.pm
+  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
+  a=2*-3
+  line_is_exp(var_is_VAR[a],exp_is_TIMES(exp_is_NUM[2],exp_is_NEG(exp_is_NUM[3])))
+
+For each production rule the handler is called with arguments
+the C<Parse::Eyapp> object, the production index (inside the grammar), the left hand side
+symbol and a reference to a list with the symbols in the right hand side. The following code
+of  some version of C<give_token_name> exemplifies how a naming scheme handler can be written:
+
+  lusasoft@LusaSoft:~/src/perl/Eyapp$ sed -ne '101,132p' lib/Parse/Eyapp/Grammar.pm | cat -n
+     1  sub give_token_name {
+     2    my ($self, $index, $lhs, $rhs) = @_;
+     3
+     4    my @rhs = @$rhs;
+     5    $rhs = '';
+     6
+     7    unless (@rhs) { # Empty RHS
+     8      return $lhs.'_is_empty';
+     9    }
+    10
+    11    my $names = $self->{GRAMMAR}{TOKENNAMES} || {};
+    12    for (@rhs) {
+    13      if ($self->is_token($_)) {
+    14        s/^'(.*)'$/$1/;
+    15        my $name = $names->{$_} || '';
+    16        unless ($name) {
+    17          $name = $_ if /^\w+$/;
+    18        }
+    19        $rhs .= "_$name" if $name;
+    20      }
+    21    }
+    22
+    23    unless ($rhs) { # no 'word' tokens in the RHS
+    24      for (@rhs) {
+    25        $rhs .= "_$_" if /^\w+$/;
+    26      }
+    27    }
+    28
+    29    # check if another production with such name exists?
+    30    my $name = $lhs.'_is'.$rhs;
+    31    return $name;
+    32  }
+
 
 
 

@@ -1,0 +1,46 @@
+# The following grammar isn't a SLR(1) grammar but it is a LALR(1) grammar. 
+# Compile it with:
+#                    eyapp -b '' give_token_names.eyp
+# and run it:
+#                  $ ./give_token_names.pm  
+# Try with input: *a = b
+
+%{
+use base q{Tail};
+Tail->set_lexemename(
+  '=' => 'ASSIGN',
+  '*' => 'POINTER',
+);
+
+%}
+
+%strict
+%token VAR ASSIGN POINTER
+
+%namingscheme { \&give_token_name; }
+
+%tree
+
+
+%%
+s:
+    l ASSIGN r
+  | r
+;
+
+l:
+    POINTER r
+  | VAR
+;
+
+r:
+    l
+;
+
+%%
+
+unless (caller) {
+  my $t = __PACKAGE__->main(@ARGV);
+  print $t->str."\n";
+}
+

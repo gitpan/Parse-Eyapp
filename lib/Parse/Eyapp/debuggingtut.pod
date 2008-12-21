@@ -596,6 +596,8 @@ Since no C<ds>  production starts with C<S>,
 the presence of C<S> is (erroneously)
 interpreted as an error.
 
+=head3 The Importance of the FOLLOW Set
+
 You may wonder why the productions
 
 
@@ -610,7 +612,11 @@ by C<ss -E<gt> S> always corresponds to the last C<S> in a derivation:
    ss => S ; ss => S ; S ; ss => S ; S; S
 
 and thus, the reduction by C<ss -E<gt> S> only occurs in the presence
-of the C<end of input> token and never with the semicolon.
+of the C<end of input> token and never with the semicolon. 
+The FOLLOW set of a syntactic variable 
+is the set of tokens that may appear next to such variable
+in some derivation. While the semicolon C<;> is in the FOLLOW of C<dd>,
+it isn't in the FOLLOW of C<ss>.
 
 
 =head2 Solving Shift-Reduce Conflicts by Factorizing
@@ -728,6 +734,91 @@ Here is a solution based in this idea:
     62                           #yydebug => 0x1F
     63    );
     64  }
+
+=head2 Hacking the Parsing Tables: ACTION and GOTOs
+
+Skip this section unless you are familiar with the inners of LR parsing.
+
+The program in C<DynamicallyChangingTheParser.eyp> illustrates how to hack the
+parsing tables. The former grammar is left unchanged and the conflict unsolved:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -c DynamicallyChangingTheParser.eyp | cat -n
+     1  # DebugWithErrRec.eyp
+     2  # compile it eyapp -b DebugWithErrRec.eyp -o Debug.pl to produce an
+     3  # executable
+     4  # This example illustrates how to dynamically change the behavior of the parser
+     5  %token D S
+     6  %expect 1
+     7
+     8  %%
+     9
+    10  p:
+    11        ds ';' ss
+    12      | ss
+    13  ;
+    14  ds:
+    15        D ';' ds
+    16      | D
+    17  ;
+    18  ss:
+    19        S ';' ss
+    20      | S
+    21  ;
+    22
+    23  %%
+
+The C<%expect 1> tells C<eyapp> to keep silent. No warnings are issued:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -b '' DynamicallyChangingTheParser.eyp
+  pl@europa:~/LEyapp/examples/debuggingtut$  
+
+The trick used requires a in-depth knowledge of the way an LR parser works. 
+Since we have seen in the previous sections, the conflict is in state 4.
+The lexer modifies the parsing action when detects the end of the C<D>s
+sequence:
+
+  $ sed -ne '/sub _Lexer/,/^}/p' DynamicallyChangingTheParser.eyp | cat -n
+     1  sub _Lexer {
+     2    my $self = shift;
+     3
+     4    for ($input) {
+     5      s{^(\s*)}{} and $tokenline += $1 =~ tr{\n}{};
+     6      return ('',undef) unless $_;
+     7
+     8      # dynamically changing the action tables
+     9      # Force reduction by rule 4 if it is the last D
+    10      $self->{STATES}[4]{ACTIONS}{';'} = -4 if $input =~ m{^;\s*S};
+    11
+    12      return ($1,$1) if s/^(.)//;
+    13    }
+    14    return ('',undef);
+    15  }
+
+Each state is an anonymous hash. There are three keys: ACTIONS, GOTOS and  DEFAULT.
+The ACTIONS table says when to shift and when to reduce for any given tokens.
+The GOTOS table says where to go, i.e. the next state after a reduction occurs.
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ perl -wd ./DynamicallyChangingTheParser.pm
+  DynamicallyChangingTheParser::(./DynamicallyChangingTheParser.pm:16):
+  16:     push @DynamicallyChangingTheParser::ISA, 'Parse::Eyapp::Driver';
+  D;D;S
+  DynamicallyChangingTheParser::_Lexer(DynamicallyChangingTheParser.eyp:50):
+  50:       my $self = shift;
+  DB<3> n
+  DynamicallyChangingTheParser::_Lexer(DynamicallyChangingTheParser.eyp:52):
+  52:       for ($input) {
+  DB<3> x $self->YYState(4)
+  0  HASH(0xa03fb0)
+     'ACTIONS' => HASH(0xa03fe0)
+        ';' => 8
+
+A negative number means reduction using the corresponding (opposite number) production 
+rule number. The line
+
+    10      $self->{STATES}[4]{ACTIONS}{';'} = -4 if $input =~ m{^;\s*S};
+
+tells to reduce by rule 4 when in state 4 and seeing a token C<';'> followed
+by a token C<S>. 
 
 =head2 Reduce-Reduce Conflicts
 

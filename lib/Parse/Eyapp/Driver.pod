@@ -507,7 +507,7 @@ We can also use the name of the rule to get the item:
 
 =head2 $parser->YYState
 
-C<YYState> returns the list of states containing the LALR(1) tables: the 
+C<YYState> returns a reference to the list of states containing the LALR(1) tables: the 
 action and GOTO tables.  Each state is an anonymous hash:
 
   DB<4> x $parser->YYState(2)
@@ -682,7 +682,9 @@ If no subroutine reference is set returns the reference to the current semantic 
 =head2 $parser->YYSetaction
 
 Receives a hash with keys the names of the production rules (right hand sides) and values
-the new semantic actions. Used to reuse a grammar without overwriting all the semantic actions
+the new semantic actions. Used to reuse a grammar without overwriting all the semantic actions.
+See section I<Reusing Grammars by Dynamic Substitution of Semantic Actions>
+in L<Parse::Eyapp::defaultactionsintro>.
 
 
 =head2  $parser->YYIssemantic
@@ -732,8 +734,8 @@ It is equivalent to:
     $self->$action(@_);
   }
 
-For a full example, see files examples/recycle/NoacInh.eyp
-and examples/recycle/icalcu_and_ipost.pl
+For a full example illustrating how to use it, see files C<examples/recycle/NoacInh.eyp>
+and C<examples/recycle/icalcu_and_ipost.pl>
 in the Parse::Eyapp distribution
 
 =head2 $parser->YYBypass

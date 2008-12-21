@@ -9,8 +9,8 @@ BEGIN {
   unless (Parse::Eyapp::Driver->can('YYParse')) {
     our @ISA = qw(Parse::Eyapp::Output);
     require Parse::Eyapp::Output;
-    # $VERSION is also in Parse/Eyapp/Driver.pm
-    our $VERSION = '1.135';
+    # $VERSION is also in lib/Parse/Eyapp/Driver.pm
+    our $VERSION = '1.136';
   }
 }
 

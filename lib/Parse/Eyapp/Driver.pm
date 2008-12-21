@@ -8,8 +8,8 @@
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 
-our $SVNREVISION = '$Rev: 2328 $';
-our $SVNDATE     = '$Date: 2008-12-04 13:05:29 +0000 (jue, 04 dic 2008) $';
+our $SVNREVISION = '$Rev: 2384 $';
+our $SVNDATE     = '$Date: 2008-12-21 13:59:10 +0000 (dom, 21 dic 2008) $';
 
 package Parse::Eyapp::Driver;
 
@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.135";
+$VERSION = "1.136";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -271,6 +271,33 @@ sub YYSetaction {
     $rule->[2] = $newaction{$n} if ($newaction{$n} && (reftype($newaction{$n}) eq 'CODE'));
   }
 }
+
+#sub YYDebugtree  {
+#  my ($self, $i, $e) = @_;
+#
+#  my ($name, $lhs, $rhs) = @$e;
+#  my @rhs = @$rhs;
+#
+#  return if $name =~ /_SUPERSTART/;
+#  $name = $lhs."::"."@rhs";
+#  $name =~ s/\W/_/g;
+#  return $name;
+#}
+#
+#sub YYSetnames {
+#  my $self = shift;
+#  my $newname = shift || \&YYDebugtree;
+#
+#    die "YYSetnames error. Exected a CODE reference found <$newname>" 
+#  unless $newname && (reftype($newname) eq 'CODE');
+#
+#  my $i = 0;
+#  for my $e (@{$self->{GRAMMAR}}) {
+#     my $nn= $newname->($self, $i, $e);
+#     $e->[0] = $nn if defined($nn);
+#     $i++;
+#  }
+#}
 
 sub YYLhs { 
   # returns the syntax variable on

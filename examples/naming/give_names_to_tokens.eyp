@@ -1,0 +1,49 @@
+# Compile it with:
+#                    eyapp -b '' give_names_to_tokens.eyp
+# and run it:
+#                  $ ./give_names_to_tokens.pm 
+# Try with input: *a = b
+#
+
+%namingscheme { 
+  #Receives a Parse::Eyapp object describing the grammar
+  my $self = shift;
+
+  $self->tokennames(
+    '=' => 'ASSIGN',
+    '*' => 'STAR',
+  );
+
+  # returns the handler that will give names 
+  # to the right hand sides
+  \&give_token_name; 
+}
+
+%tree
+
+%{
+use base q{Tail};
+%}
+
+%%
+s:
+    l '=' r
+  | r
+;
+
+l:
+    '*' r
+  | VAR
+;
+
+r:
+    l
+;
+
+%%
+
+unless (caller) {
+  my $t = __PACKAGE__->main(@ARGV);
+  print $t->str."\n";
+}
+

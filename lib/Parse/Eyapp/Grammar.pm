@@ -13,6 +13,7 @@ use Carp;
 use strict;
 use Parse::Eyapp::Options;
 use Parse::Eyapp::Parse;
+use Scalar::Util qw{reftype};
 
 ###############
 # Constructor #
@@ -43,6 +44,17 @@ sub new {
     and $class=ref($class);
 
     bless($self, $class);
+
+    my $ns = $self->{GRAMMAR}{NAMINGSCHEME} ;
+    if ($ns && reftype($ns) eq 'ARRAY') {
+      $ns = eval "sub { $ns->[0]; }; ";
+      warn "Error in \%namingscheme directive $@" if $@;
+      $ns = $ns->($self);
+    }
+    $ns ||= \&give_default_name;
+    $self->{GRAMMAR}{NAMINGSCHEME} = $ns; # added to allow programmable production naming schemes (%name)
+
+    $self;
 }
 
 ###########
@@ -72,18 +84,81 @@ sub ShowRules {
     $text;
 }
 
+sub give_default_name {
+  my ($self, $index, $lhs) = @_;
+
+  my $name = "$lhs"."_$index";
+  return $name;
+}
+
+sub give_lhs_name {
+  my ($self, $index, $lhs, $rhs) = @_;
+
+  my $name = $lhs;
+  return $name;
+}
+
+sub give_token_name {
+  my ($self, $index, $lhs, $rhs) = @_;
+
+  my @rhs = @$rhs;
+  $rhs = '';
+
+  unless (@rhs) { # Empty RHS
+    return $lhs.'_is_empty';
+  }
+
+  my $names = $self->{GRAMMAR}{TOKENNAMES} || {};
+  for (@rhs) {
+    if ($self->is_token($_)) { 
+      s/^'(.*)'$/$1/;
+      my $name = $names->{$_} || '';
+      unless ($name) {
+        $name = $_ if /^\w+$/;
+      }
+      $rhs .= "_$name" if $name;
+    }
+  }
+
+  unless ($rhs) { # no 'word' tokens in the RHS
+    for (@rhs) {
+      $rhs .= "_$_" if /^\w+$/;
+    }
+  }
+
+  # check if another production with such name exists?
+  my $name = $lhs.'_is'.$rhs;
+  return $name;
+}
+
 sub classname {
-  my ($name, $index, $lhs) = @_;
+  my ($self, $name, $index, $lhs, $rhs) = @_;
 
   $name = $name->[0];
 
-  $name = "_SUPERSTART" if ($lhs =~ /\$start/ and !defined($name));
-  $name = "_CODE" if ($lhs =~ /\@(\d+)-(\d+)/ and !defined($name));
-  $name = "_PAREN" if ($lhs =~ /PAREN-(\d+)/ and !defined($name));
-  $name = "_STAR_LIST" if ($lhs =~ /STAR-(\d+)/ and !defined($name));
-  $name = "_PLUS_LIST" if ($lhs =~ /PLUS-(\d+)/ and !defined($name));
-  $name = "_OPTIONAL" if ($lhs =~ /OPTIONAL-(\d+)/ and !defined($name));
-  $name = "$lhs"."_$index" unless $name;
+  unless (defined($name)) {
+    if ($lhs =~ /\$start/) {
+      $name = "_SUPERSTART"
+    }
+    elsif ($lhs =~ /\@(\d+)-(\d+)/) {
+      $name = "_CODE" 
+    }
+    elsif ($lhs =~ /PAREN-(\d+)/) {
+      $name = "_PAREN" 
+    }
+    elsif ($lhs =~ /STAR-(\d+)/) {
+      $name = "_STAR_LIST"
+    }
+    elsif ($lhs =~ /PLUS-(\d+)/) {
+      $name = "_PLUS_LIST"
+    }
+    elsif ($lhs =~ /OPTIONAL-(\d+)/) {
+      $name = "_OPTIONAL"
+    }
+  }
+
+  my $naming_scheme = $self->{GRAMMAR}{NAMINGSCHEME};
+  $name = $naming_scheme->($self, $index, $lhs, $rhs) unless $name;
 
   return $name;
 }
@@ -105,7 +180,7 @@ sub Rules { # TODO: find proper names
         my $bypass = $name->[2];
         $bypass = $self->Bypass unless defined($bypass);
         # find an acceptable perl identifier as name
-        $name = classname($name, $index, $lhs);
+        $name = $self->classname($name, $index, $lhs, $rhs);
         $packages .= "\n".(" "x9).$name unless $packages =~ m{\b$name\b};
 
         $text.= "  [ $name => '$lhs', [ ";
@@ -156,6 +231,13 @@ sub Buildingtree {
   my($self)=shift;
     
   return  $$self{GRAMMAR}{BUILDINGTREE}
+}
+
+
+sub is_token {
+  my($self)=shift;
+
+  exists($self->{GRAMMAR}{TERM}{$_[0]})
 }
 
 #####################################
@@ -241,7 +323,7 @@ sub RulesTable {
 
                     my($text);
 
-                    $rname = classname($rname, $ruleno, $lhs);
+                    $rname = $self->classname($rname, $ruleno, $lhs, $rhs);
 
                     $ruleno++;
                     $text.="[#Rule $rname\n\t\t '$lhs', $len,";
@@ -430,7 +512,9 @@ sub _SetNullable {
 sub _ReduceGrammar {
     my($values)=@_;
     my($ufrules,$ufnterm,$reachable);
-    my($grammar)={ HEAD => $values->{HEAD},
+
+    my($grammar)= bless { 
+                   HEAD => $values->{HEAD},
                    TAIL => $values->{TAIL},
                    EXPECT => $values->{EXPECT},
                    # Casiano modifications
@@ -439,7 +523,10 @@ sub _ReduceGrammar {
                    BUILDINGTREE   => $values->{BUILDINGTREE},   # influences the semantic of lists * + ?
                    ACCESSORS      => $values->{ACCESSORS}, # getter-setter for %tree and %metatree
                    PREFIX         => $values->{PREFIX},   # yyprefix
-                 };
+                   NAMINGSCHEME   => $values->{NAMINGSCHEME}, # added to allow programmable production naming schemes (%name)
+                   TOKENNAMES     => {},
+                 }, __PACKAGE__;
+
     my($rules,$nterm,$term) =  @$values {'RULES', 'NTERM', 'TERM'};
 
     ($ufrules,$ufnterm) = _UsefulRules($rules,$nterm);
@@ -488,6 +575,14 @@ sub _ReduceGrammar {
 
     $grammar;
 }#_ReduceGrammar
+
+sub tokennames {
+  my $self = shift;
+
+  my $grammar = $self->{GRAMMAR};
+  $grammar->{TOKENNAMES} = { (%{$grammar->{TOKENNAMES}}, @_) } if (@_);
+  $grammar->{TOKENNAMES}
+}
 
 1;
 

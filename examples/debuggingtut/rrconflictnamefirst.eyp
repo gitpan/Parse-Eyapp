@@ -25,5 +25,5 @@ name_list:
         ;
 %%
 
-__PACKAGE__->main unless caller();
+__PACKAGE__->main(@ARGV) unless caller();
 

@@ -21,7 +21,7 @@ my (
 my($syms,$head,$tail,$token,$term,$nterm,$rules,$precterm,$start,$nullable,
    $semantic);
 my($expect);
-my ($defaultaction);
+my ($namingscheme, $defaultaction);
 my $filename;
 my $tree = 0; # true if %tree or %metatree
 my $metatree = 0;
@@ -228,6 +228,31 @@ sub symbol {
 }
 %}
 
+%token ASSOC         /* is %(left|right|nonassoc) */
+%token BEGINCODE     /* is %begin { Perl code ... } */
+%token CODE          /* is { Perl code ... } */
+%token DEFAULTACTION /* is %defaultaction */
+%token EXPECT        /* is %expect */
+%token HEADCODE      /* is %{ Perl code ... %} */
+%token IDENT         /* is [A-Za-z_][A-Za-z0-9_]* */
+%token LITERAL       /* is a string literal like 'hello' */
+%token METATREE      /* is %metatree */
+%token NAME          /* is %name */             
+%token NAMINGSCHEME  /* is %namingscheme */             
+%token NUMBER        /* is \d+ */
+%token OPTION        /* is (%name\s*([A-Za-z_]\w*)\s*)?\? */
+%token PLUS          /* is (%name\s*([A-Za-z_]\w*)\s*)?\+ */
+%token PREC          /* is %prec */
+%token SEMANTIC      /* is %semantic\s+token */
+%token STAR          /* is (%name\s*([A-Za-z_]\w*)\s*)?\* */
+%token START         /* is %start */
+%token SYNTACTIC     /* is %syntactic\s+token */
+%token TAILCODE      /* is { Perl code ... } */
+%token TOKEN         /* is %token */
+%token TREE          /* is %tree */
+%token TYPE          /* is %type */
+%token UNION         /* is %union */
+
 %start eyapp
 
 %%
@@ -367,6 +392,11 @@ decl:  '\n'                 #default action
               # TODO: Instead of ident has to be a prefix!!!
               $prefix=$_[1][0]; 
               undef 
+            }
+    |   NAMINGSCHEME CODE '\n'
+            {
+              $namingscheme = $_[2];
+              undef  
             }
     |   HEADCODE '\n'                   { push(@$head,$_[1]); undef }
     |   UNION CODE '\n'                 { undef } #ignore
@@ -858,6 +888,9 @@ sub _Lexer {
             $$input=~/\G%(defaultaction)/gc
         and return('DEFAULTACTION',[ undef, $lineno[0] ]);
 
+            $$input=~/\G%(namingscheme)/gc
+        and return('NAMINGSCHEME',[ undef, $lineno[0] ]);
+
             $$input=~/\G%(tree((?:\s+(?:bypass|alias)){0,2}))/gc
         and do {
           my $treeoptions =  defined($2)? $2 : '';
@@ -1055,11 +1088,13 @@ sub Parse {
               'NULL', 'PREC', 'SYMS',  'START', 'EXPECT', 
               'SEMANTIC', 'BYPASS', 'ACCESSORS', 'BUILDINGTREE',
               'PREFIX',
+              'NAMINGSCHEME',
             }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
                $nullable, $precterm, $syms, $start, $expect, 
                $semantic, $bypass, $accessors, $buildingtree,
                $prefix,
+               $namingscheme,
             );
 
     undef($input);

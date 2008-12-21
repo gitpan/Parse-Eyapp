@@ -92,12 +92,12 @@ sub controller {
      elsif ($token =~ /\b(IDENT|LITERAL)\b/) {
        _generate $attr->[0]." ";
      }
-     elsif ($token =~ /(PREC|STAR|PLUS|OPTION|[)(])/) {
+     elsif ($token =~ /(PREC|STAR\b|PLUS|OPTION|[)(])/) {
        $depth++ if $token eq '(';
        $depth-- if $token eq ')';
        _generate $attr->[0]." ";
      }
-     elsif ($token =~ /\b(TOKEN|ASSOC|SYNTACTIC|SEMANTIC|STRICT|START)\b/) {
+     elsif ($token =~ /\b(TOKEN|ASSOC|SYNTACTIC|SEMANTIC|STRICT|START|EXPECT|NAMINGSCHEME|UNION)\b/) {
        my $g = ($output =~ $end_cr_set)? '': "\n"; 
        _generate $g.$attr->[0]." ";
      }
@@ -274,6 +274,9 @@ sub _Lexer {
 
             $$input=~/\G(%expect)/gc
         and return('EXPECT',[ $1, $lineno[0] ]);
+
+            $$input=~/\G(%namingscheme)/gc
+        and return('NAMINGSCHEME',[ $1, $lineno[0] ]);
 
             $$input=~/\G%{/gc
         and do {

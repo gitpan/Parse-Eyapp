@@ -515,6 +515,10 @@ C<YYDelegateaction>. See files C<examples/recycle/NoacYYDelegateaction.eyp>
 and C<examples/recycle/icalcu_and_ipost_yydel.pl>
 for an example of use of C<YYDelegateaction>.
 
+
+
+
+
 =head2 Reusing Grammars by Dynamic Substitution of Semantic Actions
 
 The methods C<YYSetaction> and C<YYAction> of the parser object provide a way
@@ -648,6 +652,9 @@ When running this program the output is:
   Write an expression: 2*3+4
   2 3 TIMES 4 PLUS
   10
+
+
+
 
 =head1 SEE ALSO
 

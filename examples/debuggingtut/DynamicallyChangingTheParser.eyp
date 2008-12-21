@@ -1,0 +1,78 @@
+# DebugWithErrRec.eyp
+# compile it eyapp -b DebugWithErrRec.eyp -o Debug.pl to produce an 
+# executable
+# This example illustrates how to dynamically change the behavior of the parser
+
+%token D S
+
+%{
+our $VERSION = '0.01';
+%}
+
+%expect 1
+
+%%
+p:
+    ds ';' ss  
+  | ss
+;
+
+ds:
+    D ';' ds    
+  | D       
+    {
+      print "Reducing by rule:\n";
+      print "\tds -> D\n";
+      $_[1];
+    }
+;
+
+ss:
+    S ';' ss      
+  | S       
+;
+
+%%
+
+my $tokenline = 1;
+
+sub _Error {
+  my $parser = shift;
+
+  my ($token) = $parser->YYCurval;
+  my ($what) = $token ? "input: '$token'" : "end of input";
+  warn "Syntax error near $what line num $tokenline\n";
+}
+
+my $input;
+
+sub _Lexer {
+  my $self = shift;
+  
+  for ($input) {
+    s{^(\s*)}{} and $tokenline += $1 =~ tr{\n}{};
+    return ('',undef) unless $_;
+
+    # dynamically changing the action tables
+    # Force reduction by rule 4 if it is the last D
+    $self->{STATES}[4]{ACTIONS}{';'} = -4 if $input =~ m{^;\s*S};
+
+    return ($1,$1) if s/^(.)//;
+  }
+  return ('',undef);
+}
+
+sub Run {
+  my $debug = shift || 0;
+  $debug = 0x1F if $debug;
+
+  $input = <STDIN>;
+
+  my $self = __PACKAGE__->new();
+
+  return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
+                         yydebug => $debug,
+  );
+}
+
+Run(@ARGV) unless caller;
