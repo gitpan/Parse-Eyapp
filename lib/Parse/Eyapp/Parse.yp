@@ -32,6 +32,7 @@ my $buildingtree = 0;
 my $alias = 0;
 my $accessors = {}; # Hash for named accessors when %tree or %metatree is active { exp::left => 0 }
 my $strict = 0; # When true, all tokens must be declared or a warning will be issued
+my $nocompact; # Do not compact action tables. No DEFAULT field for "STATES"
 
 my %nondeclared; # Potential non declared token identifiers appearing in the program
 
@@ -239,13 +240,16 @@ sub symbol {
 %token METATREE      /* is %metatree */
 %token NAME          /* is %name */             
 %token NAMINGSCHEME  /* is %namingscheme */             
+%token NOCOMPACT     /* is %nocompact */
 %token NUMBER        /* is \d+ */
 %token OPTION        /* is (%name\s*([A-Za-z_]\w*)\s*)?\? */
 %token PLUS          /* is (%name\s*([A-Za-z_]\w*)\s*)?\+ */
 %token PREC          /* is %prec */
+%token PREFIX        /* is %prefix\s+([A-Za-z_][A-Za-z0-9_:]*::) */
 %token SEMANTIC      /* is %semantic\s+token */
 %token STAR          /* is (%name\s*([A-Za-z_]\w*)\s*)?\* */
 %token START         /* is %start */
+%token STRICT        /* is %strict */
 %token SYNTACTIC     /* is %syntactic\s+token */
 %token TAILCODE      /* is { Perl code ... } */
 %token TOKEN         /* is %token */
@@ -419,6 +423,11 @@ decl:  '\n'                 #default action
             $strict = 1;
             undef 
           } 
+    |   NOCOMPACT '\n'    
+          { 
+            $nocompact = 1;
+            undef 
+          } 
     |   TYPE typedecl identlist '\n'
             {
                 for ( @{$_[3]} ) {
@@ -467,7 +476,7 @@ body:
             if ($strict) {
               for (keys %nondeclared) {
                   warn "Warning! Non declared token $_ at line $$syms{$_} of $filename\n" 
-                unless ($$term{$_} || exists($$nterm{$_}));
+                unless ($_ eq 'error' || $$term{$_} || exists($$nterm{$_}));
               }
             }
             # Superstart rule
@@ -870,6 +879,9 @@ sub _Lexer {
             $$input=~/\G%(strict)/gc
         and return('STRICT',[ undef, $lineno[0] ]);
 
+            $$input=~/\G%(nocompact)/gc
+        and return('NOCOMPACT',[ undef, $lineno[0] ]);
+
             $$input=~/\G%(semantic\s+token)/gc
         and return('SEMANTIC',[ undef, $lineno[0] ]);
 
@@ -1089,12 +1101,14 @@ sub Parse {
               'SEMANTIC', 'BYPASS', 'ACCESSORS', 'BUILDINGTREE',
               'PREFIX',
               'NAMINGSCHEME',
+              'NOCOMPACT',
             }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
                $nullable, $precterm, $syms, $start, $expect, 
                $semantic, $bypass, $accessors, $buildingtree,
                $prefix,
                $namingscheme,
+               $nocompact,
             );
 
     undef($input);

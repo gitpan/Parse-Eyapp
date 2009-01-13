@@ -388,10 +388,10 @@ and a translator from infix to postfix:
 
 =head2 Reusing Grammars Using Inheritance
 
-An alternative method is to use inheritance. 
-The client inherits the grammar and expands it 
-with methods that implement the actions.
-Here is the grammar:
+An method to reuse a grammar is via inheritance. 
+The client inherits the generated parser module and expands it 
+with methods that inherit or overwrite the actions.
+Here is an example. Initially we have this Eyapp grammar:
 
   pl@europa:~/LEyapp/examples/recycle$ cat -n NoacInh.eyp
      1  %left   '+'
@@ -458,7 +458,8 @@ Here is the grammar:
 The following program defines two classes: C<CalcActions>
 that implements the actions for the calculator
 and package C<PostActions> that implements the actions
-for the infix to postfix translation:
+for the infix to postfix translation. This way we have an 
+example that reuses the former grammar twice:
 
   pl@europa:~/LEyapp/examples/recycle$ cat -n icalcu_and_ipost.pl
      1  #!/usr/bin/perl -w
@@ -511,7 +512,9 @@ for the infix to postfix translation:
 
 The subroutine used as default action in C<NoacInh.eyp> is so useful 
 that is packed as the L<Parse::Eyapp::Driver> method 
-C<YYDelegateaction>. See files C<examples/recycle/NoacYYDelegateaction.eyp>
+C<YYDelegateaction>. 
+
+See files C<examples/recycle/NoacYYDelegateaction.eyp>
 and C<examples/recycle/icalcu_and_ipost_yydel.pl>
 for an example of use of C<YYDelegateaction>.
 

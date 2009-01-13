@@ -86,32 +86,32 @@ sub Warnings {
 
       #limit the number of diagnostics to $showonly 
       my $showonly = 2; # must be a global readonly. Bad programming!
-      $text.="$nbsr shift/reduce conflict".($nbsr > 1 ? "s" : "")." (see .output file)";
-      my @states = keys %{$$self{CONFLICTS}{FORCED}{DETAIL}};
-      @states = splice @states, $showonly if @states > $showonly;
-      @states = sort { $a <=> $b } @states;
-
-      # look at the actions associated with each state
-      # $aux{s} = "concat tokens t" such that &($_, t) = s being & the transition function
-      my %aux; 
-      for (@states) {
-        my $actions = $self->{STATES}[$_]{ACTIONS};
-        for my $token (keys(%$actions)) {
-          my $ruleno = $actions->{$token};
-          if ($ruleno < 0) { # reduction
-            my @rule = @{$self->{GRAMMAR}{RULES}[-$ruleno]};
-            $text .= "\nState $_: reduce by rule ".-$ruleno.": $rule[0] -> @{$rule[1]}";
-            $text .= " (default action)" if $token eq '';
-          }
-          else { # shift
-            $aux{$ruleno} .= "$token ";
-          }
-        }
-        $text .= "\nState $_: shifts:  ";
-        for my $state (sort { $a <=> $b } keys(%aux)) {
-          $text .= "\n  to state ".sprintf("%4d",$state)." with $aux{$state}";
-        }
-      } # end of for (@states)
+      $text.="$nbsr shift/reduce conflict".($nbsr > 1 ? "s" : ""); 
+#      my @states = keys %{$$self{CONFLICTS}{FORCED}{DETAIL}};
+#      @states = splice @states, $showonly if @states > $showonly;
+#      @states = sort { $a <=> $b } @states;
+#
+#      # look at the actions associated with each state
+#      # $aux{s} = "concat tokens t" such that &($_, t) = s being & the transition function
+#      my %aux; 
+#      for (@states) {
+#        my $actions = $self->{STATES}[$_]{ACTIONS};
+#        for my $token (keys(%$actions)) {
+#          my $ruleno = $actions->{$token};
+#          if ($ruleno < 0) { # reduction
+#            my @rule = @{$self->{GRAMMAR}{RULES}[-$ruleno]};
+#            $text .= "\nState $_: reduce by rule ".-$ruleno.": $rule[0] -> @{$rule[1]}";
+#            $text .= " (default action)" if $token eq '';
+#          }
+#          else { # shift
+#            $aux{$ruleno} .= "$token ";
+#          }
+#        }
+#        $text .= "\nState $_: shifts:  ";
+#        for my $state (sort { $a <=> $b } keys(%aux)) {
+#          $text .= "\n  to state ".sprintf("%4d",$state)." with $aux{$state}";
+#        }
+#      } # end of for (@states)
     };  # end of $nbsr != $$self{GRAMMAR}{EXPECT} There were shift-reduce conflicts
 
         $nbrr
@@ -966,54 +966,94 @@ sub _SolveConflicts {
 sub _SetDefaults {
 	my($states)=@_;
 
-    for my $state (@$states) {
-        my($actions)=$$state{ACTIONS};
-        my(%reduces,$default,$nodefault);
+  for my $state (@$states) {
+    my($actions)=$$state{ACTIONS};
 
-            exists($$actions{''})
-        and do {
-            $$actions{''}[0] = -$$actions{''}[0];
-			++$nodefault;
-        };
+    # %reduces: - rule number => array of tokens to reduce
+    # $nodefault is true if no default can be derived
+    my(%reduces,$default,$nodefault);
 
-		#shift error token => no default
-            exists($$actions{error})
-        and $$actions{error}[0] > 0
+    #If action with ''=> no default
+    exists($$actions{''}) 
+      and do {
+        $$actions{''}[0] = -$$actions{''}[0];
+        ++$nodefault;
+      };
+
+    #shift error token => no default
+    exists($$actions{error})
+      and $$actions{error}[0] > 0
         and ++$nodefault;
 
-        for my $term (keys(%$actions)) {
+    for my $term (keys(%$actions)) {
 
-			$$actions{$term}=$$actions{$term}[0];
+      $$actions{$term}=$$actions{$term}[0];
 
-                (   not defined($$actions{$term})
-                 or $$actions{$term} > 0
-                 or $nodefault)
-            and next;
+      (not defined($$actions{$term}) or $$actions{$term} > 0 or $nodefault)
+        and next;
 
-            push(@{$reduces{$$actions{$term}}},$term);
-        }
-
-			keys(%reduces) > 0
-		or	next;
-
-        $default=( map { $$_[0] }
-                   sort { $$b[1] <=> $$a[1] or $$b[0] <=> $$a[0] }
-                   map { [ $_, scalar(@{$reduces{$_}}) ] }
-                   keys(%reduces))[0];
-
-        delete(@$actions{ @{$reduces{$default}} });
-        $$state{ACTIONS}{''}=$default;
+      push(@{$reduces{$$actions{$term}}},$term);
     }
+
+    keys(%reduces) > 0 or next;
+
+    # Find the production rule with the largest reduce set, i.e.
+    # the largest number of tokens
+
+#   OLD CODE:
+#   $default=( 
+#     # take the largest ...
+#     map { $$_[0] }
+#       # sort them by cardinal (in reverse)
+#       sort { $$b[1] <=> $$a[1] or $$b[0] <=> $$a[0] }
+#         # list of [ - rule number, number of tokens for that rule ]
+#         map { [ $_, scalar(@{$reduces{$_}}) ] } 
+#           keys(%reduces) # list of - rule numbers
+#   )[0];
+
+    my $max = 0;
+    for (keys(%reduces)) {
+      my $t = @{$reduces{$_}};
+      ($max, $default) = ($t, $_) if $t > $max;
+    }
+
+    delete(@$actions{ @{$reduces{$default}} });
+    $$state{ACTIONS}{''}=$default;
+  }
+}
+
+sub _dereference {
+	my($states)=@_;
+
+  for my $state (@$states) {
+    my($actions)=$$state{ACTIONS};
+
+    exists($$actions{''}) 
+      and do {
+        $$actions{''}[0] = -$$actions{''}[0];
+      };
+
+    for my $term (keys(%$actions)) {
+      $$actions{$term}=$$actions{$term}[0];
+    }
+
+  }
 }
 
 sub _LALR {
 	my($grammar,$states) = @_;
 	my($conflicts,$inconsistent);
 
-    $inconsistent = _ComputeLA($grammar,$states);
+  $inconsistent = _ComputeLA($grammar,$states);
 
-    $conflicts = _SolveConflicts($grammar,$states,$inconsistent);
+  $conflicts = _SolveConflicts($grammar,$states,$inconsistent);
+
+  if ($grammar->{NOCOMPACT}) {
+    _dereference($states);
+  }
+  else {
     _SetDefaults($states);
+  }
 
 	$conflicts
 }

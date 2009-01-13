@@ -1,4 +1,10 @@
 Revision history for Perl extension Eyapp.
+1.137
+  %nocompact
+    This directive disables the optimization of using the DEFAULT field of the actiontable
+    and keeps the follows.  Is in Lalr.pm in sub _SetDefaults. 
+1.136
+    %namingscheme : defines an automatic naming cheme 
 1.134 - -b now set the permits. Useful to make a modulino
 1.121 - Standalone wasn't working: Parse::Eyapp::Base must be included
 1.118 - new with yyprefix

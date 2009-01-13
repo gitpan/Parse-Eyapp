@@ -2,10 +2,21 @@
 use strict;
 use File::Basename;
 
+sub get_grammars {
+  open my $f, 'MANIFEST' || exit(0);
+  my @grammar = grep { m{examples/.*yp$} } <$f>;
+  close($f);
+  chomp(@grammar);
+  exit(0) unless @grammar;
+  return @grammar;
+}
+
+my @grammar = get_grammars();
+my $numtests = @grammar;
+
+
 require Test::More;
 # TODO: Use MANIFEST instead!
-my @grammar = glob('examples/*/*.eyp examples/*/*.yp'); 
-my $numtests = @grammar;
 Test::More->import(tests=>$numtests);
 
 SKIP: {

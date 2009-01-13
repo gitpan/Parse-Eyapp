@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.136.
+#    This file was generated using Parse::Eyapp version 1.137.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -236,7 +236,7 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.136',
+    yyversion => '1.137',
     yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'treeregexplist', '$end' ], 0 ],
@@ -299,7 +299,24 @@ sub new {
   [ childlist_57 => 'childlist', [ 'STAR-26' ], 0 ],
 ],
     yyTERMS  =>
-{ '$end' => 0, '(' => 0, ')' => 0, '*' => 0, ',' => 0, '.' => 0, ':' => 0, ';' => 0, '=' => 0, '=>' => 0, 'and' => 0, ARRAY => 1, CODE => 1, IDENT => 1, REGEXP => 1, SCALAR => 1 },
+{ '' => { ISSEMANTIC => 0 },
+	'(' => { ISSEMANTIC => 0 },
+	')' => { ISSEMANTIC => 0 },
+	'*' => { ISSEMANTIC => 0 },
+	',' => { ISSEMANTIC => 0 },
+	'.' => { ISSEMANTIC => 0 },
+	':' => { ISSEMANTIC => 0 },
+	';' => { ISSEMANTIC => 0 },
+	'=' => { ISSEMANTIC => 0 },
+	'=>' => { ISSEMANTIC => 0 },
+	'and' => { ISSEMANTIC => 0 },
+	ARRAY => { ISSEMANTIC => 1 },
+	CODE => { ISSEMANTIC => 1 },
+	IDENT => { ISSEMANTIC => 1 },
+	REGEXP => { ISSEMANTIC => 1 },
+	SCALAR => { ISSEMANTIC => 1 },
+	error => { ISSEMANTIC => 0 },
+},
     yyFILENAME  => "lib/Parse/Eyapp/Treeregexp.yp",
     yystates =>
 [

@@ -203,9 +203,10 @@ sub Terms {
     my %semantic = %{$self->{GRAMMAR}{SEMANTIC}};
 
     my $text = "{ ";
-    $text .= join(', ',
-                         map { $_ eq chr(0) ? "'\$end' => 0" : "$_ => $semantic{$_}"} @terms);
-    $text .= " }";
+    $text .= join(",\n\t",
+                         # Warning! bug. Before: map { $_ eq chr(0) ? "'\$end' => 0" : "$_ => $semantic{$_}"} @terms);
+                         map { $_ eq chr(0) ? "'' => { ISSEMANTIC => 0 }" : "$_ => { ISSEMANTIC => $semantic{$_} }"} @terms); 
+    $text .= ",\n\terror => { ISSEMANTIC => 0 },\n}";
 }
 
 #####################################
@@ -524,6 +525,7 @@ sub _ReduceGrammar {
                    ACCESSORS      => $values->{ACCESSORS}, # getter-setter for %tree and %metatree
                    PREFIX         => $values->{PREFIX},   # yyprefix
                    NAMINGSCHEME   => $values->{NAMINGSCHEME}, # added to allow programmable production naming schemes (%name)
+                   NOCOMPACT      => $values->{NOCOMPACT}, # Do not compact action tables. No DEFAULT field for "STATES"
                    TOKENNAMES     => {},
                  }, __PACKAGE__;
 

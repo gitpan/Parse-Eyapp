@@ -113,7 +113,8 @@ Parse::Eyapp (Extended yapp) is a collection of modules that extends Francois
 Desarmenien Parse::Yapp 1.05.  Eyapp extends yacc/yapp syntax with
 functionalities like named attributes, EBNF-like expressions, modifiable
 default action, grammar reusability, automatic syntax tree building,
-semi-automatic abstract syntax tree building, translation schemes, tree regular
+semi-automatic abstract syntax tree building, syntax directed data generation,
+translation schemes, tree regular
 expressions, tree transformations, scope analysis support, directed acyclic
 graphs and a few more.
 
@@ -136,6 +137,9 @@ default actions and how to deal with I<grammar reuse> and factorization.
 
 =item *  The document L<Parse::Eyapp::eyapplanguageref> 
 describes the Eyapp language. 
+
+=item * L<Parse::Eyapp> can be used to generate data that conforms with a given grammar.
+The tutorial L<Parse::Eyapp::datagenerationtut> shows how.
 
 =item *  The document L<Parse::Eyapp::translationschemestut> 
 describes the use of Translation Schemes inside the Eyapp language. 
@@ -167,41 +171,46 @@ The grammar extends L<yacc> and L<yapp> grammars.  Semicolons have been omitted
 to save space.  Between C-like comments you can find an (informal) explanation
 of the language associated with each token.
 
-  lusasoft@LusaSoft:~/src/perl/Eyapp$ eyapp -c lib/Parse/Eyapp/Parse.yp
-  %token ASSOC         /* is %(left|right|nonassoc) */
-  %token BEGINCODE     /* is %begin { Perl code ... } */
-  %token CODE          /* is { Perl code ... } */
+  lib/Parse/Eyapp$ eyapp -c Parse.yp
+  %token ASSOC /* is %(left|right|nonassoc) */
+  %token BEGINCODE /* is %begin { Perl code ... } */
+  %token CODE /* is { Perl code ... } */
   %token DEFAULTACTION /* is %defaultaction */
-  %token EXPECT        /* is %expect */
-  %token HEADCODE      /* is %{ Perl code ... %} */
-  %token IDENT         /* is [A-Za-z_][A-Za-z0-9_]* */
-  %token LITERAL       /* is a string literal like 'hello' */
-  %token METATREE      /* is %metatree */
-  %token NAME          /* is %name */
-  %token NUMBER        /* is \d+ */
-  %token OPTION        /* is (%name\s*([A-Za-z_]\w*)\s*)?\? */
-  %token PLUS          /* is (%name\s*([A-Za-z_]\w*)\s*)?\+ */
-  %token PREC          /* is %prec */
-  %token SEMANTIC      /* is %semantic\s+token */
-  %token STAR          /* is (%name\s*([A-Za-z_]\w*)\s*)?\* */
-  %token START         /* is %start */
-  %token SYNTACTIC     /* is %syntactic\s+token */
-  %token TAILCODE      /* is { Perl code ... } */
-  %token TOKEN         /* is %token */
-  %token TREE          /* is %tree */
-  %token TYPE          /* is %type */
-  %token UNION         /* is %union */
-
+  %token EXPECT /* is %expect */
+  %token HEADCODE /* is %{ Perl code ... %} */
+  %token IDENT /* is [A-Za-z_][A-Za-z0-9_]* */
+  %token LITERAL /* is a string literal like 'hello' */
+  %token METATREE /* is %metatree */
+  %token NAME /* is %name */
+  %token NAMINGSCHEME /* is %namingscheme */
+  %token NOCOMPACT /* is %nocompact */
+  %token NUMBER /* is \d+ */
+  %token OPTION /* is (%name\s*([A-Za-z_]\w*)\s*)?\? */
+  %token PLUS /* is (%name\s*([A-Za-z_]\w*)\s*)?\+ */
+  %token PREC /* is %prec */
+  %token PREFIX /* is %prefix\s+([A-Za-z_][A-Za-z0-9_:]*::) */
+  %token SEMANTIC /* is %semantic\s+token */
+  %token STAR /* is (%name\s*([A-Za-z_]\w*)\s*)?\* */
+  %token START /* is %start */
+  %token STRICT /* is %strict */
+  %token SYNTACTIC /* is %syntactic\s+token */
+  %token TAILCODE /* is { Perl code ... } */
+  %token TOKEN /* is %token */
+  %token TREE /* is %tree */
+  %token TYPE /* is %type */
+  %token UNION /* is %union */
   %start eyapp
 
   %%
 
+  # Main rule
   eyapp:
         head body tail
   ;
+  #Common rules:
   symbol:
         LITERAL
-      | ident 
+      | ident #default action
   ;
   ident:
         IDENT
@@ -211,15 +220,15 @@ of the language associated with each token.
         headsec '%%'
   ;
   headsec:
-        #empty  
-      | decls 
+        #empty  #default action
+      | decls #default action
   ;
   decls:
-        decls decl 
-      | decl 
+        decls decl #default action
+      | decl #default action
   ;
   decl:
-        '\n' 
+        '\n' #default action
       | SEMANTIC typedecl symlist '\n'
       | SYNTACTIC typedecl symlist '\n'
       | TOKEN typedecl symlist '\n'
@@ -233,6 +242,7 @@ of the language associated with each token.
       | TREE '\n'
       | METATREE '\n'
       | STRICT '\n'
+      | NOCOMPACT '\n'
       | TYPE typedecl identlist '\n'
       | EXPECT NUMBER '\n'
       | error '\n'
@@ -255,8 +265,8 @@ of the language associated with each token.
       | '%%'
   ;
   rulesec:
-        rulesec rules 
-      | startrules 
+        rulesec rules #default action
+      | startrules #default action
   ;
   startrules:
         IDENT ':'  rhss ';'
@@ -275,8 +285,8 @@ of the language associated with each token.
       | optname rhs
   ;
   rhs:
-        #empty    
-      | rhselts 
+        #empty      #default action (will return undef)
+      | rhselts #default action
   ;
   rhselts:
         rhselts rhseltwithid
@@ -319,7 +329,6 @@ of the language associated with each token.
   ;
 
   %%
-
 
 
 
@@ -545,6 +554,15 @@ L<Parse::Eyapp::translationschemestut>.
 The new token declaration directives C<%syntactic token> and
 C<%semantic token> can change the way C<eyapp> builds the abstract syntax tree.
 See section L<Syntactic and Semantic tokens>.
+
+=head2 The C<%nocompact> directive
+
+This directive influences the generation of the LALR tables.
+They will not be compacted and the tokens
+for the C<DEFAULT> reduction will be explictly set.
+It can be used to produce an C<.output> file (option C<-v>)
+with more information.
+
 
 =head1 THE BODY
 
@@ -2192,10 +2210,10 @@ of the C<SUBSTRACT> nodes:
 
 =head2 Reusing Grammars Using Inheritance
 
-An alternative method is to use inheritance. 
-The client inherits the grammar and expands it 
-with methods that implement the actions.
-Here is the grammar:
+An method to reuse a grammar is via inheritance. 
+The client inherits the generated parser module and expands it 
+with methods that inherit or overwrite the actions.
+Here is an example. Initially we have this Eyapp grammar:
 
   pl@europa:~/LEyapp/examples/recycle$ cat -n NoacInh.eyp
      1  %left   '+'
@@ -2262,7 +2280,8 @@ Here is the grammar:
 The following program defines two classes: C<CalcActions>
 that implements the actions for the calculator
 and package C<PostActions> that implements the actions
-for the infix to postfix translation:
+for the infix to postfix translation. This way we have an 
+example that reuses the former grammar twice:
 
   pl@europa:~/LEyapp/examples/recycle$ cat -n icalcu_and_ipost.pl
      1  #!/usr/bin/perl -w
@@ -2315,7 +2334,9 @@ for the infix to postfix translation:
 
 The subroutine used as default action in C<NoacInh.eyp> is so useful 
 that is packed as the L<Parse::Eyapp::Driver> method 
-C<YYDelegateaction>. See files C<examples/recycle/NoacYYDelegateaction.eyp>
+C<YYDelegateaction>. 
+
+See files C<examples/recycle/NoacYYDelegateaction.eyp>
 and C<examples/recycle/icalcu_and_ipost_yydel.pl>
 for an example of use of C<YYDelegateaction>.
 
@@ -3387,10 +3408,13 @@ C<%namingscheme>.
 
 The Eyapp directive C<%namingscheme> is followed by some Perl code. Such Perl
 code must return a reference to a subroutine that will be called each time a new
-production right hand side is parsed. This Perl code receives a C<Parse::Eyapp> object
-that describes the grammar. Observe that the code after the C<%namingscheme>
+production right hand side is parsed. The subroutine returns the name for the production.
+
+The Perl code defining the handler receives a C<Parse::Eyapp> object
+that describes the grammar. The code after the C<%namingscheme>
 directive is evaluated during the early phases of the compilation of the input 
-grammar. As an example, see lines 22-38 below (the example can be found in the directory
+grammar. As an example of how to set a naming scheme, 
+see lines 22-38 below (you can find this example and others in the directory
 C<examples/naming> of the accompanying distribution):
 
   lusasoft@LusaSoft:~/src/perl/Eyapp/examples/naming$ cat -n GiveNamesToCalc.eyp
@@ -3470,7 +3494,8 @@ The current provided naming schemes handlers are:
 =item * C<give_default_name>: The name of the production is the name of the Left Hand Side of the Production Rule
 concatenated with an underscore and the index of the production
 
-=item * C<give_lhs_name>: The name of the production is the name of the Left Hand Side of the Production Rule
+=item * C<give_lhs_name>: The name of the production is the name of the Left Hand Side of the Production Rule (this
+is the naming scheme used by the C<%tree> directive when no explicit name was given)
 
 =item * C<give_token_name>: The name of the production is the Left Hand Side of the Production Rule followed by the 
 word C<_is_> followed by the concatenation of the names of the tokens in the right and side (separated by underscores).
@@ -3498,9 +3523,9 @@ All of these handlers are implemented inside the class C<Parse::Eyapp::Grammar>.
     37    \&give_token_name;
     38  }
 
-As it is illustrated in the example, the method C<tokennames> of C<Parse::Eyapp>
+As it is illustrated in this example, the method C<tokennames> of C<Parse::Eyapp>
 objects provide a way to give identifier names to tokens that are defined by strings.
-When we execute the former program with input C<a=2*-3> we got the following
+When we execute the former module/program (modulino) with input C<a=2*-3> we got the following
 output:
 
   lusasoft@LusaSoft:~/src/perl/Eyapp/examples/naming$ eyapp -b '' GiveNamesToCalc.eyp
@@ -3509,10 +3534,22 @@ output:
   a=2*-3
   line_is_exp(var_is_VAR[a],exp_is_TIMES(exp_is_NUM[2],exp_is_NEG(exp_is_NUM[3])))
 
-For each production rule the handler is called with arguments
-the C<Parse::Eyapp> object, the production index (inside the grammar), the left hand side
-symbol and a reference to a list with the symbols in the right hand side. The following code
-of  some version of C<give_token_name> exemplifies how a naming scheme handler can be written:
+For each production rule the handler is called with arguments:
+
+=over 2
+
+=item * 
+the C<Parse::Eyapp> object, 
+
+=item * the production index (inside the grammar), 
+
+=item * the left hand side
+symbol and a reference to a list with the symbols in the right hand side. 
+
+=back
+
+The following code of some version of C<give_token_name> exemplifies how a
+naming scheme handler can be written:
 
   lusasoft@LusaSoft:~/src/perl/Eyapp$ sed -ne '101,132p' lib/Parse/Eyapp/Grammar.pm | cat -n
      1  sub give_token_name {

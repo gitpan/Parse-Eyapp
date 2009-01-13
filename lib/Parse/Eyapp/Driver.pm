@@ -8,8 +8,8 @@
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon, all rights reserved.
 
-our $SVNREVISION = '$Rev: 2384 $';
-our $SVNDATE     = '$Date: 2008-12-21 13:59:10 +0000 (dom, 21 dic 2008) $';
+our $SVNREVISION = '$Rev: 2399M $';
+our $SVNDATE     = '$Date: 2009-01-06 12:28:04 +0000 (mar, 06 ene 2009) $';
 
 package Parse::Eyapp::Driver;
 
@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.136";
+$VERSION = "1.137";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -323,6 +323,13 @@ sub YYRightside {
   return @{$self->{GRAMMAR}->[$self->{CURRENT_RULE}]->[2]};
 }
 
+sub YYTerms {
+  my $self = shift;
+
+  return $self->{TERMS};
+}
+
+
 sub YYIsterm {
   my $self = shift;
   my $symbol = shift;
@@ -334,8 +341,9 @@ sub YYIssemantic {
   my $self = shift;
   my $symbol = shift;
 
-  $self->{TERMS}->{$symbol} = shift if @_;
-  return ($self->{TERMS}->{$symbol});
+  return 0 unless exists($self->{TERMS}{$symbol});
+  $self->{TERMS}{$symbol}{ISSEMANTIC} = shift if @_;
+  return ($self->{TERMS}{$symbol}{ISSEMANTIC});
 }
 
 sub YYName {
@@ -701,11 +709,75 @@ sub YYCurval {
     ${$$self{VALUE}};
 }
 
-sub YYExpect {
-    my($self)=shift;
+#sub YYExpect {
+#  my($self)=shift;
+#  my $state = shift || $self->{STATES}[$self->{STACK}[-1][0]];
+#
+#  my %expected = %{$state->{ACTIONS}};
+#  if (exists($expected{"\c@"})) {
+#    $expected{''} = 1;
+#    delete($expected{"\c@"});
+#  }
+#  
+#  return keys %expected;
+#}
 
-    keys %{$self->{STATES}[$self->{STACK}[-1][0]]{ACTIONS}}
+{
+  my @STACK; # Used for symbolic simulation
+
+  sub YYSymbolicSim {
+    my $self = shift;
+    my @reduce = @_;
+    my @expected;
+
+    while (@reduce) {
+      my $index = shift @reduce;
+      my ($lhs, $length) = @{$self->{RULES}[-$index]};
+      splice @STACK, -$length;
+      my $state = $STACK[-1]->[0];
+      my $nextstate = $self->{STATES}[$state]{GOTOS}{$lhs};
+      push @STACK, [$nextstate, undef];
+      @expected = $self->YYExpected;
+    }
+
+    return map { $_ => 1 } @expected;
+  }
+
+  sub YYExpected {
+    my($self)=shift;
+    my $state = $self->{STATES}[$STACK[-1][0]];
+
+    my %actions;
+    %actions = %{$state->{ACTIONS}} if exists $state->{ACTIONS};
+
+    my (%expected, %reduce);
+    for (keys(%actions)) {
+      if ($actions{$_} > 0) {
+        $expected{$_} = 1;
+        next;
+      }
+      $reduce{$actions{$_}} = 1;
+    }
+    $reduce{$state->{DEFAULT}} = 1 if exists($state->{DEFAULT});
+
+    if (keys %reduce) {
+      %expected = (%expected, $self->YYSymbolicSim(keys %reduce));
+    }
+    
+    return keys %expected;
+  }
+
+  sub YYExpect {
+    @STACK = @{$_[0]->{STACK}};
+    goto &YYExpected;
+  }
 }
+
+#sub YYExpect {
+#    my($self)=shift;
+#
+#    keys %{$self->{STATES}[$self->{STACK}[-1][0]]{ACTIONS}}
+#}
 
 sub YYLexer {
     my($self)=shift;

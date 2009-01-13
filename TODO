@@ -1,14 +1,20 @@
-  * Automatic naming scheme.
-    %namingscheme : defines an automatic naming cheme 
-    Examples:
-       A : B ',' C  ----->  A::B_COMMA_C  or may be A__B_COMMA_C assuming the entry for ',' is COMMA
-       A : /* empty */ ----> A::EMPTY empty becomes a reserved name
-       A_B : C_D becomes AB_CD
+  * TERMINAL::save_attributes apply to any class that is bypassed?
+  * is 'error' a syntactic or a semantic token?
+  * Language generation example examples/generator
+     -- %compact as a compiler option (eyapp)
+     -- YYExpect: is a complicated thing to predict the full set of valid tokens
+     -- Return a Test::LectroTest::Generator? 
+     -- Frequency: If '(' then freq of ')' increases. If '=' then freq of '='
+        decreases, etc.
 
-    Factorize naming code, then allow the user to change the 'naming' function. 
-    Parameters: LHS, RHS, index, parser object, what else?
+  * There seems to be a bug in yapp  (and even yacc!!!!, The yapp bug is probably a copy of the yacc one)
+    with reduce-reduce conflicts. In at least one case is reducing by the second production rule instead 
+    of the first.  It appears in the C++ parser (t/99Cplusplusgrammar.t). Confirm
 
-  * Language generation example: Use YYExpect method!
+  * Add tests to check .output tables: actions and gotos against yacc. 
+    I am not confident that some modifications I introduced in Grammar.pm were error free
+
+  * Automatic naming scheme: tests!
 
   * Check that all the production names (given with %name directives) are different. Emit a warning if not
 

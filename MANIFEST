@@ -121,6 +121,8 @@ examples/Eyapp/uselhs1.pl
 examples/Eyapp/usepostfix.pl
 examples/Eyapp/userule3.pl
 examples/Eyapp/useruleandshift.pl
+examples/generator/Generator.eyp
+examples/generator/GenSupport.pm
 examples/MatchingTrees/m2.pl
 examples/MatchingTrees/numchildren.pl
 examples/MatchingTrees/Rule6.yp
@@ -190,6 +192,7 @@ examples/YATW/Tail2.pm
 lib/Parse/Eyapp/Base.pm
 lib/Parse/Eyapp/Base.pod
 lib/Parse/Eyapp/Cleaner.pm
+lib/Parse/Eyapp/datagenerationtut.pod
 lib/Parse/Eyapp/debuggingtut.pod
 lib/Parse/Eyapp/defaultactionsintro.pod
 lib/Parse/Eyapp/Driver.pm
@@ -211,6 +214,8 @@ lib/Parse/Eyapp.pm
 lib/Parse/Eyapp.pod
 lib/Parse/Eyapp/Scope.pm
 lib/Parse/Eyapp/Scope.pod
+lib/Parse/Eyapp/TokenGen.pm
+lib/Parse/Eyapp/TokenGen.pod
 lib/Parse/Eyapp/translationschemestut.pod
 lib/Parse/Eyapp/Treeregexp.pm
 lib/Parse/Eyapp/Treeregexp.pod
