@@ -42,7 +42,7 @@ PLTAGS=/usr/share/vim/vim71/tools/pltags.pl
 calc: lib/Math/Calc.pm 
 
 scripts/c.pl: lib/Math/Calc.eyp
-	${EYAPP}  ${EYAPPFLAGS} -b -o $@ lib/Math/Calc.eyp
+	${EYAPP}  ${EYAPPFLAGS} -b '' -o $@ lib/Math/Calc.eyp
 
 lib/Math/Calc.pm: lib/Math/Calc.eyp lib/Math/Tail.pm
 

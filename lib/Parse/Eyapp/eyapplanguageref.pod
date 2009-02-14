@@ -3436,7 +3436,7 @@ naming scheme handler can be written:
 =item * 
 L<Parse::Eyapp>, 
 L<Parse::Eyapp::eyapplanguageref>, 
-L<Parse::Eyapp::debugingtut>,
+L<Parse::Eyapp::debuggingtut>,
 L<Parse::Eyapp::defaultactionsintro>,
 L<Parse::Eyapp::translationschemestut>,
 L<Parse::Eyapp::Driver>,
@@ -3445,6 +3445,7 @@ L<Parse::Eyapp::YATW>,
 L<Parse::Eyapp::Treeregexp>,
 L<Parse::Eyapp::Scope>,
 L<Parse::Eyapp::Base>,
+L<Parse::Eyapp::datagenerationtut>
 
 
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/languageintro.pdf> 
@@ -3492,10 +3493,9 @@ Is the more complete and reliable source for Parse::Eyapp. However is in Spanish
 L<Parse::Yapp>,
 
 =item *
-Man pages of yacc(1),
-
-=item *
-Man pages of bison(1),
+Man pages of yacc(1) and
+bison(1),
+L<http://www.delorie.com/gnu/docs/bison/bison.html>
 
 =item *
 L<Language::AttributeGrammar>

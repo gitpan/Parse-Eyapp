@@ -67,7 +67,7 @@ Function C<pop(k)> extracts C<k> states from the stack. The call C<$state-E<gt>a
 returns the attribute associated with C<$state>. The call C<$parser-E<gt>Semantic{A -E<gt>alpha}>
 returns the semantic action associated with production C<A -E<gt>alpha>.
 
-Let us see a trace for the small gramar in C<examples/aSb.yp>:
+Let us see a trace for the small gramar in C<examples/debuggingtut/aSb.yp>:
 
   pl@nereida:~/LEyapp/examples$ /usr/local/bin/paste.pl aSb.yp aSb.output | head -5
   %%                                             | Rules:

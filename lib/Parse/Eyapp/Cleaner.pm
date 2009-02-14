@@ -227,7 +227,7 @@ sub _Lexer {
                               \\\\|    # escaped \ i.e. \\
                                \\'|    # escaped apostrophe i.e. \'
                                 \\     # escape i.e. \
-                        )+?            # non greedy repetitions
+                        )*?            # non greedy repetitions
                       '                # closing apostrophe
                     )/gxc
     and do {

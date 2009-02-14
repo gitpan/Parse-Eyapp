@@ -396,6 +396,7 @@ of a symbol table (for instance, the problem of associating
 a C<RETURN> node with the C<FUNCTION> that encloses it). 
 For such kind of problems C<$scopeE<gt>end_scope> provides
 a second form of call.
+
 The second way to call C<$scopeE<gt>end_scope> is
 
                  $declared = $scopemanager->end_scope($definition_node);
@@ -404,6 +405,16 @@ The only argument is the reference to the node that controls/defines
 the scope. The method returns a reference to the declared
 nodes. Any node instanced with C<scope_instance>
 since the last call to C<begin_scope> is considered I<declared>.
+
+The scope node C<$definition_node> is decorated with an attribute with
+name the value of the attribute C<SCOPE_NAME> of the scope manager
+C<$scopemanager>. The value of the attribute is the anonymous list of references to the instances
+declared in the scope of C<$definition_node> 
+(i.e. the same list referenced by C<$declared>). 
+
+The scope instances in C<@$declared> are decorated with
+an attribute with name the value of the attribute C<SCOPE_NAME> of the scope manager.
+The value is a reference to the scope node C<$definition_node>.
 
 =head2 The C<begin_scope> method
 
@@ -471,7 +482,7 @@ defined.
 =item * 
 L<Parse::Eyapp>, 
 L<Parse::Eyapp::eyapplanguageref>, 
-L<Parse::Eyapp::debugingtut>,
+L<Parse::Eyapp::debuggingtut>,
 L<Parse::Eyapp::defaultactionsintro>,
 L<Parse::Eyapp::translationschemestut>,
 L<Parse::Eyapp::Driver>,
@@ -480,6 +491,7 @@ L<Parse::Eyapp::YATW>,
 L<Parse::Eyapp::Treeregexp>,
 L<Parse::Eyapp::Scope>,
 L<Parse::Eyapp::Base>,
+L<Parse::Eyapp::datagenerationtut>
 
 
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/languageintro.pdf> 
@@ -527,10 +539,9 @@ Is the more complete and reliable source for Parse::Eyapp. However is in Spanish
 L<Parse::Yapp>,
 
 =item *
-Man pages of yacc(1),
-
-=item *
-Man pages of bison(1),
+Man pages of yacc(1) and
+bison(1),
+L<http://www.delorie.com/gnu/docs/bison/bison.html>
 
 =item *
 L<Language::AttributeGrammar>

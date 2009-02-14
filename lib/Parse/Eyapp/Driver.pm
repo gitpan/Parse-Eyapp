@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.137";
+$VERSION = "1.138";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -246,6 +246,21 @@ sub YYIndex {
   return wantarray? %index : \%index;
 }
 
+# To dynamically set syntactic actions
+# Change it to state, token, action
+# it is more natural
+sub YYLRAction {
+  my ($self, $token, $action, $state) = @_;
+
+   die "YYLRAction: Provide a state " unless defined($state);
+
+  $action = -$self->YYIndex($action) unless looks_like_number($action);
+  for (@$token) {
+    $self->{STATES}[$state]{ACTIONS}{$_} = $action;
+  }
+}
+
+# to dynamically set semantic actions
 sub YYAction {
   my $self = shift;
   my $index = shift;
@@ -518,8 +533,17 @@ sub YYBuildAST {
   
   if ($bypass and @children == 1) {
     $node = $children[0]; 
+
+    my $childisterminal = ref($node) =~ /TERMINAL$/;
     # Re-bless unless is "an automatically named node", but the characterization of this is 
     bless $node, $class unless $name =~ /${lhs}_\d+$/; # lazy, weak (and wicked).
+
+    $childisterminal and !$class->isa($PREFIX.'TERMINAL') 
+      and do { 
+        no strict 'refs';
+        push @{ref($node)."::ISA"}, $PREFIX.'TERMINAL' 
+      };
+
     return $node;
   }
   $node->{children} = \@children; 

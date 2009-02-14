@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.137.
+#    This file was generated using Parse::Eyapp version 1.138.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -264,7 +264,7 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.137',
+    yyversion => '1.138',
     yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
@@ -1989,7 +1989,7 @@ sub _Lexer {
                               \\\\|    # escaped \ i.e. \\
                                \\'|    # escaped apostrophe i.e. \'
                                 \\     # escape i.e. \
-                        )+?            # non greedy repetitions
+                        )*?            # non greedy repetitions
                       '                # closing apostrophe
                     )/gxc
     and do {
@@ -2006,6 +2006,7 @@ sub _Lexer {
         my $lines = $string =~ tr/\n//;
         _SyntaxError(2, "Constant string $string contains newlines",$lineno[0]) if $lines;
         $lineno[1] += $lines;
+        $string = chr(0) if $string eq "''";
         return('LITERAL',[ $string, $lineno[0] ]);
     };
 

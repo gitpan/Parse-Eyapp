@@ -1,3 +1,11 @@
+# See http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+# This files is almost like Debug.eyp
+# It only changes the rules
+# ds:
+#     D ';' ds    
+#   | D       
+# for a left-recursive version
+
 %token D S
 
 %{

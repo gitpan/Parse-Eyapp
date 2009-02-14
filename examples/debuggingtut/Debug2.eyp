@@ -1,3 +1,9 @@
+# See http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+# This files is almost like Debug1.eyp
+# It only changes the lexer line:
+#            s{^(\s)}{} and $tokenline += $1 =~ tr{\n}{};
+# by:
+#            s{^(\s+)}{} and $tokenline += $1 =~ tr{\n}{};
 %token D S
 
 %{

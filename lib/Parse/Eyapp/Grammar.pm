@@ -131,6 +131,37 @@ sub give_token_name {
   return $name;
 }
 
+sub give_rhs_name {
+  my ($self, $index, $lhs, $rhs) = @_;
+
+  my @rhs = @$rhs;
+  $rhs = '';
+
+  unless (@rhs) { # Empty RHS
+    return $lhs.'_is_empty';
+  }
+
+  my $names = $self->{GRAMMAR}{TOKENNAMES} || {};
+  for (@rhs) {
+    if ($self->is_token($_)) { 
+      s/^'(.*)'$/$1/;
+      my $name = $names->{$_} || '';
+      unless ($name) {
+        $name = $_ if /^\w+$/;
+      }
+      $rhs .= "_$name" if $name;
+    }
+    else {
+      s/\W/_/g;
+      $rhs .= "_$_";
+    }
+  }
+
+  # check if another production with such name exists?
+  my $name = $lhs.'_is'.$rhs;
+  return $name;
+}
+
 sub classname {
   my ($self, $name, $index, $lhs, $rhs) = @_;
 
@@ -346,6 +377,85 @@ sub RulesTable {
     $text.="\n]";
 
     $text;
+}
+
+###############################################################
+# Method to produce conflict information
+# to be used by dynamic conflict solving, e.g. 
+# YYPriorize([ 'rule_name', 'shift'], [ token list ], 'rule_name')
+# YYPriorize([ 'rule_name', 'shift'], [ token list ], 'shift')
+# YYPriorize([ 'rule_name1', 'rule_name2'], [ token list ], 'rule_name2')
+# Conflicts in typicalrr.eyp
+# 
+# Rules:
+# ------
+# 0:	$start -> s $end
+# 1:	s -> /* empty */
+# 2:	s -> s ws
+# 3:	s -> s ns
+# 4:	ns -> /* empty */
+# 5:	ns -> ns NUM
+# 6:	ws -> /* empty */
+# 7:	ws -> ws ID
+# 
+#   DB<3> x $self->{CONFLICTS}{FORCED}
+# 0  HASH(0x88e2998)
+#    'DETAIL' => HASH(0x88a7d0c)
+#       1 => HASH(0x88dbe98)
+#          'LIST' => ARRAY(0x88dbeb0)
+#             0  ARRAY(0x88dbec8)
+#                0  'NUM'
+#                1  '-6' 3 
+#             1  ARRAY(0x88dbab4)
+#                0  'ID'
+#                1  '-6'
+#             2  ARRAY(0x88dba90)
+#                0  "\c@"
+#                1  '-4'
+#             3  ARRAY(0x88dbf58)
+#                0  "\c@"
+#                1  '-6'
+#          'TOTAL' => ARRAY(0x88e235c)
+#             0  1
+#             1  3
+#       2 => HASH(0x88dbfac)
+#          'LIST' => ARRAY(0x88dbfd0)
+#             0  ARRAY(0x88dbfe8)
+#                0  'NUM'
+#                1  '-3'
+#          'TOTAL' => ARRAY(0x88dbd3c)
+#             0  1
+#       4 => HASH(0x88dbdd8)
+#          'LIST' => ARRAY(0x88dbe38)
+#             0  ARRAY(0x88dbe50)
+#                0  'ID'
+#                1  '-2'
+#          'TOTAL' => ARRAY(0x88dbdb4)
+#             0  1
+#    'TOTAL' => ARRAY(0x88e238c)
+#       0  3
+#       1  3
+# 
+###############################################################
+sub _Conflicts {
+  my $self = shift;
+  my $conflicts = $self->{CONFLICTS}{FORCED}{DETAIL};
+  my $states = $self->{STATES};
+
+  my $text = '{';
+  $conflicts and (reftype($conflicts) eq 'HASH') and do {
+    for my $s (keys %$conflicts) {
+      # default action
+      my $da = $states->[$s]{ACTIONS};
+      my $c  = $conflicts->{$s}{LIST};
+      for (@$c) {
+        my ($token, $action) = @$_;
+        my $dat = $da->{$token} || die 'Parse::Eyapp::Grammar::_Conflict: expected some shift-reduce action';
+        $text .= " '$dat#$action' => $s,"; 
+      }
+    }
+  };
+  $text .= ' }';
 }
 
 ################################

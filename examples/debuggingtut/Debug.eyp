@@ -1,6 +1,6 @@
+# See http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
 # Debug.eyp
-# compile it eyapp -b Debug.eyp -o Debug.pl to produce an 
-# executable
+# See also: Debug1.eyp Debug2.eyp LookForward.eyp
 
 %token D S
 

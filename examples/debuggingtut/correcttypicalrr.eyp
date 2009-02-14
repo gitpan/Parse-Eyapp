@@ -1,3 +1,5 @@
+# Solution to the conflicts in
+# typicalrr.eyp
 %token ID NUM 
 
 %%

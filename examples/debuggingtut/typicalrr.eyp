@@ -1,4 +1,8 @@
+# For a solution to the conflicts
+# see  correcttypicalrr.eyp
 %token ID NUM 
+
+%tree
 
 %%
 s:
@@ -6,13 +10,61 @@ s:
     | s ws
     | s ns 
 ;
-ws:
-      /* empty */
-    | ws ID 
-;
+
 ns:
       /* empty */
     | ns NUM 
 ;
 
+ws:
+      /* empty */
+    | ws ID 
+;
+
 %%
+
+sub _Error {
+  my $parser = shift;
+
+  my ($token) = $parser->YYCurval;
+  my ($what) = $token ? "input: '$token'" : "end of input";
+  warn "Syntax error near $what\n";
+}
+
+my $input;
+
+sub _Lexer {
+  my $self = shift;
+  
+  for ($input) {
+    s{^(\s*)}{};
+
+    return ('',undef) unless $_;
+
+    return ('NUM',$1) if s/^(\d+)//;
+    return ('ID',$1) if s/^([a-zA-Z_]\w*)//;
+  }
+  return ('',undef);
+}
+
+sub Run {
+  my $debug = shift || 0;
+  $debug = 0x1F if $debug;
+
+  $input = <STDIN>;
+
+  my $self = __PACKAGE__->new();
+
+  print $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, yydebug => $debug,)->str."\n";
+}
+
+Run(@ARGV) unless caller;
+
+=head1  Typical example of Reduce-Reduce conflict
+
+Compile it with:
+
+   eyapp -b '' typicalrr.eyp
+
+=cut
+

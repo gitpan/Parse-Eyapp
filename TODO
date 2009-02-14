@@ -1,13 +1,16 @@
-  * TERMINAL::save_attributes apply to any class that is bypassed?
-  * is 'error' a syntactic or a semantic token?
-  * Language generation example examples/generator
-     -- %compact as a compiler option (eyapp)
-     -- YYExpect: is a complicated thing to predict the full set of valid tokens
-     -- Return a Test::LectroTest::Generator? 
-     -- Frequency: If '(' then freq of ')' increases. If '=' then freq of '='
-        decreases, etc.
+  * There is no way to express the token end-of-input in the header section: i.e. how to give to end of 
+  input some priority in order to solve a conflict?
+  * There is a bug in eyapp with reduce-reduce conflicts!!
+  * There is a bug with &give_rhs_name in Parse::Eyapp::Grammar and lists *, +, etc. see the example
+      examples/debuggintut/SemanticInfoInTokens.eyp
+    Not always a syntactic variable is a valid identifier: e.g. PLUS-1
+    Probably, it is better that the method "tokennames" give names to the syntactic variables
 
-  * There seems to be a bug in yapp  (and even yacc!!!!, The yapp bug is probably a copy of the yacc one)
+  * str method can produce GraphViz, latex and/or other formats
+  * Treereg EXPORT and EXPORT_OK
+  * Language generation example examples/generator
+     -- Return a Test::LectroTest::Generator? 
+
     with reduce-reduce conflicts. In at least one case is reducing by the second production rule instead 
     of the first.  It appears in the C++ parser (t/99Cplusplusgrammar.t). Confirm
 

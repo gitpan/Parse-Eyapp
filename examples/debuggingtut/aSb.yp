@@ -1,3 +1,4 @@
+# see http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
 %%
 S:                 { print "S -> epsilon\n" }
     |   'a' S 'b'  { print "S -> a S b\n" }

@@ -1,4 +1,6 @@
 /*VIM: set ts=2 */
+# See http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+# See also: Debug.eyp Debug1.eyp Debug2.eyp 
 %token D S
 %token SEMICOLONS SEMICOLOND
 
