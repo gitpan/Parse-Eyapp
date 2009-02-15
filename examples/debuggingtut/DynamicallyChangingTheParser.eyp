@@ -9,30 +9,44 @@
 
 %{
 our $VERSION = '0.01';
+my $input;
 %}
 
-%expect 1
+%tree bypass
 
 %%
 p:
+    %name PROG
     ds ';' ss  
-  | ss
+  | %name SS
+    ss
 ;
 
 ds:
-    D ';' ds    
+    %name MORE_Ds
+    D hacktables ';' ds    
   | %name LAST_D
-    D       
-    {
-      print "Reducing by rule:\n";
-      print "\tds -> D\n";
-      $_[1];
-    }
+    D hacktables        
 ;
 
 ss:
+    %name SS
     S ';' ss      
-  | S       
+  | %name S
+    S       
+;
+
+hacktables:
+    /* empty. Just for hacking the LALR tables */
+      {
+        my $self = shift;
+
+        my $conflictstate = $self->YYNextState();
+
+        $self->YYSetLRAction($conflictstate, ';', 'LAST_D' ) if $input =~ m{^;\s*S};
+
+        undef;
+      }
 ;
 
 %%
@@ -45,8 +59,6 @@ sub _Error {
   warn "Syntax error near $what\n";
 }
 
-my $input;
-
 sub _Lexer {
   my $self = shift;
   
@@ -54,11 +66,6 @@ sub _Lexer {
     s{^(\s*)}{};
    
     return ('',undef) unless $_;
-
-    # dynamically changing the action tables
-    # Force reduction by rule ds->D if it is the last D
-    # $self->{STATES}[4]{ACTIONS}{';'} = -$self->YYIndex('LAST_D') if $input =~ m{^;\s*S};
-    $self->YYLRAction([ ';' ], 'LAST_D', 4) if $input =~ m{^;\s*S};
 
     return ($1,$1) if s/^(.)//;
   }
@@ -73,9 +80,12 @@ sub Run {
 
   my $self = __PACKAGE__->new();
 
-  return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-                         yydebug => $debug,
-  );
+  print 
+    $self->YYParse( 
+      yylex => \&_Lexer, 
+      yyerror => \&_Error, 
+      yydebug => $debug,
+    )->str."\n";
 }
 
 Run(@ARGV) unless caller;

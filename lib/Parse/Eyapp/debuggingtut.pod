@@ -735,521 +735,6 @@ Here is a solution based in this idea:
     63    );
     64  }
 
-=head2 Hacking the Parsing Tables: ACTION and GOTOs
-
-Skip this section unless you are familiar with the inners of LR parsing.
-
-The program in C<DynamicallyChangingTheParser.eyp> illustrates how to hack the
-parsing tables. The former grammar is left unchanged and the conflict unsolved:
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -c DynamicallyChangingTheParser.eyp | cat -n
-     1  # DebugWithErrRec.eyp
-     2  # compile it eyapp -b DebugWithErrRec.eyp -o Debug.pl to produce an
-     3  # executable
-     4  # This example illustrates how to dynamically change the behavior of the parser
-     5  %token D S
-     6  %expect 1
-     7
-     8  %%
-     9
-    10  p:
-    11        ds ';' ss
-    12      | ss
-    13  ;
-    14  ds:
-    15        D ';' ds
-    16      | D
-    17  ;
-    18  ss:
-    19        S ';' ss
-    20      | S
-    21  ;
-    22
-    23  %%
-
-The C<%expect 1> tells C<eyapp> to keep silent. No warnings are issued:
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -b '' DynamicallyChangingTheParser.eyp
-  pl@europa:~/LEyapp/examples/debuggingtut$  
-
-The trick used requires a in-depth knowledge of the way an LR parser works. 
-Since we have seen in the previous sections, the conflict is in state 4.
-The lexer modifies the parsing action when detects the end of the C<D>s
-sequence:
-
-  $ sed -ne '/sub _Lexer/,/^}/p' DynamicallyChangingTheParser.eyp | cat -n
-     1  sub _Lexer {
-     2    my $self = shift;
-     3
-     4    for ($input) {
-     5      s{^(\s*)}{} and $tokenline += $1 =~ tr{\n}{};
-     6      return ('',undef) unless $_;
-     7
-     8      # dynamically changing the action tables
-     9      # Force reduction by rule 4 if it is the last D
-    10      $self->{STATES}[4]{ACTIONS}{';'} = -4 if $input =~ m{^;\s*S};
-    11
-    12      return ($1,$1) if s/^(.)//;
-    13    }
-    14    return ('',undef);
-    15  }
-
-Each state is an anonymous hash. There are three keys: ACTIONS, GOTOS and  DEFAULT.
-The ACTIONS table says when to shift and when to reduce for any given tokens.
-The GOTOS table says where to go, i.e. the next state after a reduction occurs.
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ perl -wd ./DynamicallyChangingTheParser.pm
-  DynamicallyChangingTheParser::(./DynamicallyChangingTheParser.pm:16):
-  16:     push @DynamicallyChangingTheParser::ISA, 'Parse::Eyapp::Driver';
-  D;D;S
-  DynamicallyChangingTheParser::_Lexer(DynamicallyChangingTheParser.eyp:50):
-  50:       my $self = shift;
-  DB<3> n
-  DynamicallyChangingTheParser::_Lexer(DynamicallyChangingTheParser.eyp:52):
-  52:       for ($input) {
-  DB<3> x $self->YYState(4)
-  0  HASH(0xa03fb0)
-     'ACTIONS' => HASH(0xa03fe0)
-        ';' => 8
-
-A negative number means reduction using the corresponding (opposite number) production 
-rule number. The line
-
-    10      $self->{STATES}[4]{ACTIONS}{';'} = -4 if $input =~ m{^;\s*S};
-
-tells to reduce by rule 4 when in state 4 and seeing a token C<';'> followed
-by a token C<S>. 
-
-=head2 Reduce-Reduce Conflicts
-
-Most of the time reduce-reduce conflicts are due to some ambiguity in
-the grammar. In this example the programmer has attempted to define
-a language made of mixed lists IDs and NUMbers :
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n typicalrr.eyp
-     1  %token ID NUM
-     2
-     3  %%
-     4  s:
-     5        /* empty */
-     6      | s ws
-     7      | s ns
-     8  ;
-     9  ws:
-    10        /* empty */
-    11      | ws ID
-    12  ;
-    13  ns:
-    14        /* empty */
-    15      | ns NUM
-    16  ;
-    17
-    18  %%
-
-The grammar has several reduce-reduce conflicts:
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp typicalrr.eyp
-  3 shift/reduce conflicts (see .output file)
-  State 2: reduce by rule 3: s -> s ns (default action)
-  State 2: shifts:
-    to state    5 with NUM  and 3 reduce/reduce conflicts
-
-In fact we have infinite ways to rightmost derive the empty string.
-
-The problem is easily solved designing an equivalent non ambiguous grammar:
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n correcttypicalrr.eyp
-     1  %token ID NUM
-     2
-     3  %%
-     4  s:
-     5        /* empty */
-     6      | s ID
-     7      | s NUM
-     8  ;
-     9
-    10  %%
-
-
-=head2 Reduce-Reduce Conflicts with Unambiguous Grammars
-
-Though not common, it may occur that a reduce-reduce conflict
-is not due to ambiguity but to the limitations of the LALR(1)
-algorithm. The following example illustrates the point:
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n rrconflictnamefirst.eyp
-     1  %token VAR ',' ':'
-     2
-     3  %{
-     4  use base q{Tail};
-     5  %}
-     6
-     7  %%
-     8  def:    param_spec return_spec ','
-     9          ;
-    10  param_spec:
-    11               type
-    12          |    name_list ':' type
-    13          ;
-    14  return_spec:
-    15               type
-    16          |    name ':' type
-    17          ;
-    18  name:        VAR
-    19          ;
-    20  type:        VAR
-    21          ;
-    22  name_list:
-    23               name
-    24          |    name ',' name_list
-    25          ;
-    26  %%
-    27
-    28  __PACKAGE__->main unless caller();
-
-
-This non ambiguous grammar generates a language of sequences like
-   
-                 a, b : e f : e,
-
-The conflict is due to the final comma in:
-
-      def:    param_spec return_spec ','
-
-If you supress such comma there is no conflict (try it).
-When compiling with eyapp we get the warning:
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp rrconflictnamefirst.eyp
-  1 reduce/reduce conflict
-
-Editing the C<.output> file we can see the conflict is in state 2:
-
-   46 State 2:
-   47
-   48         name -> VAR .   (Rule 6)
-   49         type -> VAR .   (Rule 7)
-   50
-   51         ','     [reduce using rule 7 (type)]
-   52         VAR     reduce using rule 7 (type)
-   53         $default        reduce using rule 6 (name)
-
-
-If we look at the grammar we can see that a reduction by 
-
-                   type -> VAR .
-
-may occur with a comma as incoming token but only after 
-the reduction by C<param_spec> has taken place. The problem
-is that the automata forgets about it. Look the 
-automata transitions in the C<.outputfile>.
-By making explict the difference between the first and second C<type>
-we solve the conflict:
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n rrconflictnamefirst_fix1.eyp
-     1  %token VAR ',' ':'
-     2
-     3  %{
-     4  use base q{Tail};
-     5  %}
-     6
-     7  %%
-     8  def:    param_spec return_spec ','
-     9          ;
-    10  param_spec:
-    11               type
-    12          |    name_list ':' type
-    13          ;
-    14  return_spec:
-    15               typeafter
-    16          |    name ':' typeafter
-    17          ;
-    18  name:        VAR
-    19          ;
-    20  type:        VAR
-    21          ;
-    22  typeafter:        VAR
-    23          ;
-    24  name_list:
-    25               name
-    26          |    name ',' name_list
-    27          ;
-    28  %%
-    29
-    30  __PACKAGE__->main unless caller();
-
-A reduce-reduce conflict is solved in favor of the first production
-found in the text. If we execute the grammar with the conflict C<./rrconflictnamefirst.pm>,
-we get the correct behavior:
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -b '' rrconflictnamefirst.eyp
-  1 reduce/reduce conflict
-  pl@europa:~/LEyapp/examples/debuggingtut$ ./rrconflictnamefirst.pm
-  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
-  a,b:c d:e,
-  <CTRL-D>
-  $
-
-The program accepts the correct language - in spite of the conflict -
-due to the fact that the  production
-
-                      name:        VAR
-
-is listed first. 
-
-The parser rejects the correct phrases if we swap the order 
-of the productions writing the C<type: VAR> production first,
-
-  pl@europa:~/LEyapp/examples/debuggingtut$ ./reducereduceconflict.pm
-  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
-  a,b:c d:e,
-  <CTRL-D>
-
-  Syntax error near input: ',' (lin num 1).
-  Incoming text:
-  ===
-  b:c d
-  ===
-  Expected one of these terminals: VAR
-
-
-Files C<reducereduceconflict_fix1.eyp> and C<reducereduceconflict_fix2.eyp>
-offer other solutions to the problem.
-
-=head2 Tokens Depending on the Syntactic Context
-
-Usually there is a one-to-one relation between a token and a regexp. Problems arise,
-however when a token's type depends upon contextual information.
-An example of this problem comes from PL/I, where statements like this are
-legal:
-
-         if then=if then if=then
-
-In PL/I this problem arises because keywords like C<if> are not reserved and can be used in
-other contexts. This simplified grammar illustrates the problem:
-
-  examples/debuggingtut$ eyapp -c PL_I_conflict.eyp
-  # This grammar deals with the famous ambiguous PL/I phrase:
-  #                if then=if then if=then
-  # The (partial) solution uses YYExpect in the lexical analyzer to predict the token
-  # that fulfills the parser expectatives.
-  # Compile it with:
-  # eyapp -b '' PL_I_conflict.eyp
-  # Run it with;
-  # ./PL_I_conflict.pm -debug
-  %strict
-  %token ID
-  %tree bypass
-
-  %%
-
-  stmt:
-        ifstmt
-      | assignstmt
-  ;
-  # Exercise: change this production
-  #     for 'if' expr 'then' stmt
-  # and check with input 'if then=if then if=then'. The problem arises again
-  ifstmt:
-        %name IF
-        'if' expr 'then' expr
-  ;
-  assignstmt:
-        id '=' expr
-  ;
-  expr:
-        %name EQ
-        id '=' id
-      | id
-  ;
-  id:
-        %name ID
-        ID
-  ;
-
-  %%
-
-If the token ambiguity depends only in the syntactic context,
-the problem can be alleviated using the C<YYExpect> method. 
-In case of doubt, the lexical analyzer calls the C<YYExpect> method to know
-which of the several feasible tokens is expected by the parser:
-
-  examples/debuggingtut$ sed -ne '/sub lex/,/^}/p' PL_I_conflict.eyp
-  sub lexer {
-    my $parser = shift;
-
-    for ($parser->{input}) {    # contextualize
-      m{\G\s*(\#.*)?}gc;
-
-      m{\G([a-zA-Z_]\w*)}gc and do {
-        my $id = $1;
-
-        return ('if',   'if')   if ($id eq 'if')   && is_in('if', $parser->YYExpect);
-        return ('then', 'then') if ($id eq 'then') && is_in('then', $parser->YYExpect);
-
-        return ('ID', $id);
-      };
-
-      m{\G(.)}gc         and return ($1, $1);
-
-      return('',undef);
-    }
-  }
-
-Here follows an example of execution:
-
-  examples/debuggingtut$ eyapp -b '' PL_I_conflict.eyp
-  examples/debuggingtut$ ./PL_I_conflict.pm
-  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
-  if then=if then if=then
-  IF(EQ(ID,ID),EQ(ID,ID))
-
-
-=head2 Lexical Tie-ins
-
-The C language has a context dependency: the way an identifier is used depends
-on what its current meaning is. For example, consider this:
-
-  T(x);
-
-This looks like a function call statement, but if C<T> is a typedef name, then
-this is actually a declaration of C<x>. How can a parser for C decide how to
-parse this input?
-
-Here is another example:
-
-  {
-    T * x;
-    ...
-  }
-
-What is this, a declaration of C<x> as a pointer to C<T>, 
-or a void multiplication of the variables C<T> and C<x>?
-
-The usual method to solve this problem is to have two different token types, C<ID> and C<TYPENAME>.
-When the lexer finds an identifier, it looks up in the symbol table 
-the current declaration of the identifier in order to 
-decide which token type to return: C<TYPENAME> if the
-identifier is declared as a typedef, C<ID> otherwise.
-
-One way to handle context-dependency is the lexical I<tie-in>: a flag which is set
-by the semantic actions, whose purpose is to alter the way tokens are parsed.
-
-In the "Calc"-like example in C<examples/debuggintut/SemanticInfoInTokens.eyp>
-we have a language with a special construct 
-C<hex (hex-expr)>. After the keyword C<hex> comes an C<expression> in parentheses in
-which all integers are hexadecimal. In particular, strings in C</[A-F0-9]+/>
-like C<A1B> must be treated as an hex integer unless they were previously
-declared as variables:
-
-  %strict
-
-  %token ID INT INTEGER
-  %syntactic token HEX
-
-  %right '='
-  %left '+'
-
-  %{
-  my %st;
-  %}
-
-  %tree bypass alias
-
-  %%
-  stmt:
-      decl <* ';'> expr <%name EXPS + ';'>
-        {
-          $_[2]->{st} = { %st };
-          $_[2];
-        }
-  ;
-
-  decl:
-      INT ID <+ ','>
-        {
-          $st{$_->{attr}} = 1 for $_[2]->children();
-        }
-  ;
-
-  expr:
-      %name ID
-      ID
-    | %name NUM
-      INTEGER
-    | %name HEX
-      HEX '(' { $_[0]->{HEXFLAG} = 1; } $expr ')'
-        {
-          $_[0]->{HEXFLAG} = 0;
-          $expr;
-        }
-    | %name ASSIGN
-      $ID '=' expr
-        {
-          my $parser = shift;
-          my $t = $parser->YYBuildAST(@_);
-          # Retype left (TERMINAL) child as ID
-          $t->ID->type('ID');
-          $t;
-        }
-    | %name PLUS
-      expr '+' expr
-  ;
-
-
-
-Here the lexer looks at the value of the attribute C<HEXFLAG>; when it is nonzero,
-all integers are parsed in hexadecimal, and tokens starting with letters are
-parsed as integers if possible.
-
-  sub lexer {
-    my $parser = shift;
-    my $hexflag = $parser->{HEXFLAG};
-
-    for ($parser->{input}) {    # contextualize
-      m{\G\s*(\#.*)?}gc;
-
-      m{\G(HEX\b|INT\b)}igc and return (uc($1), $1);
-
-      m{(\G\d+)}gc and return ('INTEGER', $hexflag? hex($1) : $1);
-
-
-      m{\G([a-zA-Z_]\w*)}gc and do {
-        my $match = $1;
-        $hexflag and !exists($st{$match}) and $match =~ m{^([A-F0-9]+)$}gc and return ('INTEGER', hex($match));
-        return ('ID', $1);
-      };
-
-      m{\G(.)}gc         and return ($1, $1);
-
-      return('',undef);
-    }
-  }
-
-Let us see an example of execution:
-
-  examples/debuggingtut$ cat inputforsemanticinfo2.txt
-  int A2
-  A2 = HEX(A23);
-  A2 = HEX(A2)
-
-  examples/debuggingtut$ ./SemanticInfoInTokens.pm -file inputforsemanticinfo2.txt
-  EXPS(ASSIGN(ID[A2],NUM[2595]),ASSIGN(ID[A2],ID[A2]))
-
-The first hex expression C<HEX(A23)> is interpreted as the number C<2595>
-while the second C<HEX(A2)> refers to previously declared variable C<A2>.
-
-For more about lexical tie-ins see also
-
-=over 2
-
-=item * L<http://www.gnu.org/software/bison/manual/html_mono/bison.html#Lexical-Tie_002dins>
-
-=item * L<http://en.wikipedia.org/wiki/The_lexer_hack>
-
-=item * L<http://eli.thegreenplace.net/2007/11/24/the-context-sensitivity-of-cs-grammar/>
-
-=back
-
 
 =head1 ERRORS DURING TREE CONSTRUCTION
 
@@ -1641,262 +1126,6 @@ we go to state 4.
 
 
 
-=head1  DYNAMICALLY CHANGING THE PARSING TABLES TO SOLVE AMBIGUITIES
-
-The grammar C<glrexpressions.eyp> models a problematic part of 
-the C++ grammar. 
-
-The C++ syntax does not disambiguate between expression
-statements and declaration statements. The ambiguity arises when an expression
-statement has a function-style cast as its left-most subexpression. 
-( since C does not support function-style casts, this ambiguity does not occur
-in C programs.) 
-
-For example,
-
-     int (x) = y+z;
-
-parses as either an C<expr> or a C<stmt>.
-
-If the statement can be interpreted both as a declaration and
-as an expression, the statement is interpreted as a declaration statement. 
-
-The following expressions disambiguate into expression statements because the
-declarator is followed by an operator different from the assignment  operator. 
-
-    type_spec(i)++;             // expression statement
-    type_spec(i,3)<<d;          // expression statement
-    type_spec(i)->l=24;         // expression statement
-
-Where C<type_spec> stands for a type specifier.
-
-In the following examples, the interpretation as declaration works, and
-consequently the statements are interpreted as declarations:
-
-    type_spec(*i)(int);         // declaration
-    type_spec(j)[5];            // declaration
-    type_spec(m) = { 1, 2 };    // declaration
-    type_spec(a);               // declaration
-    type_spec(*b)();            // declaration
-    type_spec(c)=23;            // declaration
-    type_spec(d),e,f,g=0;       // declaration
-    type_spec(h)(e,3);          // declaration
-
-Follows the contents of C<glrexpressions.eyp>
-
-  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ eyapp -c glrexpressions.eyp
-  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
-  %strict
-  %token ID INT NUM
-  %right '='
-  %left '+'
-  %tree bypass
-
-  %%
-
-  prog:
-        %name EMPTY
-        /* empty */
-      | %name PROG
-        prog stmt
-  ;
-  stmt:
-        %name EXP
-        expr ';'
-      | %name DECL
-        decl
-  ;
-  expr:
-        %name EXPID
-        ID hacktables
-      | %name NUM
-        NUM
-      | %name TYPECAST
-        INT '(' expr ')' /* typecast */
-      | %name PLUS
-        expr '+' expr
-      | %name ASSIGN
-        expr '=' expr
-  ;
-  decl:
-        %name DECLARATOR
-        INT declarator ';'
-      | %name DECLARATORINIT
-        INT declarator '=' expr ';'
-  ;
-  declarator:
-        %name DECID
-        ID hacktables
-      | '(' declarator ')'
-  ;
-  hacktables:
-        /* empty. Just for hacking the LALR tables */
-  ;
-
-  %%
-
-
-Eyapp detects the ambiguity as a reduce/reduce conflict:
-
-  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ eyapp -vb '' glrexpressions.eyp
-  1 reduce/reduce conflict
-
-namely, the conflcit is in state 27:
-
-  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ head -12 glrexpressions.output
-  Warnings:
-  ---------
-  1 reduce/reduce conflict
-
-  Conflicts:
-  ----------
-  Conflict in state 16 between rule 8 and token '+' resolved as reduce.
-  Conflict in state 16 between rule 8 and token '=' resolved as reduce.
-  Conflict in state 18 between rule 9 and token '+' resolved as shift.
-  Conflict in state 18 between rule 9 and token '=' resolved as shift.
-  State 27 contains 1 reduce/reduce conflict
-
-
-When we look at the description of the involved state, we see the reasons for the conflict:
-
-  $ sed -ne '/^State 27:/,/^State/p' glrexpressions.output
-  State 27:
-
-          expr -> ID hacktables . (Rule 5)
-          declarator -> ID hacktables .   (Rule 12)
-
-          ')'     [reduce using rule 12 (declarator)]
-          $default        reduce using rule 5 (expr)
-
-  State 28:
-
-The C++ rule is: take it as a declaration if it looks as a declaration,
-otherwise is an expression.
-
-For this simplified version, we can solve the problem by dynamically changing
-the parser tables (hack). For this purpose we introduce the syntactic variable 
-C<hacktable>. If the ambiguous expression/declarator is followed by some
-sequence of closing parenthesis and a C<;> or an C<=> the action is to reduce
-by the production C<declarator -E<gt> ID> otherwise we reduce by C<expression -E<gt> ID>:
-
-
-  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ cat -n glrexpressions.eyp
-     1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
-     2  %strict
-     3  %token ID INT NUM
-     4
-     5  %right '='
-     6  %left '+'
-     7
-     8  %{
-     9  my $input;
-    10  %}
-    11
-    12  %tree bypass
-    13  %%
-    14  prog:
-    15      %name EMPTY
-    16      /* empty */
-    17    | %name PROG
-    18      prog stmt
-    19  ;
-    20
-    21  stmt:
-    22      %name EXP
-    23      expr ';'
-    24    | %name DECL
-    25      decl
-    26  ;
-    27
-    28  expr:
-    29      %name EXPID
-    30      ID hacktables
-    31    | %name NUM
-    32      NUM
-    33    | %name TYPECAST
-    34      INT '(' expr ')' /* typecast */
-    35    | %name PLUS
-    36      expr '+' expr
-    37    | %name ASSIGN
-    38      expr '=' expr
-    39  ;
-    40
-    41  decl:
-    42      %name DECLARATOR
-    43      INT declarator ';'
-    44    | %name DECLARATORINIT
-    45      INT declarator '=' expr ';'
-    46  ;
-    47
-    48  declarator:
-    49      %name DECID
-    50      ID hacktables
-    51    | '(' declarator ')'
-    52  ;
-    53
-    54  hacktables:
-    55      /* empty. Just for hacking the LALR tables */
-    56      {
-    57        my $self = shift;
-    58
-    59        if ($input =~ m{^[)\s]*[;=]\s*}) {
-    60          # Temptative syntax: It may happen that there are more than two productions involved ...
-    61          #$self->YYSolveConflict([ qw{EXPID DECID} ], ')') = 'DECID';
-    62          $self->YYLRAction(['ID', ')'], 'DECID', 27);
-    63        }
-    64        else {
-    65          $self->YYLRAction([ ')' ], 'EXPID', 27); # the next 'state'
-    66          #$self->YYLRAction([ 'ID', ')' ], 'EXPID');
-    67        }
-    68      }
-    69  ;
-    70
-    71  %%
-    72
-    73  sub _Error {
-    74    my $parser = shift;
-    75
-    76    my ($token) = $parser->YYCurval;
-    77    my ($what) = $token ? "input: '$token'" : "end of input";
-    78    warn "Syntax error near $what\n";
-    79  }
-    80
-    81  sub _Lexer {
-    82    my $self = shift;
-    83
-    84    for ($input) {
-    85      s{^(\s*)}{};
-    86
-    87      return ('', undef) unless $_;
-    88
-    89      return ('INT', $1) if s{^(int\b)}{};
-    90
-    91      return ('ID',  $1) if (s{^([a-zA-Z_]\w*)}{});
-    92
-    93      return ('NUM', $1) if s/^(\d+)//;
-    94
-    95      return ($1,    $1) if s/^(.)//;
-    96    }
-    97
-    98    return ('',undef);
-    99  }
-
-
-Here are the results of two executions:
-
-  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ ./glrexpressions.pm
-  int (x) = y+z;
-  PROG(EMPTY,DECL(TERMINAL[int],DECID[x],PLUS(EXPID[y],EXPID[z])))
-  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ ./glrexpressions.pm
-  int (x)+1;
-  PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],EXPID[x]),NUM[1]))
-
-
-Certainly, a solution for the ambiguity in the
-full C++ grammar requires a more elaborated
-solution.
-
-
 =head1 ERRORS INSIDE SEMANTIC ACTIONS
 
 A third type of error occurs when the code inside
@@ -2035,6 +1264,832 @@ reaching the end of the program:
     use o inhibit_exit to avoid stopping after program termination,
     h q, h R or h o to get additional info.
     DB<3>                                   
+
+=head1 SOLVING DIFFICULT CONFLICTS AND AMBIGUITIES
+
+=head2 Reduce-Reduce Conflicts
+
+Most of the time reduce-reduce conflicts are due to some ambiguity in
+the grammar. In this example the programmer has attempted to define
+a language made of mixed lists IDs and NUMbers :
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n typicalrr.eyp
+     1  %token ID NUM
+     2
+     3  %%
+     4  s:
+     5        /* empty */
+     6      | s ws
+     7      | s ns
+     8  ;
+     9  ws:
+    10        /* empty */
+    11      | ws ID
+    12  ;
+    13  ns:
+    14        /* empty */
+    15      | ns NUM
+    16  ;
+    17
+    18  %%
+
+The grammar has several reduce-reduce conflicts:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp typicalrr.eyp
+  3 shift/reduce conflicts (see .output file)
+  State 2: reduce by rule 3: s -> s ns (default action)
+  State 2: shifts:
+    to state    5 with NUM  and 3 reduce/reduce conflicts
+
+In fact we have infinite ways to rightmost derive the empty string.
+
+The problem is easily solved designing an equivalent non ambiguous grammar:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n correcttypicalrr.eyp
+     1  %token ID NUM
+     2
+     3  %%
+     4  s:
+     5        /* empty */
+     6      | s ID
+     7      | s NUM
+     8  ;
+     9
+    10  %%
+
+Of course you can also try to diambiguate using priorities. In the
+file C<examples/debuggingtut/typicalrrwithprec.eyp> there
+is a solution:
+
+  lusasoft@LusaSoft:~/src/perl/Parse-Eyapp/examples/debuggingtut$ eyapp -c typicalrrwithprec.eyp
+  # This example illustrates how to express EOI in the header section: use ''
+  # For the original grammar
+  # see file
+  #   typicalrr.eyp
+  # For an alternative solution see file
+  #   correcttypicalrr.eyp
+  %right LNUM
+  %right NUM
+  %right ID
+  %right '' # The string '' refers to the 'End of Input' token
+  %tree bypass
+
+  %%
+
+  s:
+        %name EMPTY
+        /* empty */%prec ''
+      | %name WORDS
+        s ws
+      | %name NUMS
+        s ns
+  ;
+  ns:
+        %name EMPTYNUM
+        /* empty */%prec NUM
+      | %name NUMS
+        NUM ns
+  ;
+  ws:
+        %name EMPTYID
+        /* empty */%prec LNUM
+      | %name IDS
+        ID ws
+  ;
+
+  %%
+
+Observe the use of C<%right ''> in the header section:
+it gives a priority to the end-of-input token.
+
+=head2 Reduce-Reduce Conflicts with Unambiguous Grammars
+
+Though not so common, it may occur that a reduce-reduce conflict
+is not due to ambiguity but to the limitations of the LALR(1)
+algorithm. The following example illustrates the point:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n rrconflictnamefirst.eyp
+     1  %token VAR ',' ':'
+     2
+     3  %{
+     4  use base q{Tail};
+     5  %}
+     6
+     7  %%
+     8  def:    param_spec return_spec ','
+     9          ;
+    10  param_spec:
+    11               type
+    12          |    name_list ':' type
+    13          ;
+    14  return_spec:
+    15               type
+    16          |    name ':' type
+    17          ;
+    18  name:        VAR
+    19          ;
+    20  type:        VAR
+    21          ;
+    22  name_list:
+    23               name
+    24          |    name ',' name_list
+    25          ;
+    26  %%
+    27
+    28  __PACKAGE__->main unless caller();
+
+
+This non ambiguous grammar generates a language of sequences like
+   
+                 a, b : e f : e,
+
+The conflict is due to the final comma in:
+
+      def:    param_spec return_spec ','
+
+If you supress such comma there is no conflict (try it).
+When compiling with eyapp we get the warning:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp rrconflictnamefirst.eyp
+  1 reduce/reduce conflict
+
+Editing the C<.output> file we can see the conflict is in state 2:
+
+   46 State 2:
+   47
+   48         name -> VAR .   (Rule 6)
+   49         type -> VAR .   (Rule 7)
+   50
+   51         ','     [reduce using rule 7 (type)]
+   52         VAR     reduce using rule 7 (type)
+   53         $default        reduce using rule 6 (name)
+
+
+If we look at the grammar we can see that a reduction by 
+
+                   type -> VAR .
+
+may occur with a comma as incoming token but only after 
+the reduction by C<param_spec> has taken place. The problem
+is that the automata forgets about it. Look the 
+automata transitions in the C<.outputfile>.
+By making explict the difference between the first and second C<type>
+we solve the conflict:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n rrconflictnamefirst_fix1.eyp
+     1  %token VAR ',' ':'
+     2
+     3  %{
+     4  use base q{Tail};
+     5  %}
+     6
+     7  %%
+     8  def:    param_spec return_spec ','
+     9          ;
+    10  param_spec:
+    11               type
+    12          |    name_list ':' type
+    13          ;
+    14  return_spec:
+    15               typeafter
+    16          |    name ':' typeafter
+    17          ;
+    18  name:        VAR
+    19          ;
+    20  type:        VAR
+    21          ;
+    22  typeafter:        VAR
+    23          ;
+    24  name_list:
+    25               name
+    26          |    name ',' name_list
+    27          ;
+    28  %%
+    29
+    30  __PACKAGE__->main unless caller();
+
+A reduce-reduce conflict is solved in favor of the first production
+found in the text. If we execute the grammar with the conflict C<./rrconflictnamefirst.pm>,
+we get the correct behavior:
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -b '' rrconflictnamefirst.eyp
+  1 reduce/reduce conflict
+  pl@europa:~/LEyapp/examples/debuggingtut$ ./rrconflictnamefirst.pm
+  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
+  a,b:c d:e,
+  <CTRL-D>
+  $
+
+The program accepts the correct language - in spite of the conflict -
+due to the fact that the  production
+
+                      name:        VAR
+
+is listed first. 
+
+The parser rejects the correct phrases if we swap the order 
+of the productions writing the C<type: VAR> production first,
+
+  pl@europa:~/LEyapp/examples/debuggingtut$ ./reducereduceconflict.pm
+  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
+  a,b:c d:e,
+  <CTRL-D>
+
+  Syntax error near input: ',' (lin num 1).
+  Incoming text:
+  ===
+  b:c d
+  ===
+  Expected one of these terminals: VAR
+
+
+Files C<reducereduceconflict_fix1.eyp> and C<reducereduceconflict_fix2.eyp>
+offer other solutions to the problem.
+
+=head2 Tokens Depending on the Syntactic Context
+
+Usually there is a one-to-one relation between a token and a regexp. Problems arise,
+however when a token's type depends upon contextual information.
+An example of this problem comes from PL/I, where statements like this are
+legal:
+
+         if then=if then if=then
+
+In PL/I this problem arises because keywords like C<if> are not reserved and can be used in
+other contexts. This simplified grammar illustrates the problem:
+
+  examples/debuggingtut$ eyapp -c PL_I_conflict.eyp
+  # This grammar deals with the famous ambiguous PL/I phrase:
+  #                if then=if then if=then
+  # The (partial) solution uses YYExpect in the lexical analyzer to predict the token
+  # that fulfills the parser expectatives.
+  # Compile it with:
+  # eyapp -b '' PL_I_conflict.eyp
+  # Run it with;
+  # ./PL_I_conflict.pm -debug
+  %strict
+  %token ID
+  %tree bypass
+
+  %%
+
+  stmt:
+        ifstmt
+      | assignstmt
+  ;
+  # Exercise: change this production
+  #     for 'if' expr 'then' stmt
+  # and check with input 'if then=if then if=then'. The problem arises again
+  ifstmt:
+        %name IF
+        'if' expr 'then' expr
+  ;
+  assignstmt:
+        id '=' expr
+  ;
+  expr:
+        %name EQ
+        id '=' id
+      | id
+  ;
+  id:
+        %name ID
+        ID
+  ;
+
+  %%
+
+If the token ambiguity depends only in the syntactic context,
+the problem can be alleviated using the C<YYExpect> method. 
+In case of doubt, the lexical analyzer calls the C<YYExpect> method to know
+which of the several feasible tokens is expected by the parser:
+
+  examples/debuggingtut$ sed -ne '/sub lex/,/^}/p' PL_I_conflict.eyp
+  sub lexer {
+    my $parser = shift;
+
+    for ($parser->{input}) {    # contextualize
+      m{\G\s*(\#.*)?}gc;
+
+      m{\G([a-zA-Z_]\w*)}gc and do {
+        my $id = $1;
+
+        return ('if',   'if')   if ($id eq 'if')   && is_in('if', $parser->YYExpect);
+        return ('then', 'then') if ($id eq 'then') && is_in('then', $parser->YYExpect);
+
+        return ('ID', $id);
+      };
+
+      m{\G(.)}gc         and return ($1, $1);
+
+      return('',undef);
+    }
+  }
+
+Here follows an example of execution:
+
+  examples/debuggingtut$ eyapp -b '' PL_I_conflict.eyp
+  examples/debuggingtut$ ./PL_I_conflict.pm
+  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
+  if then=if then if=then
+  IF(EQ(ID,ID),EQ(ID,ID))
+
+
+=head2 Lexical Tie-ins
+
+The C language has a context dependency: the way an identifier is used depends
+on what its current meaning is. For example, consider this:
+
+  T(x);
+
+This looks like a function call statement, but if C<T> is a typedef name, then
+this is actually a declaration of C<x>. How can a parser for C decide how to
+parse this input?
+
+Here is another example:
+
+  {
+    T * x;
+    ...
+  }
+
+What is this, a declaration of C<x> as a pointer to C<T>, 
+or a void multiplication of the variables C<T> and C<x>?
+
+The usual method to solve this problem is to have two different token types, C<ID> and C<TYPENAME>.
+When the lexer finds an identifier, it looks up in the symbol table 
+the current declaration of the identifier in order to 
+decide which token type to return: C<TYPENAME> if the
+identifier is declared as a typedef, C<ID> otherwise.
+
+One way to handle context-dependency is the lexical I<tie-in>: a flag which is set
+by the semantic actions, whose purpose is to alter the way tokens are parsed.
+
+In the "Calc"-like example in C<examples/debuggintut/SemanticInfoInTokens.eyp>
+we have a language with a special construct 
+C<hex (hex-expr)>. After the keyword C<hex> comes an C<expression> in parentheses in
+which all integers are hexadecimal. In particular, strings in C</[A-F0-9]+/>
+like C<A1B> must be treated as an hex integer unless they were previously
+declared as variables:
+
+  %strict
+
+  %token ID INT INTEGER
+  %syntactic token HEX
+
+  %right '='
+  %left '+'
+
+  %{
+  my %st;
+  %}
+
+  %tree bypass alias
+
+  %%
+  stmt:
+      decl <* ';'> expr <%name EXPS + ';'>
+        {
+          $_[2]->{st} = { %st };
+          $_[2];
+        }
+  ;
+
+  decl:
+      INT ID <+ ','>
+        {
+          $st{$_->{attr}} = 1 for $_[2]->children();
+        }
+  ;
+
+  expr:
+      %name ID
+      ID
+    | %name NUM
+      INTEGER
+    | %name HEX
+      HEX '(' { $_[0]->{HEXFLAG} = 1; } $expr ')'
+        {
+          $_[0]->{HEXFLAG} = 0;
+          $expr;
+        }
+    | %name ASSIGN
+      $ID '=' expr
+        {
+          my $parser = shift;
+          my $t = $parser->YYBuildAST(@_);
+          # Retype left (TERMINAL) child as ID
+          $t->ID->type('ID');
+          $t;
+        }
+    | %name PLUS
+      expr '+' expr
+  ;
+
+
+
+Here the lexer looks at the value of the attribute C<HEXFLAG>; when it is nonzero,
+all integers are parsed in hexadecimal, and tokens starting with letters are
+parsed as integers if possible.
+
+  sub lexer {
+    my $parser = shift;
+    my $hexflag = $parser->{HEXFLAG};
+
+    for ($parser->{input}) {    # contextualize
+      m{\G\s*(\#.*)?}gc;
+
+      m{\G(HEX\b|INT\b)}igc and return (uc($1), $1);
+
+      m{(\G\d+)}gc and return ('INTEGER', $hexflag? hex($1) : $1);
+
+
+      m{\G([a-zA-Z_]\w*)}gc and do {
+        my $match = $1;
+        $hexflag and !exists($st{$match}) and $match =~ m{^([A-F0-9]+)$}gc and return ('INTEGER', hex($match));
+        return ('ID', $1);
+      };
+
+      m{\G(.)}gc         and return ($1, $1);
+
+      return('',undef);
+    }
+  }
+
+Let us see an example of execution:
+
+  examples/debuggingtut$ cat inputforsemanticinfo2.txt
+  int A2
+  A2 = HEX(A23);
+  A2 = HEX(A2)
+
+  examples/debuggingtut$ ./SemanticInfoInTokens.pm -file inputforsemanticinfo2.txt
+  EXPS(ASSIGN(ID[A2],NUM[2595]),ASSIGN(ID[A2],ID[A2]))
+
+The first hex expression C<HEX(A23)> is interpreted as the number C<2595>
+while the second C<HEX(A2)> refers to previously declared variable C<A2>.
+
+For more about lexical tie-ins see also
+
+=over 2
+
+=item * L<http://www.gnu.org/software/bison/manual/html_mono/bison.html#Lexical-Tie_002dins>
+
+=item * L<http://en.wikipedia.org/wiki/The_lexer_hack>
+
+=item * L<http://eli.thegreenplace.net/2007/11/24/the-context-sensitivity-of-cs-grammar/>
+
+=back
+
+
+=head1  DYNAMICALLY CHANGING THE PARSING TABLES TO SOLVE AMBIGUITIES
+
+=head2 The C++ Ambiguity
+
+The grammar C<glrexpressions.eyp> models a problematic part of 
+the C++ grammar. 
+
+The C++ syntax does not disambiguate between expression
+statements and declaration statements. The ambiguity arises when an expression
+statement has a function-style cast as its left-most subexpression. 
+( since C does not support function-style casts, this ambiguity does not occur
+in C programs.) 
+
+For example,
+
+     int (x) = y+z;
+
+parses as either an C<expr> or a C<stmt>.
+
+If the statement can be interpreted both as a declaration and
+as an expression, the statement is interpreted as a declaration statement. 
+
+The following expressions disambiguate into expression statements because the
+declarator is followed by an operator different from the assignment  operator. 
+
+    type_spec(i)++;             // expression statement
+    type_spec(i,3)<<d;          // expression statement
+    type_spec(i)->l=24;         // expression statement
+
+Where C<type_spec> stands for a type specifier.
+
+In the following examples, the interpretation as declaration works, and
+consequently the statements are interpreted as declarations:
+
+    type_spec(*i)(int);         // declaration
+    type_spec(j)[5];            // declaration
+    type_spec(m) = { 1, 2 };    // declaration
+    type_spec(a);               // declaration
+    type_spec(*b)();            // declaration
+    type_spec(c)=23;            // declaration
+    type_spec(d),e,f,g=0;       // declaration
+    type_spec(h)(e,3);          // declaration
+
+Follows the contents of C<glrexpressions.eyp>
+
+  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ eyapp -c glrexpressions.eyp
+  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
+  %strict
+  %token ID INT NUM
+  %right '='
+  %left '+'
+  %tree bypass
+
+  %%
+
+  prog:
+        %name EMPTY
+        /* empty */
+      | %name PROG
+        prog stmt
+  ;
+  stmt:
+        %name EXP
+        expr ';'
+      | %name DECL
+        decl
+  ;
+  expr:
+        %name EXPID
+        ID hacktables
+      | %name NUM
+        NUM
+      | %name TYPECAST
+        INT '(' expr ')' /* typecast */
+      | %name PLUS
+        expr '+' expr
+      | %name ASSIGN
+        expr '=' expr
+  ;
+  decl:
+        %name DECLARATOR
+        INT declarator ';'
+      | %name DECLARATORINIT
+        INT declarator '=' expr ';'
+  ;
+  declarator:
+        %name DECID
+        ID hacktables
+      | '(' declarator ')'
+  ;
+  hacktables:
+        /* empty. Just for hacking the LALR tables */
+  ;
+
+  %%
+
+
+Eyapp detects the ambiguity as a reduce/reduce conflict:
+
+  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ eyapp -vb '' glrexpressions.eyp
+  1 reduce/reduce conflict
+
+namely, the conflcit is in state 27:
+
+  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ head -12 glrexpressions.output
+  Warnings:
+  ---------
+  1 reduce/reduce conflict
+
+  Conflicts:
+  ----------
+  Conflict in state 16 between rule 8 and token '+' resolved as reduce.
+  Conflict in state 16 between rule 8 and token '=' resolved as reduce.
+  Conflict in state 18 between rule 9 and token '+' resolved as shift.
+  Conflict in state 18 between rule 9 and token '=' resolved as shift.
+  State 27 contains 1 reduce/reduce conflict
+
+
+When we look at the description of the involved state, we see the reasons for the conflict:
+
+  $ sed -ne '/^State 27:/,/^State/p' glrexpressions.output
+  State 27:
+
+          expr -> ID hacktables . (Rule 5)
+          declarator -> ID hacktables .   (Rule 12)
+
+          ')'     [reduce using rule 12 (declarator)]
+          $default        reduce using rule 5 (expr)
+
+  State 28:
+
+The C++ rule is: take it as a declaration if it looks as a declaration,
+otherwise is an expression.
+
+For this simplified version, we can solve the problem by dynamically changing
+the parser tables. For this purpose we introduce the syntactic variable 
+C<hacktable>. If the ambiguous expression/declarator is followed by some
+sequence of closing parenthesis and a C<;> or an C<=> the action is to reduce
+by the production C<declarator -E<gt> ID> otherwise we reduce by C<expression -E<gt> ID>:
+
+
+  Parse-Eyapp/examples/debuggingtut$ cat -n glrexpressions.eyp
+     1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
+     2  %strict
+     3  %token ID INT NUM
+     4
+     5  %right '='
+     6  %left '+'
+     7
+     8  %{
+     9  my $input;
+    10  %}
+    11
+    12  %tree bypass
+    13  %%
+    14  prog:
+    15      %name EMPTY
+    16      /* empty */
+    17    | %name PROG
+    18      prog stmt
+    19  ;
+    20
+    21  stmt:
+    22      %name EXP
+    23      expr ';'
+    24    | %name DECL
+    25      decl
+    26  ;
+    27
+    28  expr:
+    29      %name EXPID
+    30      ID hacktables
+    31    | %name NUM
+    32      NUM
+    33    | %name TYPECAST
+    34      INT '(' expr ')' /* typecast */
+    35    | %name PLUS
+    36      expr '+' expr
+    37    | %name ASSIGN
+    38      expr '=' expr
+    39  ;
+    40
+    41  decl:
+    42      %name DECLARATOR
+    43      INT declarator ';'
+    44    | %name DECLARATORINIT
+    45      INT declarator '=' expr ';'
+    46  ;
+    47
+    48  declarator:
+    49      %name DECID
+    50      ID hacktables
+    51    | '(' declarator ')'
+    52  ;
+    53
+    54  hacktables:
+    55      /* empty. Just for hacking the LALR tables */
+    56        {
+    57          my $self = shift;
+    58
+    59          my $conflictstate = $self->YYNextState();
+    60          if ($input =~ m{^[)\s]*[;=]\s*}) {
+    61            $self->YYSetLRAction($conflictstate, ')', 'DECID' );
+    62          }
+    63          else {
+    64            $self->YYSetLRAction($conflictstate, ')', 'EXPID' );
+    65          }
+    66        }
+    67  ;
+    68
+    69  %%
+    70
+    71  sub _Error {
+    72    my $parser = shift;
+    73
+    74    my ($token) = $parser->YYCurval;
+    75    my ($what) = $token ? "input: '$token'" : "end of input";
+    76    warn "Syntax error near $what\n";
+    77  }
+    78
+    79  sub _Lexer {
+    80    my $self = shift;
+    81
+    82    for ($input) {
+    83      s{^(\s*)}{};
+    84
+    85      return ('', undef) unless $_;
+    86
+    87      return ('INT', $1) if s{^(int\b)}{};
+    88
+    89      return ('ID',  $1) if (s{^([a-zA-Z_]\w*)}{});
+    90
+    91      return ('NUM', $1) if s/^(\d+)//;
+    92
+    93      return ($1,    $1) if s/^(.)//;
+    94    }
+    95
+    96    return ('',undef);
+    97  }
+
+Line 59 uses the method C<YYNextState> to compute the state after the reduction for
+the production rule 
+
+      hacktables -> /* empty */
+
+this is precisely the conflict state. If the incoming input is a sequence of parenthesis 
+followed by either a semicolon or an equal we call to the method C<YYSetLRAction> to set
+a reduction by the rule
+
+     declarator -> ID
+
+otherwise we indicate a reduction by the rule:
+
+     expr -> ID    
+
+Here are the results of two executions:
+
+  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ ./glrexpressions.pm
+  int (x) = y+z;
+  PROG(EMPTY,DECL(TERMINAL[int],DECID[x],PLUS(EXPID[y],EXPID[z])))
+  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ ./glrexpressions.pm
+  int (x)+1;
+  PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],EXPID[x]),NUM[1]))
+
+
+Certainly, a solution for the ambiguity in the
+full C++ grammar requires a more elaborated
+solution.
+
+=head2 Solving Dynamically a Shift-Reduce Conflict
+
+The program in C<DynamicallyChangingTheParser.eyp> illustrates how to hack the
+parsing tables. This is a modification of the grammar in C<Debug.eyp> that was studied in
+the previous sections:
+
+  Parse-Eyapp/examples/debuggingtut$ sed -ne '1,52p' DynamicallyChangingTheParser.eyp | cat -n
+     1  # See section 'Hacking the Parsing Tables: ACTION and GOTOs'
+     2  # in http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+     3  #
+     4  # See also: Debug.eyp Debug1.eyp Debug2.eyp  LookForward.eyp
+     5  # DynamicallyChangingTheParser.eyp
+     6  # This example illustrates how to dynamically change the behavior of the parser
+     7
+     8  %token D S
+     9
+    10  %{
+    11  our $VERSION = '0.01';
+    12  my $input;
+    13  %}
+    14
+    15  %tree bypass
+    16
+    17  %%
+    18  p:
+    19      %name PROG
+    20      ds ';' ss
+    21    | %name SS
+    22      ss
+    23  ;
+    24
+    25  ds:
+    26      %name MORE_Ds
+    27      D hacktables ';' ds
+    28    | %name LAST_D
+    29      D hacktables
+    30  ;
+    31
+    32  ss:
+    33      %name SS
+    34      S ';' ss
+    35    | %name S
+    36      S
+    37  ;
+    38
+    39  hacktables:
+    40      /* empty. Just for hacking the LALR tables */
+    41        {
+    42          my $self = shift;
+    43
+    44          my $conflictstate = $self->YYNextState();
+    45
+    46          $self->YYSetLRAction($conflictstate, ';', 'LAST_D' ) if $input =~ m{^;\s*S};
+    47
+    48          undef;
+    49        }
+    50  ;
+    51
+    52  %%
+
+As you remeber there is a shift-reduce conflict:
+
+  Parse-Eyapp/examples/debuggingtut$ eyapp -vb '' DynamicallyChangingTheParser.eyp
+    1 shift/reduce conflict
+  Parse-Eyapp/examples/debuggingtut$ sed -ne '/^State 8:/,/State/p' DynamicallyChangingTheParser.output
+  State 8:
+
+          ds -> D hacktables . ';' ds     (Rule 3)
+          ds -> D hacktables .    (Rule 4)
+
+          ';'     shift, and go to state 11
+
+          ';'     [reduce using rule 4 (ds)]
+
+  State 9:
+
+The conflict is dynamically solved modifying the action table in the semantic action associated
+with C<hacktables>
+
 
 =head1 TREE EQUALITY
 

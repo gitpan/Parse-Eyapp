@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.138";
+$VERSION = "1.139";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -189,11 +189,46 @@ sub YYState {
   my $index = shift;
 
   if ($index) {
+    # Comes from the stack: a pair [state number, attribute]
+    $index = $index->[0] if 'ARRAY' eq reftype($index);
     die "YYState error. Expecting a number, found <$index>" unless (looks_like_number($index));
     return $self->{STATES}[$index]
   }
 
   return $self->{STATES}
+}
+
+sub YYGoto {
+  my ($self, $state, $symbol) = @_;
+ 
+  my $stateLRactions = $self->YYState($state);
+
+  $stateLRactions->{GOTOS}{hacktables};
+}
+
+sub YYRHSLength {
+  my $self = shift;
+  # If no production index is give, is the production begin used in the current reduction
+  my $index = shift || $self->YYRuleindex;
+
+  # If the production was given by its name, compute its index
+  $index = $self->YYIndex($index) unless looks_like_number($index); 
+  
+  my $currentprod = $self->YYRule($index);
+
+  $currentprod->[1];
+}
+
+# To be used in a semantic action, when reducing ...
+# It gives the next state after reduction
+sub YYNextState {
+  my $self = shift;
+
+  my $lhs = $self->YYLhs;
+  my $length = $self->YYRHSLength;
+  my $state = $self->YYTopState;
+
+  $self->YYGoto($state, $lhs);
 }
 
 # TODO: make it work with a list of indices ...
@@ -246,15 +281,28 @@ sub YYIndex {
   return wantarray? %index : \%index;
 }
 
+sub YYTopState {
+  my $self = shift;
+  my $length = shift || 0;
+
+  $length = -$length unless $length <= 0;
+  $length--;
+
+  $_[1] and $self->{STACK}[$length] = $_[1];
+  $self->{STACK}[$length];
+}
+
 # To dynamically set syntactic actions
 # Change it to state, token, action
 # it is more natural
-sub YYLRAction {
-  my ($self, $token, $action, $state) = @_;
+sub YYSetLRAction {
+  my ($self,  $state, $token, $action) = @_;
 
    die "YYLRAction: Provide a state " unless defined($state);
 
+  # Action can be given using the name of the production
   $action = -$self->YYIndex($action) unless looks_like_number($action);
+  $token = [ $token ] unless ref($token);
   for (@$token) {
     $self->{STATES}[$state]{ACTIONS}{$_} = $action;
   }
@@ -538,10 +586,12 @@ sub YYBuildAST {
     # Re-bless unless is "an automatically named node", but the characterization of this is 
     bless $node, $class unless $name =~ /${lhs}_\d+$/; # lazy, weak (and wicked).
 
-    $childisterminal and !$class->isa($PREFIX.'TERMINAL') 
+   
+    my $finalclass =  ref($node);
+    $childisterminal and !$finalclass->isa($PREFIX.'TERMINAL') 
       and do { 
         no strict 'refs';
-        push @{ref($node)."::ISA"}, $PREFIX.'TERMINAL' 
+        push @{$finalclass."::ISA"}, $PREFIX.'TERMINAL' 
       };
 
     return $node;

@@ -53,18 +53,17 @@ declarator:
 
 hacktables:
     /* empty. Just for hacking the LALR tables */
-    {
-      my $self = shift;
+      {
+        my $self = shift;
 
-      if ($input =~ m{^[)\s]*[;=]\s*}) {
-        #$self->YYSolveConflict([ qw{EXPID DECID} ], ')') = 'DECID';
-        $self->YYLRAction(['ID', ')'], 'DECID', 27);
+        my $conflictstate = $self->YYNextState();
+        if ($input =~ m{^[)\s]*[;=]\s*}) {
+          $self->YYSetLRAction($conflictstate, ')', 'DECID' );
+        }
+        else {
+          $self->YYSetLRAction($conflictstate, ')', 'EXPID' ); 
+        }
       }
-      else {
-        $self->YYLRAction([ ')' ], 'EXPID', 27); # the next 'state'
-        #$self->YYLRAction([ 'ID', ')' ], 'EXPID');
-      }
-    }
 ;
 
 %%
