@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.139";
+$VERSION = "1.140";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -203,7 +203,7 @@ sub YYGoto {
  
   my $stateLRactions = $self->YYState($state);
 
-  $stateLRactions->{GOTOS}{hacktables};
+  $stateLRactions->{GOTOS}{$symbol};
 }
 
 sub YYRHSLength {
@@ -225,10 +225,18 @@ sub YYNextState {
   my $self = shift;
 
   my $lhs = $self->YYLhs;
-  my $length = $self->YYRHSLength;
-  my $state = $self->YYTopState;
 
-  $self->YYGoto($state, $lhs);
+  my $state = $self->YYTopState;
+  if ($lhs) { # reduce
+    #my $length = $self->YYRHSLength;
+
+    $self->YYGoto($state, $lhs);
+  }
+  else { # shift: a token must be provided as argument
+    my $token = shift;
+    
+    $self->YYGetLRAction($state, $token);
+  }
 }
 
 # TODO: make it work with a list of indices ...
@@ -298,7 +306,7 @@ sub YYTopState {
 sub YYSetLRAction {
   my ($self,  $state, $token, $action) = @_;
 
-   die "YYLRAction: Provide a state " unless defined($state);
+  die "YYLRAction: Provide a state " unless defined($state);
 
   # Action can be given using the name of the production
   $action = -$self->YYIndex($action) unless looks_like_number($action);
@@ -306,6 +314,50 @@ sub YYSetLRAction {
   for (@$token) {
     $self->{STATES}[$state]{ACTIONS}{$_} = $action;
   }
+}
+
+sub YYRestoreLRAction {
+  my $self = shift;
+  my $conflictname = shift;
+  my @tokens = @_;
+
+  for (@tokens) {
+    my ($conflictstate, $action) = @{$self->{CONFLICT}{$conflictname}{$_}};
+    $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $action;
+  }
+}
+
+sub YYSetReduce {
+  my ($self, $token, $action) = @_;
+
+  # Conflict state
+  my $conflictstate = $self->YYNextState();
+
+  # Action can be given using the name of the production
+  $action = -$self->YYIndex($action) unless looks_like_number($action);
+
+  $token = [ $token ] unless ref($token);
+
+  my $conflictname = $self->YYLhs;
+  for (@$token) {
+    $self->{CONFLICT}{$conflictname}{$_}  = [ $conflictstate,  $self->{STATES}[$conflictstate]{ACTIONS}{$_} ];
+    $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $action;
+  }
+}
+
+sub YYGetLRAction {
+  my ($self,  $state, $token) = @_;
+
+  $state = $state->[0] if reftype($state) eq 'ARRAY';
+  my $stateentry = $self->{STATES}[$state];
+
+  if (defined($token)) {
+    return $stateentry->{ACTIONS}{$token} if exists $stateentry->{ACTIONS}{$token};
+  }
+
+  return $stateentry->{DEFAULT} if exists $stateentry->{DEFAULT};
+
+  return;
 }
 
 # to dynamically set semantic actions
@@ -890,28 +942,31 @@ sub _Error {
 }
 
 sub _DBLoad {
-  {
-    no strict 'refs';
 
-      exists(${__PACKAGE__.'::'}{_DBParse})#Already loaded ?
+      __PACKAGE__->can('_DBParse')  #Already loaded ?
     and return;
-  }
+  
   my($fname)=__FILE__;
   my(@drv);
   local $/ = "\n";
-  open(DRV,"<$fname") or die "Report this as a BUG: Cannot open $fname";
-  local $_;
-  while(<DRV>) {
-                  /^\s*sub\s+_Parse\s*{\s*$/ .. /^\s*}\s*#\s*_Parse\s*$/
-          and     do {
-                  s/^#DBG>//;
-                  push(@drv,$_);
-          }
-  }
-  close(DRV);
+  if (open(DRV,"<$fname")) {
+    local $_;
+    while(<DRV>) {
+                    /^\s*sub\s+_Parse\s*{\s*$/ .. /^\s*}\s*#\s*_Parse\s*$/
+            and     do {
+                    s/^#DBG>//;
+                    push(@drv,$_);
+            }
+    }
+    close(DRV);
 
-  $drv[0]=~s/_P/_DBP/;
-  eval join('',@drv);
+    $drv[0]=~s/_P/_DBP/;
+    eval join('',@drv);
+  }
+  else {
+    # TODO: debugging for standalone modules isn't supported yet
+    *Parse::Eyapp::Driver::_DBParse = \&_Parse;
+  }
 }
 
 #Note that for loading debugging version of the driver,
@@ -1090,6 +1145,7 @@ sub _Parse {
           push(@$stack,
                      [ $$states[$$stack[-1][0]]{GOTOS}{$lhs}, $semval ]);
                 $$check='';
+                $self->{CURRENT_LHS} = undef;
                 next;
             };
 

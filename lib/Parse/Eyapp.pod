@@ -20,7 +20,7 @@ Parse::Eyapp - Extensions for Parse::Yapp
 
     %%
     line:
-        exp <%name EXPRESION_LIST + ';'>
+        exp <%name EXPRESSION_LIST + ';'>
           { $_[1] } /* list of expressions separated by ';' */
     ;
 
@@ -108,15 +108,24 @@ Parse::Eyapp - Extensions for Parse::Yapp
   
 =head1 INTRODUCTION
 
-
 Parse::Eyapp (Extended yapp) is a collection of modules that extends Francois
 Desarmenien Parse::Yapp 1.05.  Eyapp extends yacc/yapp syntax with
 functionalities like named attributes, EBNF-like expressions, modifiable
-default action, grammar reusability, automatic syntax tree building,
-semi-automatic abstract syntax tree building, syntax directed data generation,
+default action (like L<Parse::RecDescent> autoaction), grammar reusability, 
+automatic abstract syntax tree building,
+syntax directed data generation,
 translation schemes, tree regular
 expressions, tree transformations, scope analysis support, directed acyclic
-graphs and a few more.
+graphs and a few more. 
+
+Parse-Eyapp LALR parsing engine provides mechanisms for the I<dynamic resolution>
+(i.e. at parsing time and not at grammar compilation time) of shift-reduce and 
+reduce-reduce that can be satisfactorily solved
+using static precedences.  Parse-Eyapp also provide means to solve the problem of 
+languages where the token's type depends upon contextual information like in
+the well known PL/I statement:
+
+         if then=if then if=then
 
 
 
@@ -454,6 +463,9 @@ will be interpreted as
 
                          (4 - 5) - 9
 
+You can refer to the token end-of-input in the header section using the string C<''> (for example
+to give it some priority, see the example in C<examples/debuggingtut/typicalrrwithprec.eyp>). 
+
 =head2 Header Code
 
 Perl code surrounded by C<%{> and C<%}>
@@ -530,7 +542,9 @@ with the specified prefix
 
   %prefix Some::Prefix::
 
-See the example in C<examples/eyapplanguageref/alias_and_yyprefix.pl>
+See the example in C<examples/eyapplanguageref/alias_and_yyprefix.pl>.
+See also section L<Parse::Eyapp::defaultactionsintro/Grammar Reuse>
+for an example that does not involve the C<%tree> directive.
 
 =head2 Default Action Directive
 
@@ -549,7 +563,7 @@ L<ABSTRACT SYNTAX TREES: %tree AND %name>
 and
 L<Parse::Eyapp::translationschemestut>. 
 
-=head2 Syntactic and Semantic Tokens
+=head2 Tokens and the Abstract Syntax Tree
 
 The new token declaration directives C<%syntactic token> and
 C<%semantic token> can change the way C<eyapp> builds the abstract syntax tree.
@@ -859,7 +873,7 @@ giving the production the precedence of the C<token>
                           exp:   '-' exp %prec NEG { -$_[1] }
 
 =item * If there is a shift/reduce conflict, and both the grammar production
-and the input character have precedence and associativity associated
+and the input token have precedence and associativity associated
 with them, then the conflict is solved in favor of the action (shift or
 reduce) associated with the higher precedence. If the precedences are the
 same, then the associativity is used; left associative implies reduce,
@@ -1180,7 +1194,8 @@ Is equivalent to:
           ];
 
 Observe that, in spite of C<'d'> being a syntactic token
-the action related with the C<d+> element creates 
+the actions related with the C<d+> element (i.e. the actions associated
+with the C<PLUS-2> productions) create 
 the list of C<d>s.
 
 
@@ -2820,7 +2835,7 @@ syntactic tree>. Thus, the first print in the section L<Parse::Eyapp> SYNOPSIS e
     16
     17    %%
     18    line:
-    19        exp <%name EXPRESION_LIST + ';'>
+    19        exp <%name EXPRESSION_LIST + ';'>
     20          { $_[1] } /* list of expressions separated by ';' */
     21    ;
     22
@@ -2911,7 +2926,7 @@ gives as result the following output:
 
  nereida:~/src/perl/YappWithDefaultAction/examples> synopsis.pl
  Syntax Tree:
- EXPRESION_LIST(
+ EXPRESSION_LIST(
    PLUS(
      TIMES(
        NUM(
@@ -2939,7 +2954,7 @@ gives as result the following output:
        )
      ) # UMINUS
    ) # UMINUS
- ) # EXPRESION_LIST
+ ) # EXPRESSION_LIST
 
 C<TERMINAL> nodes corresponding to tokens that were defined by strings like
 C<'='>, C<'-'>, C<'+'>, C<'/'>, C<'*'>, C<'('> and C<')'>  do not 
@@ -3085,7 +3100,7 @@ but using the C<bypass> clause instead:
    %tree bypass    # Let us build an abstract syntax tree ...
 
    %%
-   line: exp <%name EXPRESION_LIST + ';'>  { $_[1] } 
+   line: exp <%name EXPRESSION_LIST + ';'>  { $_[1] } 
    ;
 
    exp:
@@ -3144,9 +3159,9 @@ we obtain the following output:
  nereida:~/src/perl/YappWithDefaultAction/examples> bypass.pl
 
  ************
- EXPRESION_LIST(ASSIGN(TERMINAL[a],PLUS(TIMES(NUM[2],UMINUS(NUM[3])),TIMES(VAR[b],NUM[0]))))
+ EXPRESSION_LIST(ASSIGN(TERMINAL[a],PLUS(TIMES(NUM[2],UMINUS(NUM[3])),TIMES(VAR[b],NUM[0]))))
  ************
- EXPRESION_LIST(ASSIGN(TERMINAL[a],NUM[-6]))
+ EXPRESSION_LIST(ASSIGN(TERMINAL[a],NUM[-6]))
 
 As you can see the trees are more compact when using the C<bypass> directive.
 
@@ -3404,7 +3419,10 @@ I<by hand> by inheriting from C<Parse::Eyapp::Node>.
 Explict names can be given to grammar productions
 via the C<%name> directive. An alternative to explictly gave 
 names to rules is to define a I<naming scheme> via the Eyapp directive
-C<%namingscheme>.
+C<%namingscheme>. This can be helpful when you inherit a large grammar
+and want to quickly build a parser. The ASNSI C parser in 
+C<examples/languages/C/ansic.eyp> is a good example. Another
+example is the Pascal parser in C<examples/languages/pascal/pascal.eyp>.
 
 The Eyapp directive C<%namingscheme> is followed by some Perl code. Such Perl
 code must return a reference to a subroutine that will be called each time a new
@@ -4002,11 +4020,8 @@ Also:
 
 =over
 
-
-=item * Make a local copy of the C<examples/> directory in this distribution
-
-=item * Probably it will be also a good idea to make a copy of the tests in the C<t/> directory.
-  They also illustrate the use of Eyapp
+=item * Make a local copy of the C<examples/> directory in this distribution. They contain
+the examples used in the tutorials
 
 =back
 

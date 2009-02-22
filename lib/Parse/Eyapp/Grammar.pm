@@ -382,10 +382,8 @@ sub RulesTable {
 ###############################################################
 # Method to produce conflict information
 # to be used by dynamic conflict solving, e.g. 
-# YYPriorize([ 'rule_name', 'shift'], [ token list ], 'rule_name')
-# YYPriorize([ 'rule_name', 'shift'], [ token list ], 'shift')
-# YYPriorize([ 'rule_name1', 'rule_name2'], [ token list ], 'rule_name2')
-# Conflicts in typicalrr.eyp
+# YYSetReduce(token, 'rule_name')
+# YYSetShift(token)
 # 
 # Rules:
 # ------
@@ -440,22 +438,15 @@ sub RulesTable {
 sub _Conflicts {
   my $self = shift;
   my $conflicts = $self->{CONFLICTS}{FORCED}{DETAIL};
-  my $states = $self->{STATES};
 
-  my $text = '{';
-  $conflicts and (reftype($conflicts) eq 'HASH') and do {
-    for my $s (keys %$conflicts) {
-      # default action
-      my $da = $states->[$s]{ACTIONS};
-      my $c  = $conflicts->{$s}{LIST};
-      for (@$c) {
-        my ($token, $action) = @$_;
-        my $dat = $da->{$token} || die 'Parse::Eyapp::Grammar::_Conflict: expected some shift-reduce action';
-        $text .= " '$dat#$action' => $s,"; 
-      }
-    }
-  };
-  $text .= ' }';
+  # Just while developping
+  require Data::Dumper;
+  Data::Dumper->import;
+  local $Data::Dumper::Indent = 0;
+  $_ = Dumper($conflicts);
+
+  s/^\$VAR\d*\s*=\s*//;
+  $_
 }
 
 ################################

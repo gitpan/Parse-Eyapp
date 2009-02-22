@@ -27,7 +27,7 @@ stmt:
 
 expr:
     %name EXPID
-    ID hacktables
+    ID decexpconflict
   | %name NUM 
     NUM
   | %name TYPECAST
@@ -47,11 +47,11 @@ decl:
 
 declarator:
     %name DECID
-    ID hacktables
+    ID decexpconflict
   | '(' declarator ')'
 ;
 
-hacktables:
+decexpconflict:
     /* empty. Just for hacking the LALR tables */
       {
         my $self = shift;

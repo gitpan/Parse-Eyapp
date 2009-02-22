@@ -20,7 +20,7 @@ Parse::Eyapp::Node - The nodes of the Syntax Trees
 
     %%
     line:
-        exp <%name EXPRESION_LIST + ';'>
+        exp <%name EXPRESSION_LIST + ';'>
           { $_[1] } /* list of expressions separated by ';' */
     ;
 

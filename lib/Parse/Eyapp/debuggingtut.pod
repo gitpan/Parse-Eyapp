@@ -1506,7 +1506,7 @@ of the productions writing the C<type: VAR> production first,
 Files C<reducereduceconflict_fix1.eyp> and C<reducereduceconflict_fix2.eyp>
 offer other solutions to the problem.
 
-=head2 Tokens Depending on the Syntactic Context
+=head1 TOKENS DEPENDING ON THE SYNTACTIC CONTEXT
 
 Usually there is a one-to-one relation between a token and a regexp. Problems arise,
 however when a token's type depends upon contextual information.
@@ -1595,7 +1595,7 @@ Here follows an example of execution:
   IF(EQ(ID,ID),EQ(ID,ID))
 
 
-=head2 Lexical Tie-ins
+=head1 LEXICAL TIE-INS
 
 The C language has a context dependency: the way an identifier is used depends
 on what its current meaning is. For example, consider this:
@@ -1752,7 +1752,7 @@ the C++ grammar.
 The C++ syntax does not disambiguate between expression
 statements and declaration statements. The ambiguity arises when an expression
 statement has a function-style cast as its left-most subexpression. 
-( since C does not support function-style casts, this ambiguity does not occur
+(Since C does not support function-style casts, this ambiguity does not occur
 in C programs.) 
 
 For example,

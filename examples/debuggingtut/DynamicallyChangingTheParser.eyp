@@ -10,6 +10,7 @@
 %{
 our $VERSION = '0.01';
 my $input;
+my ($conflictstate, $statetoshift);
 %}
 
 %tree bypass
@@ -27,6 +28,12 @@ ds:
     D hacktables ';' ds    
   | %name LAST_D
     D hacktables        
+      {
+         # Recover former LALR action
+         $_[0]->YYSetLRAction($conflictstate, ';', $statetoshift );
+         # Do whatever you want
+         goto &Parse::Eyapp::Driver::YYBuildAST;
+      }
 ;
 
 ss:
@@ -41,9 +48,13 @@ hacktables:
       {
         my $self = shift;
 
-        my $conflictstate = $self->YYNextState();
+        $conflictstate = $self->YYNextState();
 
-        $self->YYSetLRAction($conflictstate, ';', 'LAST_D' ) if $input =~ m{^;\s*S};
+        if ($input =~ m{^;\s*S}) {
+          # Get current action
+          $statetoshift = $self->YYGetLRAction(';');
+          $self->YYSetLRAction($conflictstate, ';', 'LAST_D' );
+        }
 
         undef;
       }
@@ -86,6 +97,10 @@ sub Run {
       yyerror => \&_Error, 
       yydebug => $debug,
     )->str."\n";
+}
+
+sub TERMINAL::info {
+  $_[0]->{attr};
 }
 
 Run(@ARGV) unless caller;

@@ -16,11 +16,12 @@ my $grammar = q{
 
   %%
   line: 
-      exp <%name EXPRESION_LIST + ';'>  
+      exp <%name EXPRESSION_LIST + ';'>  
         { $_[1] } /* list of expressions separated by ';' */
   ;
 
-  /* The %name directive defines the name of the class to which the node being built belongs */
+  /* The %name directive defines the name of the
+     class to which the node being built belongs */
   exp:
       %name NUM  
       NUM            

@@ -20,7 +20,7 @@ Parse::Eyapp::eyappintro - An introduction to Parse::Eyapp
 
     %%
     line:
-        exp <%name EXPRESION_LIST + ';'>
+        exp <%name EXPRESSION_LIST + ';'>
           { $_[1] } /* list of expressions separated by ';' */
     ;
 
@@ -353,7 +353,7 @@ list of expressions C<"2*-3+b*0;--2\n";>:
 
   pl@nereida:~/LEyapp/examples$ synopsis.pl
   Syntax Tree:
-  EXPRESION_LIST(
+  EXPRESSION_LIST(
     PLUS(
       TIMES(
         NUM(
@@ -381,7 +381,7 @@ list of expressions C<"2*-3+b*0;--2\n";>:
         )
       ) # UMINUS
     ) # UMINUS
-  ) # EXPRESION_LIST
+  ) # EXPRESSION_LIST
 
 Did you notice that the C<TERMINAL> nodes appear I<decorated> with its attribute?
 This is because each time the C<Parse::Eyapp::Node> method C<str>
@@ -551,7 +551,7 @@ a inappropriate set of transformations my hang your program.
 Thus, the former syntax tree for C<"2*-3+b*0;--2\n";> 
 becomes:
 
-  EXPRESION_LIST(NUM(TERMINAL[-6]),NUM(TERMINAL[2]))
+  EXPRESSION_LIST(NUM(TERMINAL[-6]),NUM(TERMINAL[2]))
 
 The analyzer has been able to optimize - at compile time -
 the computation of these two expressions

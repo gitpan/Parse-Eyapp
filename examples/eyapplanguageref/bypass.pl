@@ -14,10 +14,11 @@ my $grammar = q{
   %tree bypass    # Let us build an abstract syntax tree ...
 
   %%
-  line: exp <%name EXPRESION_LIST + ';'>  { $_[1] } /* list of expressions separated by ';' */
+  line: exp <%name EXPRESSION_LIST + ';'>  { $_[1] } /* list of expressions separated by ';' */
   ;
 
-  /* The %name directive defines the name of the class to which the node being built belongs */
+  /* The %name directive defines the name of the
+     class to which the node being built belongs */
   exp:
       %name NUM  NUM            | %name VAR   VAR         | %name ASSIGN VAR '=' exp 
     | %name PLUS exp '+' exp    | %name MINUS exp '-' exp | %name TIMES  exp '*' exp 
