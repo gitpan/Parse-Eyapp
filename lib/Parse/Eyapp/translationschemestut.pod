@@ -357,6 +357,11 @@ the program produces an output similar to this:
 
 =over
 
+=item * The project home is at L<http://code.google.com/p/parse-eyapp/>.
+Use a subversion client to anonymously check out the latest project source code:
+
+   svn checkout http://parse-eyapp.googlecode.com/svn/trunk/ parse-eyapp-read-only
+
 =item * 
 L<Parse::Eyapp>, 
 L<Parse::Eyapp::eyapplanguageref>, 

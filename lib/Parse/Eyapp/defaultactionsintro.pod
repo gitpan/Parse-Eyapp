@@ -21,56 +21,107 @@ action was specified.
 
 =head3 Translator from Infix to Postfix
 
-See an example that translates an infix expression
+See the example in C<examples/eyapplanguageref/Postfix.eyp>  that translates an infix expression
 like C<a=b*-3> into a postfix expression like C<a b 3 NEG * = >:
 
- # File Postfix.eyp (See the examples/ directory)
- %right  '='
- %left   '-' '+'
- %left   '*' '/'
- %left   NEG
+  Parse-Eyapp/examples/eyapplanguageref$ cat -n Postfix.eyp
+     1  # File Postfix.eyp
+     2  %right  '='
+     3  %left   '-' '+'
+     4  %left   '*' '/'
+     5  %left   NEG
+     6
+     7  %defaultaction { return  "$left $right $op"; }
+     8
+     9  %%
+    10  line: $exp  { print "$exp\n" }
+    11  ;
+    12
+    13  exp:        $NUM  { $NUM }
+    14          |   $VAR  { $VAR }
+    15          |   VAR.left '='.op exp.right
+    16          |   exp.left '+'.op exp.right
+    17          |   exp.left '-'.op exp.right
+    18          |   exp.left '*'.op exp.right
+    19          |   exp.left '/'.op exp.right
+    20          |   '-' $exp %prec NEG { "$exp NEG" }
+    21          |   '(' $exp ')' { $exp }
+    22  ;
+    23
+    24  %%
+    25
+    26  sub _Error {
+    27    my($token)=$_[0]->YYCurval;
+    28    my($what)= $token ? "input: '$token'" : "end of input";
+    29    my @expected = $_[0]->YYExpect();
+    30
+    31    local $" = ', ';
+    32    die "Syntax error near $what. Expected one of these tokens: @expected\n";
+    33  }
+    34
+    35  my $x;
+    36
+    37  sub _Lexer {
+    38    my($parser)=shift;
+    39
+    40    for ($x) {
+    41      s/^\s+//;
+    42      $_ eq '' and return('',undef);
+    43
+    44      s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+    45      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+    46      s/^(.)//s                    and return($1,$1);
+    47    }
+    48  }
+    49
+    50  sub Run {
+    51    my($self)=shift;
+    52    my $debug = shift @ARGV;
+    53    $debug = 0x1F if $debug;
+    54    print "Infix to postfix translator. Write an arithmetic expression: ";
+    55    $x = <STDIN>;
+    56    $self->YYParse(
+    57      yylex => \&_Lexer,
+    58      yyerror => \&_Error,
+    59      yydebug => $debug,
+    60    );
+    61  }
+    62
+    63   # Modulino
+    64   __PACKAGE__->new()->Run unless caller();
 
- %defaultaction { return  "$left $right $op"; }
-
- %%
- line: $exp  { print "$exp\n" }
- ;
-
- exp:        $NUM  { $NUM }
-         |   $VAR  { $VAR }
-         |   VAR.left '='.op exp.right
-         |   exp.left '+'.op exp.right
-         |   exp.left '-'.op exp.right
-         |   exp.left '*'.op exp.right
-         |   exp.left '/'.op exp.right
-         |   '-' $exp %prec NEG { "$exp NEG" }
-         |   '(' $exp ')' { $exp }
- ;
-
- %%
-
- # Support subroutines as in the Synopsis example
- ...
 
 The file containing the C<Eyapp> program must be compiled with C<eyapp>:
 
- nereida:~/src/perl/YappWithDefaultAction/examples> eyapp Postfix.eyp
+ Parse-Eyapp/examples/eyapplanguageref$ eyapp Postfix.eyp
 
 Next, you have to write a client program:
 
- nereida:~/src/perl/YappWithDefaultAction/examples> cat -n usepostfix.pl
-      1  #!/usr/bin/perl -w
-      2  use strict;
-      3  use Postfix;
-      4
-      5  my $parser = new Postfix();
-      6  $parser->Run;
+  Parse-Eyapp/examples/eyapplanguageref$ cat -n usepostfix.pl
+     1  #!/usr/bin/perl -w
+     2  use strict;
+     3  use Postfix;
+     4
+     5  my $parser = new Postfix();
+     6  $parser->Run;
+
 
 Now we can run the client program:
 
- nereida:~/src/perl/YappWithDefaultAction/examples> usepostfix.pl
- Write an expression: -(2*a-b*-3)
+ Parse-Eyapp/examples/eyapplanguageref$ usepostfix.pl
+ Infix to postfix translator. Write an arithmetic expression: -(2*a-b*-3)
  2 a * b 3 NEG * - NEG
+
+An alternative is to use the generated module as a modulino, 
+compiling the grammar using option C<-b>:
+
+  Parse-Eyapp/examples/eyapplanguageref$ eyapp -b '' Postfix.eyp
+
+This way, we can directly use the modulo as a script:
+
+  Parse-Eyapp/examples/eyapplanguageref$ ./Postfix.pm
+  Infix to postfix translator. Write an arithmetic expression: 2*3+b
+  2 3 * b +
 
 =head3 Default Actions, C<%name> and C<YYName>
 
@@ -222,7 +273,7 @@ See the following example:
   37              exp '-' exp
   38                {
   39                  my $self = shift;
-  40                  $self->YYName('SUBSTRACT'); # rename it
+  40                  $self->YYName('SUBTRACT'); # rename it
   41                  $self->YYBuildAST(@_); # build the node
   42                }
   43          |   %name TIMES
@@ -235,7 +286,7 @@ See the following example:
   50  ;
 
 When the client program is executed we can see the presence
-of the C<SUBSTRACT> nodes:
+of the C<SUBTRACT> nodes:
 
   pl@nereida:~/LEyapp/examples$ useyynamedynamic.pl
   2-b
@@ -249,7 +300,7 @@ of the C<SUBSTRACT> nodes:
           'attr' => 'b'
         }, 'VAR' )
       ]
-    }, 'SUBSTRACT' )
+    }, 'SUBTRACT' )
   ];
 
 
@@ -662,6 +713,11 @@ When running this program the output is:
 =head1 SEE ALSO
 
 =over
+
+=item * The project home is at L<http://code.google.com/p/parse-eyapp/>.
+Use a subversion client to anonymously check out the latest project source code:
+
+   svn checkout http://parse-eyapp.googlecode.com/svn/trunk/ parse-eyapp-read-only
 
 =item * 
 L<Parse::Eyapp>, 

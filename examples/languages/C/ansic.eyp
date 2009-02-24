@@ -218,15 +218,19 @@ declaration
               my $storage_class_specifier =  $declaration_specifiers->child(0);
               if ($storage_class_specifier->child(0)->{token} eq 'TYPEDEF') {
 
-                # Get the identifier
-                my $c;
-                for($c = $init_declarator_list->child(0); 
-                    $c && !($c->isa('TERMINAL')); 
-                    $c = ($c->type eq 'declarator_is_pointer_direct_declarator')? $c->child(1) : $c->child(0))
-                  {}
-                my $typeid = $c->{attr}[0];
-                $_[0]->{symboltable}{$typeid} = 1;
-                print "\ntypedef definition of $typeid\n";
+                for my $init_declarator ( $init_declarator_list->Children) {
+                  # Get the identifier
+                  my $c;
+                  for($c = $init_declarator; 
+                      $c && !($c->isa('TERMINAL')); 
+
+                      # pointers are prefixes others (arrays, functions) are suffixes
+                      $c = ($c->type eq 'declarator_is_pointer_direct_declarator')? $c->child(1) : $c->child(0))
+                    {}
+                  my $typeid = $c->{attr}[0];
+                  $_[0]->{symboltable}{$typeid} = 1;
+                  print "\ntypedef definition of $typeid\n";
+                }
               }
 
               goto &Parse::Eyapp::Driver::YYBuildAST;
@@ -735,16 +739,47 @@ __PACKAGE__->main unless caller();
 
 =head1 NAME ANSIC eyapp grammar and parser
 
+=head1 SYNOPSIS
+
+Compile it with:
+
+  $ eyapp -b '' ansic.eyp
+
+Run it with:
+
+  $ ansic.pm -file program.c -debug
+
+or, if you don't want debug info:
+
+  $ ansic.pm -file typedefstruct.c
+
 =head1 DESCRIPTION
 
-Scope analysis is not implemented (yet). Typedefs are always 
-processed as globals. A typedef can not be hidden by a later declaration,
-i.e. the following program confuses the parser:
+Scope and type analysis is not implemented (yet). Typedefs have global scope
+and can not be hidden by later declarations.
+I.e. the parser produces an error message for the following program:
 
   typedef int A;
   A A;
 
 since it interprets the Third C<A> as a type name.
+
+=head1 SEE ALSO
+
+=over 2
+
+=item * L<http://www.lysator.liu.se/c/ANSI-C-grammar-y.html>
+
+=item * L<http://cs.tu-berlin.de/~jutta/c/ANSI-C-grammar-l.html>
+
+=item * L<http://frama-c.cea.fr/download/acsl_1.2.pdf>
+
+=item * L<http://www.open-std.org/JTC1/SC22/WG14/www/standards>
+
+=item * L<http://www.open-std.org/JTC1/SC22/WG14/www/docs/n1256.pdf>
+
+
+=back
 
 =head1 AUTHOR 
  

@@ -94,6 +94,7 @@ sub targets {
   my %var = @_;
 
   $_ = <<'EOSQT';
+
 PLTAGS=/usr/share/vim/vim71/tools/pltags.pl
 
 PODS=<<PODS>>
@@ -132,7 +133,7 @@ docclean:
 lib/Parse/Eyapp.pod: tt2/Eyapp.tt2
 	cd tt2; tpage  Eyapp.tt2 > ../lib/Parse/Eyapp.pod
 
-lib/Parse/Eyapp/%.pod:tt2/%.tt2
+lib/Parse/Eyapp/%.pod:tt2/%.tt2 tt2/defaultactions tt2/grammarreuseviainheritance tt2/seealso tt2/authorandcopyright
 	cd tt2; tpage  $*.tt2 > ../$@
 
 pods: ${PODS}
@@ -239,16 +240,42 @@ try to produce a C<Makefile>. You will surely get a warning:
 
 This is because the files C<lib/Parse/Eyapp/Parse.pm> and C<lib/Parse/Eyapp/Treeregexp.pm> are derived
 from the respective grammars (C<lib/Parse/Eyapp/Parse.yp> and C<lib/Parse/Eyapp/Treeregexp.yp>). 
-Compile the grammars using the target C<release>:
 
-  pl@nereida:~/src/perl/Parse-Eyapp$ make release
+It will also complain about the absence of the pods
+
+  Warning: the following files are missing in your kit:
+        lib/Parse/Eyapp/MatchingTrees.pod
+        lib/Parse/Eyapp/translationschemestut.pod
+        lib/Parse/Eyapp/YATW.pod
+
+The pods are built from the templates in C<tt2/>.
+
+Compile the grammars and produce the pods using the makefile C<makepods>:
+
+  Parse-Eyapp$ make -f makepods
   yapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
   PERL5LIB=lib; eyapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
-  PERL5LIB=lib; /usr/bin/perl -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
+  PERL5LIB=lib; perl eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
   rm -fR Parse-Eyapp-*.tar.gz
+  cd tt2; tpage  Base.tt2 > ../lib/Parse/Eyapp/Base.pod
+  cd tt2; tpage  datagenerationtut.tt2 > ../lib/Parse/Eyapp/datagenerationtut.pod
+  cd tt2; tpage  debuggingtut.tt2 > ../lib/Parse/Eyapp/debuggingtut.pod
+  cd tt2; tpage  defaultactionsintro.tt2 > ../lib/Parse/Eyapp/defaultactionsintro.pod
+  cd tt2; tpage  Driver.tt2 > ../lib/Parse/Eyapp/Driver.pod
+  cd tt2; tpage  eyappintro.tt2 > ../lib/Parse/Eyapp/eyappintro.pod
+  cd tt2; tpage  eyapplanguageref.tt2 > ../lib/Parse/Eyapp/eyapplanguageref.pod
+  cd tt2; tpage  MatchingTrees.tt2 > ../lib/Parse/Eyapp/MatchingTrees.pod
+  cd tt2; tpage  Node.tt2 > ../lib/Parse/Eyapp/Node.pod
+  cd tt2; tpage  Parse.tt2 > ../lib/Parse/Eyapp/Parse.pod
+  cd tt2; tpage  Scope.tt2 > ../lib/Parse/Eyapp/Scope.pod
+  cd tt2; tpage  TokenGen.tt2 > ../lib/Parse/Eyapp/TokenGen.pod
+  cd tt2; tpage  translationschemestut.tt2 > ../lib/Parse/Eyapp/translationschemestut.pod
+  cd tt2; tpage  Treeregexp.tt2 > ../lib/Parse/Eyapp/Treeregexp.pod
+  cd tt2; tpage  YATW.tt2 > ../lib/Parse/Eyapp/YATW.pod
 
-This target uses L<Parse::Yapp> to make a first compilation. Then uses bootstrap
-and C<eyapp> compiles itself. Be sure you installed L<Parse::Yapp>.
+
+This target uses L<Parse::Yapp> to make a first compilation. Then it uses bootstrap
+and C<eyapp> compiles itself. Be sure you have installed L<Parse::Yapp>.
 
 =item * Before realising a distribution in CPAN via PAUSE do:
 

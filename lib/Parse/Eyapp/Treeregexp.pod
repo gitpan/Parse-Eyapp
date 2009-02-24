@@ -327,12 +327,12 @@ B<by default the option>
 C<x> 
 B<will be assumed>.
 The treeregexp compiler will automatically insert it.
-Use the new option C<X> (upper case X) if you want to supress such behavior.
+Use the new option C<X> (upper case X) if you want to suppress such behavior.
 B<There is no need also to insert> C<\b> 
 B<word anchors> to delimit identifiers:
 all the identifiers in a regexp treeregexp are automatically
 surrounded by C<\b>. Use the option C<B> (upper case B)
-to supress this behavior.
+to suppress this behavior.
 
 The optional identifier after the C<REGEXP> indicates the name of the lexical variable
 that will be held a reference to the node whose type matches C<REGEXP>.
@@ -470,6 +470,11 @@ See for example test 14 in the C<t/> directory of the Parse::Eyapp distribution.
 =head1 SEE ALSO
 
 =over
+
+=item * The project home is at L<http://code.google.com/p/parse-eyapp/>.
+Use a subversion client to anonymously check out the latest project source code:
+
+   svn checkout http://parse-eyapp.googlecode.com/svn/trunk/ parse-eyapp-read-only
 
 =item * 
 L<Parse::Eyapp>, 

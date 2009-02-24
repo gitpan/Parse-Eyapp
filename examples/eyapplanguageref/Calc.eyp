@@ -37,7 +37,7 @@ exp:
     {
        $_[3] and return($_[1] / $_[3]);
        $_[0]->YYData->{ERRMSG} = "Illegal division by zero.\n";
-       $_[0]->YYError; # Pretend that a syntactic error ocurred: _Error will be called
+       $_[0]->YYError; # Pretend that a syntactic error occurred: _Error will be called
        undef
     }
   | '-' $exp %prec NEG     { -$exp }

@@ -24,7 +24,8 @@ Parse::Eyapp::Node - The nodes of the Syntax Trees
           { $_[1] } /* list of expressions separated by ';' */
     ;
 
-    /* The %name directive defines the name of the class to which the node being built belongs */
+    /* The %name directive defines the name of the class to 
+       which the node being built belongs */
     exp:
         %name NUM
         NUM
@@ -839,7 +840,7 @@ the values of some package variables
 influence the behavior of C<str>. Among the most
 important are:
 
-  @PREFIXES = qw(Parse::Eyapp::Node::);                                 # Prefixes to supress 
+  @PREFIXES = qw(Parse::Eyapp::Node::);                                # Prefixes to suppress 
   $INDENT = 0; # -1 compact, no info, no footnotes 
                # 0 = compact, 1 = indent, 2 = indent and include Types in closing parenthesis
   $STRSEP = ',';                                # Separator between nodes, by default a comma
@@ -1090,7 +1091,7 @@ for a really simple source:
 
 The first thing is to obtain a description of the tree,
 that can be done executing the compiler under the control of
-the perl debugger, stopping just after the 
+the Perl debugger, stopping just after the 
 tree has been built and dumping the tree
 with L<Data::Dumper>:
 
@@ -1666,6 +1667,11 @@ See the documentation in L<Parse::Eyapp::MatchingTrees>
 =head1 SEE ALSO
 
 =over
+
+=item * The project home is at L<http://code.google.com/p/parse-eyapp/>.
+Use a subversion client to anonymously check out the latest project source code:
+
+   svn checkout http://parse-eyapp.googlecode.com/svn/trunk/ parse-eyapp-read-only
 
 =item * 
 L<Parse::Eyapp>, 

@@ -24,7 +24,8 @@ Parse::Eyapp::eyappintro - An introduction to Parse::Eyapp
           { $_[1] } /* list of expressions separated by ';' */
     ;
 
-    /* The %name directive defines the name of the class to which the node being built belongs */
+    /* The %name directive defines the name of the class to 
+       which the node being built belongs */
     exp:
         %name NUM
         NUM
@@ -569,6 +570,11 @@ reducing them to the computation of:
 =head1 SEE ALSO
 
 =over
+
+=item * The project home is at L<http://code.google.com/p/parse-eyapp/>.
+Use a subversion client to anonymously check out the latest project source code:
+
+   svn checkout http://parse-eyapp.googlecode.com/svn/trunk/ parse-eyapp-read-only
 
 =item * 
 L<Parse::Eyapp>, 

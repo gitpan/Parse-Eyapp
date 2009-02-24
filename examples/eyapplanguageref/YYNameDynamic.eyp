@@ -37,7 +37,7 @@ exp:
             exp '-' exp        
               {
                 my $self = shift;
-                $self->YYName('SUBSTRACT'); # rename it
+                $self->YYName('SUBTRACT'); # rename it
                 $self->YYBuildAST(@_); # build the node
               }
         |   %name TIMES

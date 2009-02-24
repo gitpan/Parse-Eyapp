@@ -49,10 +49,16 @@ sub _Lexer {
 
 sub Run {
   my($self)=shift;
-  print "Write an expression: "; 
-  $x = <>;
-  $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-    #yydebug => 0xFF
+  my $debug = shift @ARGV;
+  $debug = 0x1F if $debug;
+  print "Infix to postfix translator. Write an arithmetic expression: "; 
+  $x = <STDIN>;
+  $self->YYParse( 
+    yylex => \&_Lexer, 
+    yyerror => \&_Error,
+    yydebug => $debug,
   );
 }
 
+ # Modulino
+ __PACKAGE__->new()->Run unless caller();

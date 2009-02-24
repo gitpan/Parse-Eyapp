@@ -162,7 +162,7 @@ The scope analysis start by creating the C<Parse::Eyapp::Scope> objects:
   ;
 
 Before the analysis of the whole program we call C<reset_file_scope_vars>
-which is in chage to create the scope analizers for
+which is in chage to create the scope analyzers for
 I<identifier scope analysis> and I<loop scope analysis>:
 
   sub reset_file_scope_vars {
@@ -478,6 +478,11 @@ defined.
 =head1 SEE ALSO
   
 =over
+
+=item * The project home is at L<http://code.google.com/p/parse-eyapp/>.
+Use a subversion client to anonymously check out the latest project source code:
+
+   svn checkout http://parse-eyapp.googlecode.com/svn/trunk/ parse-eyapp-read-only
 
 =item * 
 L<Parse::Eyapp>, 
