@@ -264,7 +264,7 @@ one of a given list of elements:
     DB<15> p $x->generate
   VC
 
-Even more intersting for our purpose is the C<Frequency> method, 
+Even more interesting for our purpose is the C<Frequency> method, 
 which produces one of a given list of elements with a given 
 probability distribution. 
 
@@ -427,7 +427,7 @@ you of this property:
                                                        ----
      
 Thus, when the reduction by the production C<stmts -E<gt> stmt> occurs, we are sure 
-that the first statment has been processed. In such case we increase the weight
+that the first statement has been processed. In such case we increase the weight
 of token C<VAR> one unit (which was initially zero, see the call 
 to C<set_tokenweightsandgenerators>), 
 

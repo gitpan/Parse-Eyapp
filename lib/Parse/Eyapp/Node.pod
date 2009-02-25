@@ -1555,7 +1555,7 @@ when executed we get the following output:
 
 =head2  $yatw->unshift
 
-Tha call C<$yatw-E<gt>unshift($b)> 
+The call C<$yatw-E<gt>unshift($b)> 
 safely unshifts (inserts at the beginning)
 the node C<$b> in the list of its 
 siblings of the node that matched (i.e in the list of siblings of C<$_[0]>). 

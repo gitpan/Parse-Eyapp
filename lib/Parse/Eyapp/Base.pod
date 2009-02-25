@@ -301,10 +301,10 @@ Let us assume I want to see the syntax tree for this program.
 I can see it using C<$_[0]-E<gt>str>
 but the problem is that nodes C<PROGRAM> and C<FUNCTION>
 have defined a C<footnote> method that will dump their symbol and type tables producing 
-hundred of lines of output and making difficult to see the shape ot the tree.
+hundred of lines of output and making difficult to see the shape of the tree.
 This is because method C<str> calls method C<footnote> wherever the node being
 visited I<can> do C<footnote>. The solution is to use C<push_method> to make
-the C<footnote> methods disapear:
+the C<footnote> methods disappear:
 
     DB<2> use Parse::Eyapp::Base qw(:all)
     DB<3> push_method(qw{PROGRAM FUNCTION}, 'footnote')
@@ -397,7 +397,7 @@ The call
 
                 compute_lines(\$text, $filename, $pattern)
 
-Substitutes all the ocurrences of 
+Substitutes all the occurrences of 
 C<$pattern> by C<#line $number $filename> in string C<$text>.
 where C<$number> is the line number.
 

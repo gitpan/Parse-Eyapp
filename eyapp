@@ -6,7 +6,7 @@
 
 =head1 NAME
 
-eyapp - A perl frontend to the Parse::Eyapp module
+eyapp - A Perl front-end to the Parse::Eyapp module
 
 
 =head1 SYNOPSYS
@@ -26,8 +26,8 @@ eyapp - A perl frontend to the Parse::Eyapp module
 
 =head1 DESCRIPTION
 
-eyapp is a frontend to the L<Parse::Eyapp> module, which lets you compile
-Parse::Eyapp grammar input files into Perl LALR(1) OO parser modules.
+The eyapp compiler is a front-end to the L<Parse::Eyapp> module, which lets you compile
+Parse::Eyapp grammar input files into Perl LALR(1) Object Oriented parser modules.
 
 
 =head1 OPTIONS
@@ -88,7 +88,7 @@ have a look to the module F<Parse::Eyapp::Output.pm> : it should be obvious.
 =item I<-b shebang>
 
 If you work on systems that understand so called I<shebangs>, and your
-generated parser is directly an executable script, you can specifie one
+generated parser is directly an executable script, you can specify one
 with the I<-b> option, ie:
 
     eyapp -b '/usr/local/bin/perl -w' -o myscript.pl myscript.yp

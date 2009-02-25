@@ -112,7 +112,7 @@ Parse::Eyapp - Extensions for Parse::Yapp
 Parse::Eyapp (Extended yapp) is a collection of modules that extends Francois
 Desarmenien Parse::Yapp 1.05.  Eyapp extends yacc/yapp syntax with
 functionalities like named attributes, EBNF-like expressions, modifiable
-default action (like L<Parse::RecDescent> autoaction), grammar reusability, 
+default action (like L<Parse::RecDescent> autoaction), grammar reuse, 
 automatic abstract syntax tree building,
 syntax directed data generation,
 translation schemes, tree regular
@@ -121,7 +121,7 @@ graphs and a few more.
 
 Parse-Eyapp LALR parsing engine provides mechanisms for the I<dynamic resolution>
 (i.e. at parsing time and not at grammar compilation time) of shift-reduce and 
-reduce-reduce that can be satisfactorily solved
+reduce-reduce conflicts that can not be satisfactorily solved
 using static precedences.  Parse-Eyapp also provide means to solve the problem of 
 languages where the token's type depends upon contextual information like in
 the well known PL/I statement:
@@ -171,6 +171,13 @@ and subroutines.
 
 The examples used in this document can be found in
 the directory C<examples/Eyapp> accompanying this distribution.
+As a general rule, each pod/tutorial has an associated subdirectory
+of C<examples/Eyapp>. Thus, the examples used in the documentation
+of L<Parse::Eyapp::eyappintro> can be found in C<examples/Eyapp/eyappintro>;
+The examples mentioned in L<Parse::Eyapp::Node> can be found
+in C<examples/Eyapp/Node>. There are a few exceptions however.
+For those exceptions the relative location where the file can be found
+will be mentioned.
 
 =head1 THE EYAPP LANGUAGE
 
@@ -3759,7 +3766,7 @@ of the grammar. No arguments.
 =head2 $eyapp->Conflicts
 
 Returns a string with summary information about the conflicts
-that arised when compiling the grammar. No arguments.
+that arose when compiling the grammar. No arguments.
 
 =head2 $eyapp->DfaTable
 

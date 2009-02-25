@@ -135,7 +135,7 @@ For instance,
 =over 2
 
 =item * When dealing with I<identifier scope analysis> the problem is to associate
-each ocurrence of an identifier with the declaration
+each occurrence of an identifier with the declaration
 that applies to it. 
 
 =item * Another example is I<loop scope analysis>
@@ -162,7 +162,7 @@ The scope analysis start by creating the C<Parse::Eyapp::Scope> objects:
   ;
 
 Before the analysis of the whole program we call C<reset_file_scope_vars>
-which is in chage to create the scope analyzers for
+which is in charge to create the scope analyzers for
 I<identifier scope analysis> and I<loop scope analysis>:
 
   sub reset_file_scope_vars {
@@ -445,7 +445,7 @@ Declares the node argument to be an occurring instance of the scope:
 
 =head2 The constructor C<new>
 
-C<Parse::Eyapp::Scope-E<gt>new> returns a scope managment object. 
+C<Parse::Eyapp::Scope-E<gt>new> returns a scope management object. 
 The scope mapping function is implemented 
 by C<Parse::Eyapp::Scope> through a set of attributes
 that are added to the nodes involved in the scope analysis.

@@ -52,7 +52,7 @@ hacktables:
 
         if ($input =~ m{^;\s*S}) {
           # Get current action
-          $statetoshift = $self->YYGetLRAction(';');
+          $statetoshift = $self->YYGetLRAction($conflictstate, ';');
           $self->YYSetLRAction($conflictstate, ';', 'LAST_D' );
         }
 

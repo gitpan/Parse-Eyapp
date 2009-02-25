@@ -72,13 +72,10 @@ sub _Lexer {
     if (s{^([a-zA-Z_]\w*)}{}) {
       my $id = $1;
       if (m{^[)\s]*[;=]\s*}) {
-        # Temptative syntax: It may happen that there are more than two productions involved ...
-        #$self->YYSolveConflict([ qw{EXPID DECID} ], ')') = 'DECID';
         $self->YYLRAction([ ')'], 'DECID', 18);
       }
       else {
         $self->YYLRAction([ ')' ], 'EXPID', 18); # the next 'state'
-        #$self->YYLRAction([ 'ID', ')' ], 'EXPID');
       }
       return ('ID', $id);
     }

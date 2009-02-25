@@ -160,7 +160,7 @@ Checks that Perl code is syntactically correct.
 
 =item * C<-nosy[ntax]>
 
-Does not check the syntaxis of Perl code
+Does not check the syntax of Perl code
 
 =item * C<-se[verity] number>
 

@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.141";
+$VERSION = "1.142";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -208,15 +208,17 @@ sub YYGoto {
 
 sub YYRHSLength {
   my $self = shift;
-  # If no production index is give, is the production begin used in the current reduction
+  # If no production index is given, is the production begin used in the current reduction
   my $index = shift || $self->YYRuleindex;
 
   # If the production was given by its name, compute its index
   $index = $self->YYIndex($index) unless looks_like_number($index); 
   
+  return unless looks_like_number($index);
+
   my $currentprod = $self->YYRule($index);
 
-  $currentprod->[1];
+  $currentprod->[1] if reftype($currentprod);
 }
 
 # To be used in a semantic action, when reducing ...
@@ -226,15 +228,16 @@ sub YYNextState {
 
   my $lhs = $self->YYLhs;
 
-  my $state = $self->YYTopState;
   if ($lhs) { # reduce
-    #my $length = $self->YYRHSLength;
+    my $length = $self->YYRHSLength;
 
+    my $state = $self->YYTopState($length);
     $self->YYGoto($state, $lhs);
   }
   else { # shift: a token must be provided as argument
     my $token = shift;
     
+    my $state = $self->YYTopState;
     $self->YYGetLRAction($state, $token);
   }
 }
@@ -348,7 +351,7 @@ sub YYSetReduce {
 sub YYGetLRAction {
   my ($self,  $state, $token) = @_;
 
-  $state = $state->[0] if reftype($state) eq 'ARRAY';
+  $state = $state->[0] if reftype($state) && (reftype($state) eq 'ARRAY');
   my $stateentry = $self->{STATES}[$state];
 
   if (defined($token)) {
@@ -434,8 +437,10 @@ sub YYRightside {
   # returns the rule
   # counting the super rule as rule 0
   my $self = shift;
+  my $index = shift || $self->{CURRENT_RULE};
+  $index = $self->YYIndex($index) unless looks_like_number($index);
 
-  return @{$self->{GRAMMAR}->[$self->{CURRENT_RULE}]->[2]};
+  return @{$self->{GRAMMAR}->[$index]->[2]};
 }
 
 sub YYTerms {
