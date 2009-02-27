@@ -1,6 +1,6 @@
 =head1 NAME
  
-Parse::Eyapp::Driver - The LALR parser
+Parse::Eyapp::Driver - The LR parser
  
 =head1 INTRODUCTION
 
@@ -435,6 +435,12 @@ expected when the failure occurred
    local $" = ', ';
    die "Syntax error near $what. Expected one of these tokens: @expected\n";
  }
+
+See the tutorial L<Parse::Eyapp::datagenerationtut> and 
+the section I<TOKENS DEPENDING ON THE SYNTACTIC CONTEXT>
+in the tutorial L<Parse::Eyapp::debuggingtut> for more detailed 
+examples of use of C<YYExpect>.
+
 
 =head2 $parser->YYFirstline
 

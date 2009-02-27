@@ -83,41 +83,13 @@ sub Warnings {
 
         $nbsr != $$self{GRAMMAR}{EXPECT}
     and do {
-
-      #limit the number of diagnostics to $showonly 
-      my $showonly = 2; # must be a global readonly. Bad programming!
-      $text.="$nbsr shift/reduce conflict".($nbsr > 1 ? "s" : ""); 
-#      my @states = keys %{$$self{CONFLICTS}{FORCED}{DETAIL}};
-#      @states = splice @states, $showonly if @states > $showonly;
-#      @states = sort { $a <=> $b } @states;
-#
-#      # look at the actions associated with each state
-#      # $aux{s} = "concat tokens t" such that &($_, t) = s being & the transition function
-#      my %aux; 
-#      for (@states) {
-#        my $actions = $self->{STATES}[$_]{ACTIONS};
-#        for my $token (keys(%$actions)) {
-#          my $ruleno = $actions->{$token};
-#          if ($ruleno < 0) { # reduction
-#            my @rule = @{$self->{GRAMMAR}{RULES}[-$ruleno]};
-#            $text .= "\nState $_: reduce by rule ".-$ruleno.": $rule[0] -> @{$rule[1]}";
-#            $text .= " (default action)" if $token eq '';
-#          }
-#          else { # shift
-#            $aux{$ruleno} .= "$token ";
-#          }
-#        }
-#        $text .= "\nState $_: shifts:  ";
-#        for my $state (sort { $a <=> $b } keys(%aux)) {
-#          $text .= "\n  to state ".sprintf("%4d",$state)." with $aux{$state}";
-#        }
-#      } # end of for (@states)
+      $text.="$nbsr shift/reduce conflict".($nbsr > 1 ? "s " : " "); 
     };  # end of $nbsr != $$self{GRAMMAR}{EXPECT} There were shift-reduce conflicts
 
         $nbrr
     and do {
-            $nbsr
-        and $text.=" and ";
+            $nbsr != $$self{GRAMMAR}{EXPECT}
+        and $text.="and ";
         $text.="$nbrr reduce/reduce conflict".($nbrr > 1 ? "s" : "");
     };
 

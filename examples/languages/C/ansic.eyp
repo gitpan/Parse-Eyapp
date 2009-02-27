@@ -209,12 +209,6 @@ declaration
         : declaration_specifiers ';'
         | $declaration_specifiers $init_declarator_list ';'
             {
-              #print "\n**********************declaration_specifiers**********************\n";
-              #print $_[1]->str;
-              #print "\n***********************init_declarator_list***********************\n";
-              #print $_[2]->str;
-              #print "\n******************************************************************\n";
-              
               my $storage_class_specifier =  $declaration_specifiers->child(0);
               if ($storage_class_specifier->child(0)->{token} eq 'TYPEDEF') {
 

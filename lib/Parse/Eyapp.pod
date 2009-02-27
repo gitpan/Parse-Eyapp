@@ -3440,6 +3440,556 @@ I<by hand> by inheriting from C<Parse::Eyapp::Node>.
 
 
 
+=head1  SOLVING CONFLICTS WITH THE I<POSTPONED CONFLICT> STRATEGY
+
+Yacc-like parser generators provide ways to solve shift-reduce mechanims
+based on token precedence. No mechanisms are provided for the resolution
+of reduce-reduce conflicts. The solution for such kind of conflicts is to modify
+the grammar. The strategy I present here provides a way to broach conflicts
+that can't be solved using static precedences.
+
+=head2 Introduction: The C++ Ambiguity
+
+The C++ syntax does not disambiguate between expression
+statements and declaration statements. The ambiguity arises when an expression
+statement has a function-style cast as its left-most subexpression. 
+(Since C does not support function-style casts, this ambiguity does not occur
+in C programs.) 
+
+For example,
+
+     int (x) = y+z;
+
+parses as either an C<expr> or a C<stmt>.
+
+If the statement can be interpreted both as a declaration and
+as an expression, the statement is interpreted as a declaration statement. 
+
+The following expressions disambiguate into expression statements because the
+declarator is followed by an operator different from the assignment  operator. 
+
+    type_spec(i)++;             // expression statement
+    type_spec(i,3)<<d;          // expression statement
+    type_spec(i)->l=24;         // expression statement
+
+Where C<type_spec> stands for a type specifier.
+
+In the following examples, the interpretation as declaration works, and
+consequently the statements are interpreted as declarations:
+
+    type_spec(*i)(int);         // declaration
+    type_spec(j)[5];            // declaration
+    type_spec(m) = { 1, 2 };    // declaration
+    type_spec(a);               // declaration
+    type_spec(*b)();            // declaration
+    type_spec(c)=23;            // declaration
+    type_spec(d),e,f,g=0;       // declaration
+    type_spec(h)(e,3);          // declaration
+
+=head2 An Ambiguous Grammar 
+
+The simple grammar in C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp>
+illustrates the problem of parsing C++:
+
+  examples/debuggingtut$ eyapp -c SimplifiedCplusplusAmbiguity.eyp
+  %strict
+  %token ID INT NUM
+  %right '='
+  %left '+'
+
+  %%
+
+  prog:
+        /* empty */
+      | prog stmt
+  ;
+  stmt:
+        expr ';'
+      | decl
+  ;
+  expr:
+        ID
+      | NUM
+      | INT '(' expr ')' /* typecast */
+      | expr '+' expr
+      | expr '=' expr
+  ;
+  decl:
+        INT declarator ';'
+      | INT declarator '=' expr ';'
+  ;
+  declarator:
+        ID
+      | '(' declarator ')'
+  ;
+
+  %%
+
+The grammar is ambiguous since an input like:
+
+               int (x) = 4;
+
+can be interpreted as a C<decl> or an C<expr>.
+
+The C<eyapp> compiler warn us of the presence of reduce/reduce conflict:
+
+  examples/debuggingtut$ eyapp -v SimplifiedCplusplusAmbiguity.eyp
+  1 reduce/reduce conflict
+
+when we look at the C<.output> file we see that the reduce-reduce conflict
+is at state 18:
+
+  examples/debuggingtut$ head -12 SimplifiedCplusplusAmbiguity.output
+  Warnings:
+  ---------
+  1 reduce/reduce conflict
+
+  Conflicts:
+  ----------
+  Conflict in state 15 between rule 8 and token '+' resolved as reduce.
+  Conflict in state 15 between rule 8 and token '=' resolved as reduce.
+  Conflict in state 17 between rule 9 and token '+' resolved as shift.
+  Conflict in state 17 between rule 9 and token '=' resolved as shift.
+  State 18 contains 1 reduce/reduce conflict
+
+
+When we look at the description of the involved state, we see the reasons for the conflict:
+
+  examples/debuggingtut$ sed -ne '/^State 18:/,/^State/p' SimplifiedCplusplusAmbiguity.output
+  State 18:
+
+          expr -> ID .    (Rule 5)
+          declarator -> ID .      (Rule 12)
+
+          ')'     [reduce using rule 12 (declarator)]
+          $default        reduce using rule 5 (expr)
+
+  State 19:
+
+The conflict means that once the parser has seen the C<ID> and is in the presence
+of the closing parenthesis C<')'>, it is incapable to decide whether 
+to reduce by rule 12 or rule 5.
+
+As we said, the C++ disambiguation rule is: take it as a declaration if it looks as a declaration,
+otherwise is an expression.  But we see that interpretation as C<decl> 
+will succeed if declarator is followed - after the sequence of closing parenthesis - 
+by one of the two tokens a C<;> or C<=>. That can be traced during
+parsing time. L<Parse::Eyapp> provides the mechanisms to change the parsing
+actions at parsing time.
+
+=head2 The I<Postponed Conflict Resolution> Strategy
+
+The I<postponed conflict strategy> presented here can be used whenever there 
+is a shift-reduce or reduce-reduce conflict that can not be solved using static 
+precedences but that can be solved using information obtained at parsing time.
+
+=head2 I<Postponed Conflict Resolution>: Reduce-Reduce Conflicts
+
+Let us assume we have a reduce-reduce conflict between to productions
+
+                      A -> alpha .
+                      B -> beta .
+
+for some token C<@>. Let also assume that production 
+
+                      A -> alpha
+
+has name C<ruleA> and production
+
+                      B -> beta 
+
+has name C<ruleB>.
+
+The postponed conflict resolution strategy consists
+in modifying the conflictive grammar by adding at the points of conflict, 
+in this case at then end of the involved productions a new syntactic variable.
+C<IsAorB>:
+
+                      A -> alpha IsAorB .
+                      B -> beta  IsAorB .
+
+The reduce-reduce conflict is now I<postponed> after C<IsAorB> is seen.
+The new syntactic variable C<IsAorB> will be called the I<conflict name>. 
+The new introduced syntactic variable has only one empty production:
+
+                     IsAorB -> /* empty */
+
+The programmer associates with that production a semantic action
+whose mission is to solve the conflict by dynamically changing the
+parsing table like this:
+
+                     IsAorB -> /* empty */ 
+                       {
+                          my $self = shift;
+
+                          if (looks_like_A($self)) {
+                            $self->YYSetReduce('@', 'ruleA' );
+                          }
+                          else {
+                            $self->YYSetReduce('@', 'ruleB' );
+                          }
+                       }
+
+The semantic action associated with the I<conflict name>
+receives the name of I< conflict handler>.
+
+=head2 An Example of Dynamic Conflict Resolution
+
+The Eyapp program C<examples/debuggingtut/Cplusplus.eyp> solves the 
+conflicts in  C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp> 
+by using the I<Postponed Conflict Resolution> strategy:
+
+  examples/debuggingtut$ head -65 Cplusplus.eyp | cat -n
+     1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
+     2  %strict
+     3  %token ID INT NUM
+     4
+     5  %right '='
+     6  %left '+'
+     7
+     8  %tree bypass
+     9
+    10  %%
+    11  prog:
+    12      %name EMPTY
+    13      /* empty */
+    14    | %name PROG
+    15      prog stmt
+    16  ;
+    17
+    18  stmt:
+    19      %name EXP
+    20      expr ';'
+    21    | %name DECL
+    22      decl
+    23  ;
+    24
+    25  expr:
+    26      %name EXPID
+    27      ID decexpconflict
+    28    | %name NUM
+    29      NUM
+    30    | %name TYPECAST
+    31      INT '(' expr ')' /* typecast */
+    32    | %name PLUS
+    33      expr '+' expr
+    34    | %name ASSIGN
+    35      expr '=' expr
+    36  ;
+    37
+    38  decl:
+    39      %name DECLARATOR
+    40      INT declarator ';'
+    41    | %name DECLARATORINIT
+    42      INT declarator '=' expr ';'
+    43  ;
+    44
+    45  declarator:
+    46      %name DECID
+    47      ID decexpconflict
+    48    | '(' declarator ')'
+    49  ;
+    50
+    51  decexpconflict:
+    52      /* empty. Just to solve the reduce-reduce conflict */
+    53        {
+    54          my $self = shift;
+    55          # If followed by ';' or '=' is a declaration
+    56          if ($self->{INPUT} =~ m{^[)\s]*[;=]\s*}) {
+    57            $self->YYSetReduce(')', 'DECID' );
+    58          }
+    59          else {
+    60            $self->YYSetReduce(')', 'EXPID' );
+    61          }
+    62        }
+    63  ;
+    64
+    65  %%
+
+The aforementioned conflict in C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp>:
+
+  examples/debuggingtut$ sed -ne '/^State 18:/,/^State/p' SimplifiedCplusplusAmbiguity.output
+  State 18:
+
+          expr -> ID .    (Rule 5)
+          declarator -> ID .      (Rule 12)
+
+          ')'     [reduce using rule 12 (declarator)]
+          $default        reduce using rule 5 (expr)
+
+  State 19:
+
+is now delayed just after seen C<decexpconflict>:
+
+  examples/debuggingtut$ eyapp -vb '' Cplusplus.eyp
+  1 reduce/reduce conflict
+  examples/debuggingtut$ sed -ne '/^State 27:/,/^State/p' Cplusplus.output
+  State 27:
+
+          expr -> ID decexpconflict .     (Rule 5)
+          declarator -> ID decexpconflict .       (Rule 12)
+
+          ')'     [reduce using rule 12 (declarator)]
+          $default        reduce using rule 5 (expr)
+
+  State 28:
+
+The call 
+
+         $self->YYSetReduce(')', 'DECID' );
+
+inside the semantic action associated with C<decexpconflict> sets the parsing action
+to reduce by the production with name C<DECID>, i.e.
+
+            declarator -> ID 
+
+when the incoming input is followed by a semicolon or an equal. Otherwise the action taken is 
+to reduce by 
+
+            expr -> ID
+
+The program now successfully solves the ambiguity:
+
+  examples/debuggingtut$ Cplusplus.pm
+  int(x)+2;
+  PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],EXPID[x]),NUM[2]))
+  debuggingtut$ Cplusplus.pm
+  int(x)=2;
+  PROG(EMPTY,DECL(TERMINAL[int],DECID[x],NUM[2]))
+  examples/debuggingtut$ Cplusplus.pm
+  int(x);
+  PROG(EMPTY,DECL(TERMINAL[int],DECID[x]))
+
+=head2 Using C<YYSetLRAction> and C<YYNextState>
+
+The modulino C<glrexpressions.eyp> illustrates an alternative way to
+apply the postponed conflict resolution strategy to the aforementioned
+problem:
+
+  examples/debuggingtut$ head -69 glrexpressions.eyp | cat -n
+     1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
+     2  %strict
+     3  %token ID INT NUM
+     4
+     5  %right '='
+     6  %left '+'
+     7
+     8  %{
+     9  my $input;
+    10  %}
+    11
+    12  %tree bypass
+    13  %%
+    14  prog:
+    15      %name EMPTY
+    16      /* empty */
+    17    | %name PROG
+    18      prog stmt
+    19  ;
+    20
+    21  stmt:
+    22      %name EXP
+    23      expr ';'
+    24    | %name DECL
+    25      decl
+    26  ;
+    27
+    28  expr:
+    29      %name EXPID
+    30      ID decexpconflict
+    31    | %name NUM
+    32      NUM
+    33    | %name TYPECAST
+    34      INT '(' expr ')' /* typecast */
+    35    | %name PLUS
+    36      expr '+' expr
+    37    | %name ASSIGN
+    38      expr '=' expr
+    39  ;
+    40
+    41  decl:
+    42      %name DECLARATOR
+    43      INT declarator ';'
+    44    | %name DECLARATORINIT
+    45      INT declarator '=' expr ';'
+    46  ;
+    47
+    48  declarator:
+    49      %name DECID
+    50      ID decexpconflict
+    51    | '(' declarator ')'
+    52  ;
+    53
+    54  decexpconflict:
+    55      /* empty. Just for hacking the LALR tables */
+    56        {
+    57          my $self = shift;
+    58
+    59          my $conflictstate = $self->YYNextState();
+    60          if ($input =~ m{^[)\s]*[;=]\s*}) {
+    61            $self->YYSetLRAction($conflictstate, ')', 'DECID' );
+    62          }
+    63          else {
+    64            $self->YYSetLRAction($conflictstate, ')', 'EXPID' );
+    65          }
+    66        }
+    67  ;
+    68
+    69  %%
+
+
+Line 59 uses the method C<YYNextState> to compute the state after the reduction for
+the production rule 
+
+      decexpconflict -> /* empty */
+
+which is precisely the conflict state. If the incoming input is a sequence of parenthesis 
+followed by either a semicolon or an equal we call to the method C<YYSetLRAction> to set
+a reduction by the rule
+
+     declarator -> ID
+
+for that state and token C<')'>, otherwise we indicate a reduction by the rule:
+
+     expr -> ID    
+
+
+=head2 I<Postponed Conflict Resolution>: Shift-Reduce Conflicts
+
+The program in C<DynamicallyChangingTheParser2.eyp> illustrates how the postponed
+conflict strategy is used for shift-reduce conflicts.
+This is an extension of the grammar in C<Debug.eyp> that was studied in
+the previous sections. The generated language is constituted by sequences like:
+
+    { D; D; S; S; S; } {D; S} { S }
+
+as you remember the conflict was:
+
+  examples/debuggingtut$ sed -ne '/^State 13:/,/^State/p' DynamicallyChangingTheParser2.output
+  State 13:
+
+          ds -> D conflict . ';' ds       (Rule 6)
+          ds -> D conflict .      (Rule 7)
+
+          ';'     shift, and go to state 16
+
+          ';'     [reduce using rule 7 (ds)]
+
+  State 14:
+
+The conflict handler (lines 50-56 below) sets the LR action
+to reduce by the production with name C<LAST_D>
+
+                 ds -> D
+
+in the presence of token C<';'> if indeed is the last C<'D'>.
+The semantic action associated with the production C<LAST_D> (lines
+34-37) restores the former shift action and proceeds to call
+C<Parse::Eyapp::Driver::YYBuildAST> in order to build the abstract syntax tree:
+
+  examples/debuggingtut$ cat -n DynamicallyChangingTheParser2.eyp
+     1  # See section 'Hacking the Parsing Tables: ACTION and GOTOs' in
+     2  # http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+     3  #
+     4  # See also: Debug.eyp Debug1.eyp Debug2.eyp  LookForward.eyp
+     5  # DynamicallyChangingTheParser.eyp This example illustrates how to dynamically
+     6  # change the behavior of the parser
+     7
+     8  %token D S
+     9
+    10  %{
+    11  our $VERSION = '0.01';
+    12  %}
+    13
+    14  %tree bypass
+    15
+    16  %%
+    17  p: %name PROG
+    18      block +
+    19  ;
+    20
+    21  block:
+    22      %name BLOCK
+    23      '{' ds ';' ss '}'
+    24    | %name SS
+    25      '{' ss '}'
+    26  ;
+    27
+    28  ds:
+    29      %name MORE_Ds
+    30      D conflict ';' ds
+    31    | %name LAST_D
+    32      D conflict
+    33        {
+    34           # Recover former LALR action
+    35           $_[0]->YYRestoreLRAction('conflict', ';');
+    36           # Do whatever you want
+    37           goto &Parse::Eyapp::Driver::YYBuildAST;
+    38        }
+    39  ;
+    40
+    41  ss:
+    42      %name SS
+    43      S ';' ss
+    44    | %name S
+    45      S
+    46  ;
+    47
+    48  conflict:
+    49      /* empty. Just for dynamic precedence */
+    50        {
+    51          my $self = shift;
+    52
+    53          $self->YYSetReduce(';', 'LAST_D' ) if ($self->{INPUT} =~ m{^;\s*S});
+    54
+    55          undef; # skip this node in the AST
+    56        }
+    57  ;
+    58
+    59  %%
+    60
+    61  sub _Error {
+    62    my $parser = shift;
+    63
+    64    my ($token) = $parser->YYCurval;
+    65    my ($what) = $token ? "input: '$token'" : "end of input";
+    66    warn "Syntax error near $what\n";
+    67  }
+    68
+    69  sub _Lexer {
+    70    my $self = shift;
+    71
+    72    for ($self->{INPUT}) {
+    73      s{^(\s*)}{};
+    74
+    75      return ('',undef) unless $_;
+    76
+    77      return ($1,$1) if s/^(.)//;
+    78    }
+    79    return ('',undef);
+    80  }
+    81
+    82  sub Run {
+    83    my $debug = shift || 0;
+    84    $debug = 0x1F if $debug;
+    85
+    86    my $self = __PACKAGE__->new();
+    87    $self->{INPUT} = <STDIN>;
+    88
+    89    print
+    90      $self->YYParse(
+    91        yylex => \&_Lexer,
+    92        yyerror => \&_Error,
+    93        yydebug => $debug,
+    94      )->str."\n";
+    95  }
+    96
+    97  Run(@ARGV) unless caller;
+
+
+
+
+
 =head1 NAMING SCHEMES
 
 
