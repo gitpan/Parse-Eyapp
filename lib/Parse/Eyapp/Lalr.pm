@@ -81,19 +81,22 @@ sub Warnings {
 
     $text=$self->SUPER::Warnings();
 
-        $nbsr != $$self{GRAMMAR}{EXPECT}
-    and do {
-      $text.="$nbsr shift/reduce conflict".($nbsr > 1 ? "s " : " "); 
-    };  # end of $nbsr != $$self{GRAMMAR}{EXPECT} There were shift-reduce conflicts
+    my $expected = $$self{GRAMMAR}{EXPECT};
+    my ($sre, $rre) = ref($expected) ? @$expected : ($expected, 0);
 
-        $nbrr
+        $nbsr != $sre
     and do {
-            $nbsr != $$self{GRAMMAR}{EXPECT}
+      $text.="$nbsr shift/reduce conflict".($nbsr != 1 ? "s " : " "); 
+    };  # end of $nbsr != $sre There were shift-reduce conflicts
+
+        $nbrr != $rre
+    and do {
+            $nbsr != $sre
         and $text.="and ";
-        $text.="$nbrr reduce/reduce conflict".($nbrr > 1 ? "s" : "");
+        $text.="$nbrr reduce/reduce conflict".($nbrr != 1 ? "s" : "");
     };
 
-       (    $nbsr != $$self{GRAMMAR}{EXPECT}
+       (    $nbsr != $expected
         or  $nbrr)
     and $text.="\n";
 

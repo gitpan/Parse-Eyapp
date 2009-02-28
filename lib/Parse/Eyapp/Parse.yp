@@ -446,6 +446,7 @@ decl:  '\n'                 #default action
                 }
             }
     |   EXPECT NUMBER '\n'             { $expect=$_[2][0]; undef }
+    |   EXPECT NUMBER NUMBER '\n'      { $expect= [ $_[2][0], $_[3][0]]; undef }
     |   error '\n'                     { $_[0]->YYErrok }
 ;    
 

@@ -10,6 +10,9 @@ my $input;
 %}
 
 %tree bypass
+
+%expect 0 1
+
 %%
 prog:
     %name EMPTY

@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Parse-Eyapp
-version:            1.143
+version:            1.144
 abstract:           Extensions for Parse::Yapp
 author:
     - Casiano Rodriguez-Leon <casiano@ull.es>

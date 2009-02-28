@@ -1955,7 +1955,7 @@ The Eyapp program C<examples/debuggingtut/Cplusplus.eyp> solves the
 conflicts in  C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp> 
 by using the I<Postponed Conflict Resolution> strategy:
 
-  examples/debuggingtut$ head -65 Cplusplus.eyp | cat -n
+  examples/debuggingtut$ head -67 Cplusplus.eyp | cat -n
      1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
      2  %strict
      3  %token ID INT NUM
@@ -1965,62 +1965,65 @@ by using the I<Postponed Conflict Resolution> strategy:
      7
      8  %tree bypass
      9
-    10  %%
-    11  prog:
-    12      %name EMPTY
-    13      /* empty */
-    14    | %name PROG
-    15      prog stmt
-    16  ;
-    17
-    18  stmt:
-    19      %name EXP
-    20      expr ';'
-    21    | %name DECL
-    22      decl
-    23  ;
-    24
-    25  expr:
-    26      %name EXPID
-    27      ID decexpconflict
-    28    | %name NUM
-    29      NUM
-    30    | %name TYPECAST
-    31      INT '(' expr ')' /* typecast */
-    32    | %name PLUS
-    33      expr '+' expr
-    34    | %name ASSIGN
-    35      expr '=' expr
-    36  ;
-    37
-    38  decl:
-    39      %name DECLARATOR
-    40      INT declarator ';'
-    41    | %name DECLARATORINIT
-    42      INT declarator '=' expr ';'
-    43  ;
-    44
-    45  declarator:
-    46      %name DECID
-    47      ID decexpconflict
-    48    | '(' declarator ')'
-    49  ;
-    50
-    51  decexpconflict:
-    52      /* empty. Just to solve the reduce-reduce conflict */
-    53        {
-    54          my $self = shift;
-    55          # If followed by ';' or '=' is a declaration
-    56          if ($self->{INPUT} =~ m{^[)\s]*[;=]\s*}) {
-    57            $self->YYSetReduce(')', 'DECID' );
-    58          }
-    59          else {
-    60            $self->YYSetReduce(')', 'EXPID' );
-    61          }
-    62        }
-    63  ;
-    64
-    65  %%
+    10  %expect 0 1 # 0 shift-reduce conflicts, 1 reduce-reduce conflict
+    11
+    12  %%
+    13  prog:
+    14      %name EMPTY
+    15      /* empty */
+    16    | %name PROG
+    17      prog stmt
+    18  ;
+    19
+    20  stmt:
+    21      %name EXP
+    22      expr ';'
+    23    | %name DECL
+    24      decl
+    25  ;
+    26
+    27  expr:
+    28      %name EXPID
+    29      ID decexpconflict
+    30    | %name NUM
+    31      NUM
+    32    | %name TYPECAST
+    33      INT '(' expr ')' /* typecast */
+    34    | %name PLUS
+    35      expr '+' expr
+    36    | %name ASSIGN
+    37      expr '=' expr
+    38  ;
+    39
+    40  decl:
+    41      %name DECLARATOR
+    42      INT declarator ';'
+    43    | %name DECLARATORINIT
+    44      INT declarator '=' expr ';'
+    45  ;
+    46
+    47  declarator:
+    48      %name DECID
+    49      ID decexpconflict
+    50    | '(' declarator ')'
+    51  ;
+    52
+    53  decexpconflict:
+    54      /* empty. Just to solve the reduce-reduce conflict */
+    55        {
+    56          my $self = shift;
+    57
+    58          if ($self->{INPUT} =~ m{^[)\s]*[;=]\s*}) {
+    59            $self->YYSetReduce(')', 'DECID' );
+    60          }
+    61          else {
+    62            $self->YYSetReduce(')', 'EXPID' );
+    63          }
+    64        }
+    65  ;
+    66
+    67  %%
+
 
 The aforementioned conflict in C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp>:
 
@@ -2172,10 +2175,10 @@ for that state and token C<')'>, otherwise we indicate a reduction by the rule:
 
 =head2 I<Postponed Conflict Resolution>: Shift-Reduce Conflicts
 
-The program in C<DynamicallyChangingTheParser2.eyp> illustrates how the postponed
+The program in C<examples/debuggingtut/DynamicallyChangingTheParser2.eyp> illustrates how the postponed
 conflict strategy is used for shift-reduce conflicts.
-This is an extension of the grammar in C<Debug.eyp> that was studied in
-the previous sections. The generated language is constituted by sequences like:
+This is an extension of the grammar in C<examples/debuggingtut/Debug.eyp>.
+The generated language is constituted by sequences like:
 
     { D; D; S; S; S; } {D; S} { S }
 
