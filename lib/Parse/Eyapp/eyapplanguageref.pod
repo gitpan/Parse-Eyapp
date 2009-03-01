@@ -3431,7 +3431,7 @@ has name C<ruleB>.
 
 The postponed conflict resolution strategy consists
 in modifying the conflictive grammar by adding at the points of conflict, 
-in this case at then end of the involved productions a new syntactic variable.
+in this case at then end of the involved productions a new syntactic variable
 C<IsAorB>:
 
                       A -> alpha IsAorB .
@@ -3695,7 +3695,7 @@ The generated language is constituted by sequences like:
 
     { D; D; S; S; S; } {D; S} { S }
 
-as you remember the conflict was:
+As you remember the conflict was:
 
   examples/debuggingtut$ sed -ne '/^State 13:/,/^State/p' DynamicallyChangingTheParser2.output
   State 13:
@@ -3717,7 +3717,8 @@ to reduce by the production with name C<LAST_D>
 in the presence of token C<';'> if indeed is the last C<'D'>.
 The semantic action associated with the production C<LAST_D> (lines
 34-37) restores the former shift action and proceeds to call
-C<Parse::Eyapp::Driver::YYBuildAST> in order to build the abstract syntax tree:
+C<Parse::Eyapp::Driver::YYBuildAST> in order to continue
+with the building of the abstract syntax tree:
 
   examples/debuggingtut$ cat -n DynamicallyChangingTheParser2.eyp
      1  # See section 'Hacking the Parsing Tables: ACTION and GOTOs' in
@@ -3829,7 +3830,7 @@ Explicit names can be given to grammar productions
 via the C<%name> directive. An alternative to explicitly gave 
 names to rules is to define a I<naming scheme> via the Eyapp directive
 C<%namingscheme>. This can be helpful when you inherit a large grammar
-and want to quickly build a parser. The ASNSI C parser in 
+and want to quickly build a parser. The ANSI C parser in 
 C<examples/languages/C/ansic.eyp> is a good example. Another
 example is the Pascal parser in C<examples/languages/pascal/pascal.eyp>.
 
@@ -4124,6 +4125,17 @@ Pete Jinks
 =back
 
 
+=head1 CONTRIBUTORS
+
+=over 2
+
+=item * Hal Finkel L<http://www.halssoftware.com/> 
+
+=item * G. Williams L<http://kasei.us/>
+
+=item * Thomas L. Shinnick L<http://search.cpan.org/~tshinnic/>
+
+=back
 
 =head1 AUTHOR
  
@@ -4143,8 +4155,10 @@ A large percentage of  code is verbatim taken from L<Parse::Yapp> 1.05.
 The author of L<Parse::Yapp> is Francois Desarmenien.
  
 I wish to thank Francois Desarmenien for his L<Parse::Yapp> module, 
-to my students at La Laguna and to the Perl Community. Special thanks to 
-my family and Larry Wall.
+to my students at La Laguna and to the Perl Community. Thanks to 
+the people who have contributed to improve the module (see L<Parse::Eyapp/CONTRIBUTORS>).
+Thanks to Larry Wall for giving us Perl.
+Special thanks to Juana.
 
 =head1 LICENCE AND COPYRIGHT
  

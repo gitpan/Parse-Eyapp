@@ -100,7 +100,9 @@ sub Output {
   $accessors = $self->Accessors;
   my $accessors_hash = make_accessors($accessors);
   $TERMS = $self->Terms();
-  $FILENAME = '"'.$self->Option('inputfile').'"';
+
+  # Thanks Tom! previous double-quote use produced errors in windows
+  $FILENAME = q{'}.$self->Option('inputfile').q{'};
 
 	if ($self->Option('standalone')) {
     # Copy Base, Driver, Node and YATW

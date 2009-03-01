@@ -1,10 +1,10 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.144.
+#    This file was generated using Parse::Eyapp version 1.145.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
-#        Don't edit this file, use source file "lib/Parse/Eyapp/Parse.yp" instead.
+#        Don't edit this file, use source file 'lib/Parse/Eyapp/Parse.yp' instead.
 #
 #             ANY CHANGE MADE HERE WILL BE LOST !
 #
@@ -264,7 +264,7 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.144',
+    yyversion => '1.145',
     yyGRAMMAR  =>
 [
   [ _SUPERSTART => '$start', [ 'eyapp', '$end' ], 0 ],
@@ -384,7 +384,7 @@ sub new {
 	error => { ISSEMANTIC => 1 },
 	error => { ISSEMANTIC => 0 },
 },
-    yyFILENAME  => "lib/Parse/Eyapp/Parse.yp",
+    yyFILENAME  => 'lib/Parse/Eyapp/Parse.yp',
     yystates =>
 [
 	{#State 0

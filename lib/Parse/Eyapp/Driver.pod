@@ -903,6 +903,17 @@ it returns the state on top of the stack.
 Otherwise, returns the state C<$length> units deep in the stack.
 
 
+=head1 CONTRIBUTORS
+
+=over 2
+
+=item * Hal Finkel L<http://www.halssoftware.com/> 
+
+=item * G. Williams L<http://kasei.us/>
+
+=item * Thomas L. Shinnick L<http://search.cpan.org/~tshinnic/>
+
+=back
 
 =head1 AUTHOR
  
@@ -922,8 +933,10 @@ A large percentage of  code is verbatim taken from L<Parse::Yapp> 1.05.
 The author of L<Parse::Yapp> is Francois Desarmenien.
  
 I wish to thank Francois Desarmenien for his L<Parse::Yapp> module, 
-to my students at La Laguna and to the Perl Community. Special thanks to 
-my family and Larry Wall.
+to my students at La Laguna and to the Perl Community. Thanks to 
+the people who have contributed to improve the module (see L<Parse::Eyapp/CONTRIBUTORS>).
+Thanks to Larry Wall for giving us Perl.
+Special thanks to Juana.
 
 =head1 LICENCE AND COPYRIGHT
  
