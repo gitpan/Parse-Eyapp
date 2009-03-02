@@ -1518,7 +1518,7 @@ To set the name of the node associated with a list operator the
 C<%name> directive must precede the operator as in 
 the following example:
 
-  pl@nereida:~/LEyapp/examples$ sed -ne '1,27p' CsBetweenCommansAndDWithNames.eyp | cat -n
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ sed -ne '1,27p' CsBetweenCommansAndDWithNames.eyp | cat -n
    1  # CsBetweenCommansAndDWithNames.eyp
    2
    3  %semantic token 'c' 'd'
@@ -1547,9 +1547,18 @@ the following example:
   26
   27  %%
 
+The grammar describes the language of sequences 
+
+                  c,...,cd c,...,cd c,...,cd ....
+
+The right hand side of the production has only one term which is a list, 
+but the factor to which the star applies is itself a list. 
+We are naming the term with the name C<Cs_and_d> and the factor with 
+the name C<Cs>.
+
 The execution shows the renamed nodes:
 
-  pl@nereida:~/LEyapp/examples$ use_csbetweencommansanddwithnames.pl
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ use_csbetweencommansanddwithnames.pl
   c,c,c,cd
 
   Node
@@ -1704,7 +1713,7 @@ Notice that line 13 can be rewritten as:
                     goto &Parse::Eyapp::Driver::YYBuildAST;
 
 At line 18 the node for the rule is explicitly created
-using C<Parse::Eyapp::Node->new>. The handler passed as second argument
+using C<Parse::Eyapp::Node-E<gt>new>. The handler passed as second argument
 is responsible for setting the value of the atribute C<attr>
 of the just created C<TERMINAL> node.
 
@@ -1811,8 +1820,8 @@ This is the output when executing this program with input C<aaacbbb>:
 
 =head1 NAMES FOR ATTRIBUTES
 
-Attributes can be referenced by meaningful names instead
-of the classic error-prone positional approach using the I<dot notation>:
+Attributes can be referenced by meaningful names using the I<dot notation>
+instead of using the classic error-prone positional approach:
 
                         rhs:  rhseltwithid *
                         rhseltwithid : 
@@ -2343,10 +2352,15 @@ semantic actions remain unchanged:
 
 When running this program the output is:
 
-  pl@europa:~/LEyapp/examples/recycle$ ./rewritepostfixwithactions.pl
+  examples/recycle$ ./rewritepostfixwithactions.pl
   Write an expression: 2*3+4
   2 3 TIMES 4 PLUS
   10
+  examples/recycle$ rewritepostfixwithactions.pl
+  Write an expression: a = 2*(b = 3+5)
+  2 3 5 PLUS &b ASSIGN TIMES &a ASSIGN
+  16
+
 
 
 

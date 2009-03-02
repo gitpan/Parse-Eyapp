@@ -14,7 +14,10 @@ exp:        $NUM
                 { $VAR }            
         |   %name ASSIGN  
               VAR.left '='exp.right         
-                { "$_[3] &$_[1] ASSIGN"; }
+                { 
+                  # & stands for 'address of'
+                  "$_[3] &$_[1] ASSIGN"; 
+                }
         |   %name PLUS    
               exp.left '+'exp.right         
                 { "$_[1] $_[3] PLUS"; }

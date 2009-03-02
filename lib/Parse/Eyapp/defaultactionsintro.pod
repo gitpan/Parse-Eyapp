@@ -702,10 +702,15 @@ semantic actions remain unchanged:
 
 When running this program the output is:
 
-  pl@europa:~/LEyapp/examples/recycle$ ./rewritepostfixwithactions.pl
+  examples/recycle$ ./rewritepostfixwithactions.pl
   Write an expression: 2*3+4
   2 3 TIMES 4 PLUS
   10
+  examples/recycle$ rewritepostfixwithactions.pl
+  Write an expression: a = 2*(b = 3+5)
+  2 3 5 PLUS &b ASSIGN TIMES &a ASSIGN
+  16
+
 
 
 

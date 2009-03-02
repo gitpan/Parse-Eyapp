@@ -56,3 +56,6 @@ sub Run {
       #, yydebug => 0x1F 
     );
 }
+
+# modulino code: compile with: eyapp -b '' CsBetweenCommansAndDWithNames.eyp
+__PACKAGE__->new()->Run unless caller();
