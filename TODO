@@ -4,8 +4,6 @@
 
     to be used in YYParse. When an error is found, if the token is in the set 'end_of_input' the input
     will be accepted if in the accepting state
-  * There is no way to express the token end-of-input in the header section: i.e. how to give to end of 
-  input some priority in order to solve a conflict?
   * There is a bug in eyapp with reduce-reduce conflicts!!
   * There is a bug with &give_rhs_name in Parse::Eyapp::Grammar and lists *, +, etc. see the example
       examples/debuggintut/SemanticInfoInTokens.eyp

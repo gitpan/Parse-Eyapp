@@ -1,0 +1,103 @@
+# See section 'Hacking the Parsing Tables: ACTION and GOTOs' in
+# http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+#
+# See also: Debug.eyp Debug1.eyp Debug2.eyp  LookForward.eyp
+# DynamicallyChangingTheParser.eyp This example illustrates how to dynamically
+# change the behavior of the parser
+
+%token D S
+
+%{
+our $VERSION = '0.01'; 
+%}
+
+%tree bypass
+
+%expect 1 
+
+%%
+p: %name PROG
+    block +
+;
+
+block:
+    %name BLOCK
+    '{' ds ';' ss '}' 
+  | %name SS
+    '{' ss '}'
+;
+
+ds:
+    %name MORE_Ds
+    D conflict ';' ds    
+  | %name LAST_D
+    D conflict        
+      {
+         # Recover former LALR action
+         $_[0]->YYRestoreLRAction('conflict', ';');
+         # Do whatever you want
+         goto &Parse::Eyapp::Driver::YYBuildAST;
+      }
+;
+
+ss:
+    %name SS
+    S ';' ss      
+  | %name S
+    S       
+;
+
+conflict:
+    /* empty. Just for dynamic precedence */
+      {
+        my $self = shift;
+
+        $self->YYSetReduce(';', 'LAST_D' ) if ($self->{INPUT} =~ m{^\s*;\s*S});
+
+        undef; # skip this node in the AST
+      }
+;
+
+%%
+
+sub _Error {
+  my $parser = shift;
+
+  my ($token) = $parser->YYCurval;
+  my ($what) = $token ? "input: '$token'" : "end of input";
+  warn "Syntax error near $what\n";
+}
+
+sub _Lexer {
+  my $self = shift;
+  
+  for ($self->{INPUT}) {
+    s{^(\s*)}{};
+   
+    return ('',undef) unless $_;
+
+    return ($1,$1) if s/^(.)//;
+  }
+  return ('',undef);
+}
+
+sub Run {
+  my $debug = shift || 0;
+  $debug = 0x1F if $debug;
+
+  my $self = __PACKAGE__->new();
+  $self->{INPUT} = <STDIN>;
+
+  print 
+    $self->YYParse( 
+      yylex => \&_Lexer, 
+      yyerror => \&_Error, 
+      yydebug => $debug,
+    )->str."\n";
+}
+
+Run(@ARGV) unless caller;
+
+sub TERMINAL::info {
+  $_[0]->{attr};
+}

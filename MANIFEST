@@ -30,6 +30,7 @@ examples/debuggingtut/Debug2.eyp
 examples/debuggingtut/Debug.eyp
 examples/debuggingtut/DebugLookForward.eyp
 examples/debuggingtut/DynamicallyChangingTheParser.eyp
+examples/debuggingtut/DynamicallyChangingTheParser2.eyp
 examples/debuggingtut/DynamicvsTieIns.eyp
 examples/debuggingtut/glrexpressions.eyp
 examples/debuggingtut/glrexpressionswithlexer.eyp
