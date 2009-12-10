@@ -1,9 +1,37 @@
-# This example illustrates how to express EOI in the header section: use ''
-# For the original grammar
-# see file
-#   typicalrr.eyp 
-# For an alternative solution see file 
-#   correcttypicalrr.eyp
+%{
+
+=head1 SYNOPSIS
+
+This example illustrates how to express the
+end of input (EOI) in the header section: use ''.
+I believe the fact that EOI can be involved in a 
+conflict resolution has been overlooked.
+
+It attempts to solve the conflict in 
+C<typicalrr.eyp> by giving priority
+only to the  'empty rules'. 
+Warning: Don't look too much at it if you 
+are new to LALR conflict resolution.
+
+Compile it with 
+
+            eyapp -b '' typicalrrwithprec.eyp
+
+Execute it with:
+
+   ./typicalrrwithprec.pm -t
+
+Try inputs C<4 5>,  C<a b> and C<4 5 a b>.
+
+=head1 SEE ALSO
+
+see  typicalrr.eyp, correcttypicalrr.eyp and typicalrr_fixed.eyp
+
+=cut
+
+use base q{RRTail}; 
+
+%}
 
 %right LNUM
 %right NUM 
@@ -16,10 +44,10 @@
 s:
       %name EMPTY
       /* empty */ %prec ''
-    | %name WORDS
+    | %name LIST
        s ws
-    | %name NUMS
-      s ns 
+    | %name LIST
+       s ns
 ;
 
 ns:
@@ -38,50 +66,10 @@ ws:
 
 %%
 
-sub _Error {
-  my $parser = shift;
-
-  my ($token) = $parser->YYCurval;
-  my ($what) = $token ? "input: '$token'" : "end of input";
-  warn "Syntax error near $what\n";
+unless (caller()) {
+  $Parse::Eyapp::Node::INDENT = 1;
+  my $prompt = 'Try "4 5 a b 2 3" '.
+               '(press <CR><CTRL-D> to finish): ';
+  __PACKAGE__->main($prompt) 
 }
-
-my $input;
-
-sub _Lexer {
-  my $self = shift;
-  
-  for ($input) {
-    s{^(\s*)}{};
-
-    return ('',undef) unless $_;
-
-    return ('NUM',$1) if s/^(\d+)//;
-    return ('ID',$1) if s/^([a-zA-Z_]\w*)//;
-  }
-  return ('',undef);
-}
-
-sub Run {
-  my $debug = shift || 0;
-  $debug = 0x1F if $debug;
-
-  $input = <STDIN>;
-
-  my $self = __PACKAGE__->new();
-
-  print $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, yydebug => $debug,)->str."\n";
-}
-
-sub TERMINAL::info { $_[0]->{attr} }
-
-Run(@ARGV) unless caller;
-
-=head1  Solving the typical example of Reduce-Reduce conflict using precedences
-
-Compile it with:
-
-   eyapp -b '' typicalrrwithprec.eyp
-
-=cut
 

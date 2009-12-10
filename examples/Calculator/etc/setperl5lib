@@ -16,7 +16,10 @@ export PATH=${CP}/scripts:${EYAPPPATH}:${PATH}
 # Used by some SKIP tests
 export DEVELOPER=casiano
 
-# To simplify some svn commands
-export SVNR=svn+ssh://casiano@orion.pcg.ull.es/var/svn/casiano/PL/YappWithDefaultAction/trunk/examples/Calculator
+eyapp -m Math::Calc -o lib/Math/Calc.pm lib/Math/Calc.eyp 
 
+# svn 
+# default commit message
+export M='working in my computer'
 
+export SVNR=https://parse-eyapp.googlecode.com/svn/trunk/examples/Calculator

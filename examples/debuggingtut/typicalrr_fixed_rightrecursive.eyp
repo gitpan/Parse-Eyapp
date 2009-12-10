@@ -13,6 +13,7 @@ Execute it with:
 
 Try inputs C<4 5>,  C<a b> and C<4 5 a b>.
 
+
 =head1 SEE ALSO
 
 see  typicalrr.eyp, typicalrr2.eyp and correcttypicalrr.eyp 
@@ -24,30 +25,30 @@ use base q{RRTail};
 %}
 %right ID NUM
 
-%tree
+%tree bypass
 
 %%
 s: 
      %name EMPTY
      /* empty */
-   | %name LIST
-     s ws  %prec ID
-   | %name LIST
-     s ns  %prec NUM
+   | %name WORDS
+      ws s 
+   | %name NUMS
+      ns s 
  ;
 
 ws:
      %name ID
-     ID
-   | %name WORDS
-     ws ID
+      ID
+   |  %name IDS
+      ID ws
 ;
 
 ns:
     %name NUM
     NUM
   | %name NUMS
-    ns NUM
+    NUM ns
 ;
 
 %%

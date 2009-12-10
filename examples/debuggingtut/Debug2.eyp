@@ -1,65 +1,64 @@
-# See http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
-# This files is almost like Debug1.eyp
-# It only changes the lexer line:
-#            s{^(\s)}{} and $tokenline += $1 =~ tr{\n}{};
-# by:
-#            s{^(\s+)}{} and $tokenline += $1 =~ tr{\n}{};
+%{
+=head1 SYNOPSIS
+
+See 
+   
+   http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+   file Debug2.eyp
+
+This grammar fixes the conflicts an bugs in Debug.eyp and Debug1.eyp
+
+Be sure C<DebugTail.pm> is reachable
+compile it with 
+
+      eyapp -b '' Debug2.eyp
+
+See the C<.output> file generated
+execute the generated modulino with:
+
+      ./Debug2.pm -t
+
+=head1 See also
+
+    Debug1.eyp Debug2.eyp DebugLookForward.eyp
+
+=cut
+
+our $VERSION = '0.01';
+use base q{DebugTail}; 
+
+%}
+
 %token D S
 
-%{
-our $VERSION = '0.01';
-%}
+%tree
 
 %%
 p:
-		ds ';' ss  
-	|	ss
+    %name P
+      ds ';' ss  
+  | %name SS
+      ss
 ;
 
+
 ds:
-	  ds ';' D
-	| D				
-    {
-      print "Reducing by rule:\n";
-      print "\tds -> D\n";
-      $_[1];
-    }
+    %name D2
+      ds ';' D
+  | %name D1
+      D       
 ;
 
 ss:
-	  S ';' ss			
-	| S				
+    %name S2
+    S ';' ss      
+  | %name S1
+    S       
 ;
+
 
 %%
 
-my $tokenline = 1;
+__PACKAGE__->main('Provide a statement like "D; D; S" and press <CR><CTRL-D>: ') unless caller;
 
-sub _Error {
-	my $parser = shift;
-	my ($token) = $parser->YYCurval;
-	my ($what) = $token ? "input: '$token'" : "end of input";
-	die "Syntax error near $what line num $tokenline\n";
-}
-
-my $input;
-
-sub _Lexer {
-	
-	for ($input) {
-      s{^(\s+)}{} and $tokenline += $1 =~ tr{\n}{};
-	    return ('',undef) unless $_;
-      return ($1,$1) if s/^(.)//;
-	}
-	return ('',undef);
-}
-
-sub Run {
-	my ($self) = shift;
-	
-	$input = shift;
-	
-	return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-                         yydebug => 0xF
-  );
-}
+1;

@@ -1,3 +1,16 @@
+  * Dynamic conflict  resolution:
+               if (is_A()) { $self->YYSetReduce('@', 'ruleA') }
+               else { $self->YYSetShift('@') }
+
+               - Copy input in a saved place. 
+               - Duplicate grammar for A.
+               - Parse using duplicated grammar
+
+  * Dynamic conflict resolution: test YYSetShift
+        The case where the default is a reduction is not solved. Investigate
+
+  * Lars request (see dir contributions)
+
   * Provide debugging support for standalone modules: currently skipped
   * Provide an argument named 
                                 'end_of_input' => [ token list: '', NUM, etc. ]

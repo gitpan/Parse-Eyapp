@@ -1,4 +1,8 @@
-# See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
+%{
+our $VERSION = '0.01';
+use base q{DebugTail}; 
+%}
+
 %strict
 %token ID INT NUM
 
@@ -7,7 +11,7 @@
 
 %tree bypass
 
-%expect 0 1
+%expect 0 1  # 0 shift-reduce conflicts, 1 reduce-reduce conflict
 
 %%
 prog:
@@ -26,7 +30,7 @@ stmt:
 
 expr:
     %name EXPID
-    ID
+    ID decexpconflict
   | %name NUM 
     NUM
   | %name TYPECAST
@@ -46,65 +50,72 @@ decl:
 
 declarator:
     %name DECID
-    ID
+    ID decexpconflict
   | '(' declarator ')'
+;
+
+decexpconflict:
+    /* empty. Just to solve the reduce-reduce conflict */
+      {
+        my $self = shift;
+
+        if (${$self->input()} =~ m{^[)\s]*[;=]\s*}) {
+          $self->YYSetReduce(')', 'DECID' );
+        }
+        else {
+          $self->YYSetReduce(')', 'EXPID' ); 
+        }
+      }
 ;
 
 %%
 
-sub _Error {
-  my $parser = shift;
+__PACKAGE__->lexer( 
+  sub {
+    my $self = shift;
+    
+    for (${$self->input()}) {
+      s{^(\s*)}{};
 
-  my ($token) = $parser->YYCurval;
-  my ($what) = $token ? "input: '$token'" : "end of input";
-  warn "Syntax error near $what\n";
-}
+      return ('', undef) unless $_;
 
-my $input;
+      return ('INT', $1) if s{^(int\b)}{};
 
-sub _Lexer {
-  my $self = shift;
-  
-  for ($input) {
-    s{^(\s*)}{};
+      return ('ID',  $1) if (s{^([a-zA-Z_]\w*)}{});
 
-    return ('',undef) unless $_;
+      return ('NUM', $1) if s/^(\d+)//;
 
-    # dynamically changing the action tables
-    return ('INT', $1) if s{^(int\b)}{};
-    if (s{^([a-zA-Z_]\w*)}{}) {
-      my $id = $1;
-      if (m{^[)\s]*[;=]\s*}) {
-        $self->YYLRAction([ ')'], 'DECID', 18);
-      }
-      else {
-        $self->YYLRAction([ ')' ], 'EXPID', 18); # the next 'state'
-      }
-      return ('ID', $id);
+      return ($1,    $1) if s/^(.)//;
     }
 
-    return ('NUM',$1) if s/^(\d+)//;
-    return ($1,$1) if s/^(.)//;
+    return ('',undef);
   }
-  return ('',undef);
+);
+
+unless (caller()) {
+  my $prompt = 'Try first "int (x) = 2;" then "int (x) + 2;" '.
+               '(press <CR><CTRL-D> to finish): ';
+  __PACKAGE__->main($prompt) 
 }
 
-sub Run {
-  my $debug = shift || 0;
-  $debug = 0x1F if $debug;
+####################################################
 
-  $input = <STDIN>;
+=head1 SYNOPSIS
 
-  my $self = __PACKAGE__->new();
+Compile it with
+ 
+   eyapp -b '' Cplusplus
 
-  print $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, yydebug => $debug,)->str."\n";
-}
+Run it with:
 
-sub TERMINAL::info { 
-  $_[0]->{attr} 
-}
+   ./Cplusplus.pm -t
 
-Run(@ARGV) unless caller;
+try with inputs:
+
+     int (x) = 2;
+     int (x) + 2;
+
+the result will be the generated abstract sytax tree
 
 =head1  C++ Ambiguities
 
@@ -131,8 +142,7 @@ Eyapp detects this as a reduce/reduce conflict:
 The C++ rule is: take it as a declaration if it looks as a declaration,
 otherwise is an expression.
 
-This Eyapp parser solves the problem by dynamically changing the parser
-(hacking).
+This Eyapp parser solves the problem by dynamically changing the parser.
 
 =head1 SEE ALSO
 

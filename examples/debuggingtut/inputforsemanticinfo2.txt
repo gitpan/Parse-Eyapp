@@ -1,4 +1,0 @@
-int A2 
-A2 = HEX(A23);
-A2 = HEX(A2)
-

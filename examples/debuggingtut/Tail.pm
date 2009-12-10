@@ -1,8 +1,8 @@
-package Math::Tail;
-use warnings;
+package Tail;
 use strict;
+use warnings;
+
 use Getopt::Long;
-use Pod::Usage;
 
 sub _Error {
   my $parser = shift;
@@ -17,43 +17,61 @@ sub _Error {
   my($token)=$parser->YYCurval;
   my($what)= $token->[0] ? "input: '$token->[0]'" : "end of input";
   my @expected = $parser->YYExpect();
+  my $next = substr($parser->{input}, pos($parser->{input}), 5);
   local $" = ', ';
   warn << "ERRMSG";
 
 Syntax error near $what (lin num $token->[1]). 
+Incoming text: 
+===
+$next
+===
 Expected one of these terminals: @expected
 ERRMSG
 }
 
-sub make_lexer {
-  my $input = shift;
-  my ($beginline, $lineno) = (1, 1);
 
-  return sub {
+{ # closure
+
+my $lineno = 1;
+my %lexemename;
+
+  sub set_lexemename {
+    my $self = shift;
+    my %names = @_;
+
+    my @keys = keys(%names);
+
+    @lexemename{@keys} = values(%names);
+
+    return @lexemename{@keys};
+  }
+
+  sub lexer {
     my $parser = shift;
 
-    $beginline = $lineno;
-    for ($$input) {    # contextualize
-      m{\G[ \t]*(\#.*)?}gc;
+    my $beginline = $lineno;
+    for ($parser->{input}) {    # contextualize
+      m{\G[ \t\n]*(\#.*)?}gc;
 
       m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM', [$1, $beginline]);
       m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR', [$1, $beginline]);
-      m{\G\n}gc                      and 
-                      do { $lineno++; return ("\n", ["\n", $beginline]) };
-      m{\G(.)}gc                     and return ($1,    [$1, $beginline]);
+      m{\G(.)}gc                     and do {
+        my $token = exists $lexemename{$1}? $lexemename{$1} : $1;
+        return ($token, [$token, $beginline]);
+      };
 
       return('',undef);
     }
   }
-}
+} # closure
 
 sub Run {
     my($self)=shift;
-    my $input = shift or die "Run error: No input given\n";
     my $yydebug = shift || 0;
 
     return $self->YYParse( 
-      yylex => make_lexer($input), 
+      yylex => \&lexer, 
       yyerror => \&_Error,
       yydebug => $yydebug, # 0x1F
     );
@@ -78,26 +96,20 @@ sub uploadfile {
 sub main {
   my $package = shift;
 
-  my $debug = 0;
+  my $debug = shift || 0;
   my $file = '';
-  my $help;
   my $result = GetOptions (
     "debug!" => \$debug,  
     "file=s" => \$file,
-    "help"   => \$help,
   );
-
-  pod2usage() if $help;
 
   $debug = 0x1F if $debug;
   $file = shift if !$file && @ARGV; 
 
-  my $prompt = "Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:\n";
-  my $input;
-  $input = uploadfile($file, $prompt);
-
   my $parser = $package->new();
-  $parser->Run( \$input, $debug );
+  my $prompt = "Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:\n";
+  $parser->{input} = uploadfile($file, $prompt);
+  $parser->Run( $debug );
 }
 
 sub semantic_error {
@@ -108,4 +120,3 @@ sub semantic_error {
 }
 
 1;
-

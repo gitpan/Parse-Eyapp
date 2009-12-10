@@ -1,12 +1,36 @@
-# See http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
-# Debug.eyp
-# See also: Debug1.eyp Debug2.eyp LookForward.eyp
+%{
+=head1 SYNOPSIS
+
+This grammar has an unsolved shift-reduce conflict.
+
+Be sure C<DebugTail.pm> is reachable.
+Compile it with 
+
+      eyapp -b '' Debug.eyp
+
+See the C<Debug.output> file generated.
+Execute the generated modulino with:
+
+      ./Debug.pm -d  # to activate debugging
+      ./Debug.pm -h  # for help
+
+The generated parser will not recognize any input, since its shifts forever.
+Try input C<'D; D; S'>.
+
+=head1 See also
+   
+    http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+
+    Debug1.eyp Debug2.eyp DebugLookForward.eyp DebugDynamicResolution.eyp
+
+=cut
+
+our $VERSION = '0.01';
+use base q{DebugTail}; 
+
+%}
 
 %token D S
-
-%{
-our $VERSION = '0.01';
-%}
 
 %%
 p:
@@ -16,12 +40,7 @@ p:
 
 ds:
     D ';' ds    
-  | D       
-    {
-      print "Reducing by rule:\n";
-      print "\tds -> D\n";
-      $_[1];
-    }
+  | D          /* this production is never used */ 
 ;
 
 ss:
@@ -31,39 +50,4 @@ ss:
 
 %%
 
-my $tokenline = 1;
-
-sub _Error {
-  my $parser = shift;
-
-  my ($token) = $parser->YYCurval;
-  my ($what) = $token ? "input: '$token'" : "end of input";
-  die "Syntax error near $what line num $tokenline\n";
-}
-
-my $input;
-
-sub _Lexer {
-  
-  for ($input) {
-    s{^(\s)}{} and $tokenline += $1 =~ tr{\n}{};
-    return ('',undef) unless $_;
-    return ($1,$1) if s/^(.)//;
-  }
-  return ('',undef);
-}
-
-sub Run {
-  my $debug = shift || 0;
-  $debug = 0x1F if $debug;
-
-  $input = <STDIN>;
-
-  my $self = __PACKAGE__->new();
-
-  return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-                         yydebug => $debug,
-  );
-}
-
-Run(@ARGV) unless caller;
+__PACKAGE__->main('Provide a statement like "D; D; S" and press <CR><CTRL-D>: ') unless caller;

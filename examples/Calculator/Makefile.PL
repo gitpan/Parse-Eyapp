@@ -4,15 +4,19 @@ use strict;
 use ExtUtils::MakeMaker;
 
 my $PUBLIC_PLACE = $ENV{PUBLIC_PLACE}   || "/home/$ENV{USER}/public_html/perlexamples/";
-my $MACHINES     = $ENV{REMOTEMACHINES} || 'orion beowulf';
+my $MACHINES     = $ENV{REMOTEMACHINES} || 'localhost';
 
 WriteMakefile(
     NAME              => 'Math::Calc',
     VERSION_FROM      => 'lib/Math/Calc.eyp',
-    PREREQ_PM         => { 'Parse::Eyapp' => '1.124', 'Devel::Cover' => '0.64', 'GRID::Machine' => '0.101', }, 
+    PREREQ_PM         => { 
+                               'Parse::Eyapp' => '1.124', 
+                             # 'Devel::Cover' => '0.64',   # Only for the DEVELOPER
+                             # 'GRID::Machine' => '0.101', # Only for the DEVELOPER
+                         }, 
     EXE_FILES         => [ 'scripts/calc.pl' ],
     ABSTRACT_FROM     => 'lib/Math/Calc.pod', 
-    AUTHOR            => 'Procesadores de Lenguaje <casiano@ull.es>',
+    AUTHOR            => 'Casiano Rodriguez-Leon <casiano@ull.es>',
 );
 
 sub MY::postamble {
@@ -20,14 +24,16 @@ sub MY::postamble {
   return '' unless $ENV{DEVELOPER};
 
   $_ = targets();
+
   s/<<PUBLIC_PLACE>>/$PUBLIC_PLACE/ge;
+
   s/<<MACHINES>>/$MACHINES/ge;
+
   return $_;
 }
 
 sub targets {
 
-# ctags --langdef=eyapp --langmap=eyapp:.eyp --regex-eyapp='/^([a-zA-Z][a-zA-Z0-9_]*[ \t]*:)/\1/' lib/Math/Calc.eyp
   return <<'EOM';
 EYAPP=eyapp
 # Set EYAPPENV environment variable to '-s' if you want a standalone
@@ -37,7 +43,7 @@ PLTAGS=/usr/share/vim/vim71/tools/pltags.pl
 
 %.pm:%.eyp 
 	${EYAPP}  ${EYAPPFLAGS} -o $@ $*
-	perl -Ilib -c $@
+	${PERL} -Ilib -c $@
 
 calc: lib/Math/Calc.pm 
 
@@ -72,16 +78,8 @@ tags:
 	${PLTAGS} scripts/*.pl lib/Math/Tail.pm lib/Math/*.eyp Makefile.PL 
 	ctags -a 
 
-# Commit to group repository; Checkout google-code copy; Export from group repository overwriting files; 
-# commit to google. The editor may be open twice asking for messages
 google:
-	svn commit 
-	rm -fR /tmp/google-calculator
-	svn checkout https://misc-perl-utilities.googlecode.com/svn/trunk/calculator /tmp/google-calculator --username casiano.rodriguez.leon
-	cd /tmp/google-calculator; \
-    svn export --force svn+ssh://casiano@orion.pcg.ull.es/var/svn/casiano/PL/YappWithDefaultAction/trunk/examples/Calculator .
-	echo issue a commit in /tmp/google-calculator!
-	echo svn commit /tmp/google-calculator
+	svn commit -m ${M}
 EOM
 }
 

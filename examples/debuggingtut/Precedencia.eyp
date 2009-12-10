@@ -1,11 +1,45 @@
+%{
+=head1 SYNOPSIS
+
+Be sure Math::Tail in examples/Calculator/lib is reachable
+compile it with 
+
+  eyapp -b '/usr/bin/perl -I ../Calculator/lib' Precedencia.eyp
+
+execute the generated modulino with:
+
+      ./Precedencia.pm -t
+
+Try with inputs:
+   
+    4@3@5
+    4@3&5
+    4&3@5
+    4&3&5
+
+The result will be the term describing the generated
+Abstract Syntax Tree 
+
+=head1 See also
+
+    http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+
+=cut
+
+our $VERSION = '0.01';
+use base q{Math::Tail};
+
+%}
+
 %token NUM
 %left '@'
 %right '&'  dummy
 
-%tree
+
+%tree bypass
 %%
 list
-    :
+    : /* empty */
     | list '\n' {}
     | list e { print $_[2]->str."\n" }
     ;
@@ -20,111 +54,10 @@ e : %name NUM
 
 %%
 
-use Getopt::Long;
-
-sub _Error {
-  my $parser = shift;
-  my $yydata = $parser->YYData;
-
-    exists $yydata->{ERRMSG}
-  and do {
-      warn $yydata->{ERRMSG};
-      delete $yydata->{ERRMSG};
-      return;
-  };
-  my($token)=$parser->YYCurval;
-  my($what)= $token->[0] ? "input: '$token->[0]'" : "end of input";
-  my @expected = $parser->YYExpect();
-  my $next = substr($parser->{input}, pos($parser->{input}), 5);
-  local $" = ', ';
-  warn << "ERRMSG";
-
-Syntax error near $what (lin num $token->[1]). 
-Incoming text: 
-===
-$next
-===
-Expected one of these terminals: @expected
-ERRMSG
-}
-
-
-{
-
-my $lineno = 1;
-
-  sub lexer {
-    my $parser = shift;
-
-    my $beginline = $lineno;
-    for ($parser->{input}) {    # contextualize
-      m{\G[ \t]*(\#.*)?}gc;
-
-      m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM', [$1, $beginline]);
-      m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR', [$1, $beginline]);
-      m{\G(.)}gsc                    and return ($1,    [$1, $beginline]);
-
-      return('',undef);
-    }
-  }
-}
-sub Run {
-    my($self)=shift;
-    my $yydebug = shift || 0;
-
-    return $self->YYParse( 
-      yylex => \&lexer, 
-      yyerror => \&_Error,
-      yydebug => $yydebug, # 0x1F
-    );
-}
-
-sub uploadfile {
-  my $file = shift;
-  my $msg = shift;
-
-  my $input = '';
-  eval {
-    $input = Parse::Eyapp::Base::slurp_file($file) 
-  };
-  if ($@) {
-    print $msg;
-    local $/ = undef;
-    $input = <STDIN>;
-  }
-  return $input;
-}
-
-sub main {
-  my $package = shift;
-
-  my $debug = 0;
-  my $file = '';
-  my $result = GetOptions (
-    "debug!" => \$debug,  
-    "file=s" => \$file,
-  );
-
-  $debug = 0x1F if $debug;
-  $file = shift if !$file && @ARGV; 
-
-  my $parser = $package->new();
-  my $prompt = "Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:\n";
-  $parser->{input} = uploadfile($file, $prompt);
-  $parser->Run( $debug );
-}
-
-sub semantic_error {
-  my ($parser, $msg) = @_;
-
-  $parser->YYData->{ERRMSG} = $msg;
-  $parser->YYError; 
-}
-
 sub TERMINAL::info {
   $_[0]->{attr}[0]
 }
 
-__PACKAGE__->main unless caller();
+__PACKAGE__->main('Input (try st. like 2@3&4<CR><CTRL-D>): ') unless caller();
 
 1;

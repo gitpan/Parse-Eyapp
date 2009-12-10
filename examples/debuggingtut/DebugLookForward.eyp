@@ -1,67 +1,79 @@
 /*VIM: set ts=2 */
-# See http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
-# See also: Debug.eyp Debug1.eyp Debug2.eyp 
-%token D S
-%token SEMICOLONS SEMICOLOND
-
 %{
+=head1 SYNOPSIS
+
+See 
+   
+   http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+   file DebugLookForward.eyp
+
+This grammar fixes the conflicts an bugs in Debug.eyp and Debug1.eyp
+
+Be sure C<DebugTail.pm> is reachable
+compile it with 
+
+      eyapp -b '' DebugLookForward.eyp
+
+execute the generated modulino with:
+
+      ./DebugLookForward.pm -t
+
+=head1 See also
+
+    Debug.eyp Debug1.eyp Debug2.eyp 
+
+=cut
+
 our $VERSION = '0.01';
+use base q{DebugTail}; 
+
 %}
+
+%token D S
+%syntactic token SEMICOLONS SEMICOLOND
+
+%tree
 
 %%
 p:
+    %name P
     ds SEMICOLONS ss  
-  | ss
+  | %name SS
+    ss
 ;
 
 ds:
-    D SEMICOLOND ds   
-  | D       
-    {
-      print "Reducing by rule:\n";
-      print "\tds -> D\n";
-      $_[1];
-    }
+    %name D2
+      D SEMICOLOND ds   
+  | %name D1
+      D       
 ;
 
 ss:
-    S SEMICOLONS ss     
-  | S       
+    %name S2
+      S SEMICOLONS ss     
+  | %name S1
+      S       
 ;
 
 %%
 
-my $tokenline = 1;
+__PACKAGE__->lexer(
+  sub {
+    my $self = shift;
+    
+    for (${$self->input()}) {
+       s{^(\s+)}{} and $self->tokenline($1 =~ tr{\n}{});
+       return ('',undef) unless $_;
 
-sub _Error {
-  my $parser = shift;
-  my ($token) = $parser->YYCurval;
-  my ($what) = $token ? "input: '$token'" : "end of input";
-  die "Syntax error near $what line num $tokenline\n";
-}
-
-my $input;
-
-sub _Lexer {
-  
-  for ($input) {
-     s{^(\s+)}{} and $tokenline += $1 =~ tr{\n}{};
-     return ('',undef) unless $_;
-
-     return ($1,$1) if s/^([sSDd])//;
-     return ('SEMICOLOND', 'SEMICOLOND') if s/^;\s*D/D/;
-     return ('SEMICOLONS', 'SEMICOLONS') if s/^;\s*S/S/;
-     die "Syntax error at line num $tokenline:".substr($_,0,10)."\n";
+       return ($1,$1) if s/^([sSDd])//;
+       return ('SEMICOLOND', 'SEMICOLOND') if s/^;\s*D/D/;
+       return ('SEMICOLONS', 'SEMICOLONS') if s/^;\s*S/S/;
+       die "Syntax error at line num ${$self->tokenline()}: ${substr($_,0,10)}\n";
+    }
+    return ('',undef);
   }
-  return ('',undef);
-}
+);
 
-sub Run {
-  my ($self) = shift;
-  
-  $input = shift;
-  
-  return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-                         #yydebug => 0x1F
-  );
-}
+__PACKAGE__->main unless caller();
+

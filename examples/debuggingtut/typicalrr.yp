@@ -1,0 +1,21 @@
+%token ID NUM 
+
+%%
+s:
+      /* empty */
+    | s ws
+    | s ns 
+;
+
+ns:
+      /* empty */
+    | ns NUM 
+;
+
+ws:
+      /* empty */
+    | ws ID 
+;
+
+%%
+

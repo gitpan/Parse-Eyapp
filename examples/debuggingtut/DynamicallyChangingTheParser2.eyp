@@ -1,15 +1,36 @@
-# See section 'Hacking the Parsing Tables: ACTION and GOTOs' in
-# http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
-#
-# See also: Debug.eyp Debug1.eyp Debug2.eyp  LookForward.eyp
-# DynamicallyChangingTheParser.eyp This example illustrates how to dynamically
-# change the behavior of the parser
+%{
+=head1 SYNOPSIS
+
+This example is here only for historical reasons.
+The method C<YYRestoreLRAction> is deprecated.
+
+See section 'SOLVING CONFLICTS WITH THE POSTPONED CONFLICT STRATEGY' in
+http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+
+This example illustrates how to dynamically
+change the behavior of the parser for a shift-reduce conflict
+   
+Be sure C<DebugTail.pm> is reachable
+compile it with 
+
+      eyapp -b '' DynamicallyChangingTheParser2.eyp
+
+execute the generated modulino with the option C<-t>:
+
+      ./DynamicallyChangingTheParser2.pm -t
+
+=head1 See instead
+
+    DynamicallyChangingTheParser.eyp
+
+=cut
+
+our $VERSION = '0.01';
+use base q{DebugTail}; 
+
+%}
 
 %token D S
-
-%{
-our $VERSION = '0.01'; 
-%}
 
 %tree bypass
 
@@ -52,7 +73,7 @@ conflict:
       {
         my $self = shift;
 
-        $self->YYSetReduce(';', 'LAST_D' ) if ($self->{INPUT} =~ m{^\s*;\s*S});
+        $self->YYSetReduce(';', 'LAST_D' ) if (${$self->input()} =~ m{^\s*;\s*S});
 
         undef; # skip this node in the AST
       }
@@ -60,44 +81,5 @@ conflict:
 
 %%
 
-sub _Error {
-  my $parser = shift;
-
-  my ($token) = $parser->YYCurval;
-  my ($what) = $token ? "input: '$token'" : "end of input";
-  warn "Syntax error near $what\n";
-}
-
-sub _Lexer {
-  my $self = shift;
-  
-  for ($self->{INPUT}) {
-    s{^(\s*)}{};
-   
-    return ('',undef) unless $_;
-
-    return ($1,$1) if s/^(.)//;
-  }
-  return ('',undef);
-}
-
-sub Run {
-  my $debug = shift || 0;
-  $debug = 0x1F if $debug;
-
-  my $self = __PACKAGE__->new();
-  $self->{INPUT} = <STDIN>;
-
-  print 
-    $self->YYParse( 
-      yylex => \&_Lexer, 
-      yyerror => \&_Error, 
-      yydebug => $debug,
-    )->str."\n";
-}
-
-Run(@ARGV) unless caller;
-
-sub TERMINAL::info {
-  $_[0]->{attr};
-}
+my $prompt = 'Provide a statement like "{D; S} {D; D; S}" and press <CR><CTRL-D>: ';
+__PACKAGE__->main($prompt) unless caller;

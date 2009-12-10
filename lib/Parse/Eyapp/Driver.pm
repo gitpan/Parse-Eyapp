@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.147";
+$VERSION = "1.148";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -333,11 +333,17 @@ sub YYRestoreLRAction {
 sub YYSetReduce {
   my ($self, $token, $action) = @_;
 
+  croak "YYSetReduce error: specify a production" unless defined($action);
+
   # Conflict state
   my $conflictstate = $self->YYNextState();
 
   # Action can be given using the name of the production
-  $action = -$self->YYIndex($action) unless looks_like_number($action);
+  unless (looks_like_number($action)) {
+    my $actionnum = $self->YYIndex($action);
+    croak "YYSetReduce error: can't find production '$action'. Did you forget to name it?" unless looks_like_number($actionnum);
+    $action = -$actionnum;
+  }
 
   $token = [ $token ] unless ref($token);
 
@@ -345,6 +351,32 @@ sub YYSetReduce {
   for (@$token) {
     $self->{CONFLICT}{$conflictname}{$_}  = [ $conflictstate,  $self->{STATES}[$conflictstate]{ACTIONS}{$_} ];
     $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $action;
+  }
+}
+
+sub YYSetShift {
+  my ($self, $token) = @_;
+
+  # my ($self, $token, $action) = @_;
+  # $action is syntactic sugar ...
+
+  # Conflict state
+  my $conflictstate = $self->YYNextState();
+
+  $token = [ $token ] unless ref($token);
+
+  my $conflictname = $self->YYLhs;
+  for (@$token) {
+    if (defined($self->{CONFLICT}{$conflictname}{$_}))  {
+      my ($conflictstate2, $action) = @{$self->{CONFLICT}{$conflictname}{$_}};
+      # assert($conflictstate == $conflictstate2) 
+
+      $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $self->{CONFLICT}{$conflictname}{$_}[1];
+    }
+    else {
+      #croak "YYSetShift error. No shift action found";
+      # shift is the default ...  hope to be lucky!
+    }
   }
 }
 
@@ -610,7 +642,7 @@ sub YYBuildAST {
   my $node = bless {}, $class;
 
   for(my $i = 0; $i < @right; $i++) {
-    $_ = $right[$i]; # The symbol
+    local $_ = $right[$i]; # The symbol
     my $ch = $_[$i]; # The attribute/reference
     if ($self->YYIssemantic($_)) {
       my $class = $PREFIX.'TERMINAL';

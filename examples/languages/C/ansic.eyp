@@ -3,7 +3,6 @@
 # That will produce a stand-alone modulino.
 # Run it with:
 #          $ ./ansic.pm -file prueba.c         
-# or
 #         
 %strict
 
