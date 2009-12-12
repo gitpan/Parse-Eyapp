@@ -443,7 +443,7 @@ sub _Conflicts {
   require Data::Dumper;
   Data::Dumper->import;
   local $Data::Dumper::Indent = 0;
-  $_ = Dumper($conflicts);
+  local $_ = Dumper($conflicts);
 
   s/^\$VAR\d*\s*=\s*//;
   $_

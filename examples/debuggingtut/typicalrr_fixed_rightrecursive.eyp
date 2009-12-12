@@ -25,23 +25,23 @@ use base q{RRTail};
 %}
 %right ID NUM
 
-%tree bypass
+%tree
 
 %%
 s: 
      %name EMPTY
      /* empty */
-   | %name WORDS
+   | %name LIST
       ws s 
-   | %name NUMS
+   | %name LIST
       ns s 
  ;
 
 ws:
      %name ID
-      ID
-   |  %name IDS
-      ID ws
+     ID
+   | %name IDS
+     ws ID
 ;
 
 ns:

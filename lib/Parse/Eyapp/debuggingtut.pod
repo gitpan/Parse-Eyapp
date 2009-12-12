@@ -233,74 +233,60 @@ of declarations (C<D> stands for declaration)
 followed by lists of sentences (C<S> stands for statement)
 separated by semicolons:
 
-  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n Debug.eyp
-     1  # Debug.eyp
-     2  # compile it eyapp -b Debug.eyp -o Debug.pl to produce an
-     3  # executable
-     4
-     5  %token D S
-     6
-     7  %{
-     8  our $VERSION = '0.01';
-     9  %}
-    10
-    11  %%
-    12  p:
-    13      ds ';' ss
-    14    | ss
-    15  ;
+  pl@nereida:~/LEyapp/examples/debuggingtut$ cat -n Debug.eyp                   
+     1  %{                                                                    
+     2  =head1 SYNOPSIS                                                       
+     3                                                                        
+     4  This grammar has an unsolved shift-reduce conflict.                   
+     5                                                                        
+     6  Be sure C<DebugTail.pm> is reachable.                                 
+     7  Compile it with                                                       
+     8                                                                        
+     9        eyapp -b '' Debug.eyp                                           
+    10                                                                        
+    11  See the C<Debug.output> file generated.                               
+    12  Execute the generated modulino with:                                  
+    13                                                                        
+    14        ./Debug.pm -d  # to activate debugging                          
+    15        ./Debug.pm -h  # for help
     16
-    17  ds:
-    18      D ';' ds
-    19    | D
-    20      {
-    21        print "Reducing by rule:\n";
-    22        print "\tds -> D\n";
-    23        $_[1];
-    24      }
-    25  ;
-    26
-    27  ss:
-    28      S ';' ss
-    29    | S
-    30  ;
-    31
-    32  %%
-    33
-    34  my $tokenline = 1;
-    35
-    36  sub _Error {
-    37    my $parser = shift;
-    38
-    39    my ($token) = $parser->YYCurval;
-    40    my ($what) = $token ? "input: '$token'" : "end of input";
-    41    die "Syntax error near $what line num $tokenline\n";
-    42  }
-    43
-    44  my $input;
+    17  The generated parser will not recognize any input, since its shifts forever.
+    18  Try input C<'D; D; S'>.
+    19
+    20  =head1 See also
+    21
+    22      http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
+    23
+    24      Debug1.eyp Debug2.eyp DebugLookForward.eyp DebugDynamicResolution.eyp
+    25
+    26  =cut
+    27
+    28  our $VERSION = '0.01';
+    29  use base q{DebugTail};
+    30
+    31  %}
+    32
+    33  %token D S
+    34
+    35  %%
+    36  p:
+    37      ds ';' ss
+    38    | ss
+    39  ;
+    40
+    41  ds:
+    42      D ';' ds
+    43    | D          /* this production is never used */
+    44  ;
     45
-    46  sub _Lexer {
-    47
-    48    for ($input) {
-    49      s{^(\s)}{} and $tokenline += $1 =~ tr{\n}{};
-    50      return ('',undef) unless $_;
-    51      return ($1,$1) if s/^(.)//;
-    52    }
-    53    return ('',undef);
-    54  }
-    55
-    56  sub Run {
-    57
-    58    $input = <>;
-    59
-    60    my $self = __PACKAGE__->new();
-    61
-    62    return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-    63                           yydebug => 0x1F
-    64    );
-    65  }
-    66
-    67  Run() unless caller;
+    46  ss:
+    47      S ';' ss
+    48    | S
+    49  ;
+    50
+    51  %%
+    52
+    53  __PACKAGE__->main('Provide a statement like "D; D; S" and press <CR><CTRL-D>: ') unless caller;
 
 
 =head2 Focusing in the Grammar
@@ -551,7 +537,7 @@ as it was done for the calculator example
 in L<Parse::Eyapp::eyappintro>. If we run the analyzer
 it will refuse to accept correct entries like C<D;D;S>: 
 
-  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -b -o debug.pl Debug.eyp
+  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp -b '' -o debug.pl Debug.eyp
   1 shift/reduce conflict (see .output file)
   State 4: shifts:
     to state    8 with ';'
@@ -627,16 +613,13 @@ priorities and reorganizing the rules.
 Rewriting the recursive rule for C<ds> to
 be let recursive solves the conflict:
 
-  pl@nereida:~/LEyapp/examples$ sed -ne '/^ds:/,/^;/p' Debug1.eyp | cat -n
-   1  ds:
-   2            ds ';' D
-   3          | D
-   4      {
-   5        print "Reducing by rule:\n";
-   6        print "\tds -> D\n";
-   7        $_[1];
-   8      }
-   9  ;
+  pl@nereida:~/LEyapp/examples/debuggingtut$ sed -ne '/^ds:/,/^;/p' Debug1.eyp | cat -n
+     1  ds:
+     2      %name D2
+     3        ds ';' D
+     4    | %name D1
+     5        D
+     6  ;
 
 Now, for any phrase matching the pattern C<D ; ...> the action to build
 the tree is to reduce by
@@ -669,108 +652,99 @@ C<SEMICOLONS> if it is an C<S> and
 C<SEMICOLOND> if it is an C<D>.
 Here is a solution based in this idea:
 
-  Eyapp/examples/debuggingtut$ cat -n DebugLookForward.eyp
-     1  /*VIM: set ts=2 */
-     2  %token D S
-     3  %token SEMICOLONS SEMICOLOND
-     4
-     5  %{
-     6  our $VERSION = '0.01';
-     7  %}
-     8
-     9  %%
-    10  p:
-    11      ds SEMICOLONS ss
-    12    | ss
-    13  ;
-    14
-    15  ds:
-    16      D SEMICOLOND ds
-    17    | D
-    18      {
-    19        print "Reducing by rule:\n";
-    20        print "\tds -> D\n";
-    21        $_[1];
-    22      }
-    23  ;
-    24
-    25  ss:
-    26      S SEMICOLONS ss
-    27    | S
-    28  ;
-    29
-    30  %%
-    31
-    32  my $tokenline = 1;
-    33
-    34  sub _Error {
-    35    my $parser = shift;
-    36    my ($token) = $parser->YYCurval;
-    37    my ($what) = $token ? "input: '$token'" : "end of input";
-    38    die "Syntax error near $what line num $tokenline\n";
-    39  }
-    40
-    41  my $input;
-    42
-    43  sub _Lexer {
+  pl@nereida:~/LEyapp/examples/debuggingtut$ cat -n DebugLookForward.eyp               
+     1  /*VIM: set ts=2 */                                                           
+     2  %{                                                                           
+     3  =head1 SYNOPSIS                                                              
+     4                                                                               
+     5  See                                                                          
+     6                                                                               
+     7     http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut                 
+     8     file DebugLookForward.eyp                                                 
+     9                                                                               
+    10  This grammar fixes the conflicts an bugs in Debug.eyp and Debug1.eyp         
+    11                                                                               
+    12  Be sure C<DebugTail.pm> is reachable                                         
+    13  compile it with                                                              
+    14                                                                               
+    15        eyapp -b '' DebugLookForward.eyp                                       
+    16                                                                               
+    17  execute the generated modulino with:                                         
+    18                                                                               
+    19        ./DebugLookForward.pm -t                                               
+    20                                                                               
+    21  =head1 See also                                                              
+    22                                                                               
+    23      Debug.eyp Debug1.eyp Debug2.eyp                                          
+    24                                                                               
+    25  =cut                                                                         
+    26                                                                               
+    27  our $VERSION = '0.01';                                                       
+    28  use base q{DebugTail};                                                       
+    29                                                                               
+    30  %}                                                                           
+    31                                                                               
+    32  %token D S                                                                   
+    33  %syntactic token SEMICOLONS SEMICOLOND                                       
+    34                                                                               
+    35  %tree                                                                        
+    36                                                                               
+    37  %%                                                                           
+    38  p:                                                                           
+    39      %name P                                                                  
+    40      ds SEMICOLONS ss                                                         
+    41    | %name SS
+    42      ss
+    43  ;
     44
-    45    for ($input) {
-    46       s{^(\s)}{} and $tokenline += $1 =~ tr{\n}{};
-    47       return ('',undef) unless $_;
-    48       return ($1,$1) if s/^([sSDd])//;
-    49       return ('SEMICOLOND', 'SEMICOLOND') if s/^(;)\s*(D)/D/;
-    50       return ('SEMICOLONS', 'SEMICOLONS') if s/^(;)\s*(S)/S/;
-    51       die "Syntax error at line num $tokenline:".substr($_,0,10)."\n";
-    52    }
-    53    return ('',undef);
-    54  }
-    55
-    56  sub Run {
-    57    my ($self) = shift;
+    45  ds:
+    46      %name D2
+    47        D SEMICOLOND ds
+    48    | %name D1
+    49        D
+    50  ;
+    51
+    52  ss:
+    53      %name S2
+    54        S SEMICOLONS ss
+    55    | %name S1
+    56        S
+    57  ;
     58
-    59    $input = shift;
+    59  %%
     60
-    61    return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-    62                           #yydebug => 0x1F
-    63    );
-    64  }
+    61  __PACKAGE__->lexer(
+    62    sub {
+    63      my $self = shift;
+    64
+    65      for (${$self->input()}) {
+    66         s{^(\s+)}{} and $self->tokenline($1 =~ tr{\n}{});
+    67         return ('',undef) unless $_;
+    68
+    69         return ($1,$1) if s/^([sSDd])//;
+    70         return ('SEMICOLOND', 'SEMICOLOND') if s/^;\s*D/D/;
+    71         return ('SEMICOLONS', 'SEMICOLONS') if s/^;\s*S/S/;
+    72         die "Syntax error at line num ${$self->tokenline()}: ${substr($_,0,10)}\n";
+    73      }
+    74      return ('',undef);
+    75    }
+    76  );
+    77
+    78  __PACKAGE__->main unless caller();
 
 
 =head1 ERRORS DURING TREE CONSTRUCTION
 
-Let us write the typical client program for the parser 
-in C<Debug1>:
+Though C<Debug1.pm> seems to work:
 
-  pl@nereida:~/LEyapp/examples$ cat -n usedebug1.pl
-   1  #!/usr/bin/perl -w
-   2  # usetreebypass.pl prueba2.exp
-   3  use strict;
-   4  use Debug1;
-   5
-   6  sub slurp_file {
-   7    my $fn = shift;
-   8    my $f;
-   9
-  10    local $/ = undef;
-  11    if (defined($fn)) {
-  12      open $f, $fn  or die "Can't find file $fn!\n";
-  13    }
-  14    else {
-  15      $f = \*STDIN;
-  16    }
-  17    my $input = <$f>;
-  18    return $input;
-  19  }
-  20
-  21  my $input = slurp_file( shift() );
-  22
-  23  my $parser = Debug1->new();
-  24
-  25  $parser->Run($input);
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Debug1.pm -t
+  Try first "D;S" and then "D; D;  S" (press <CR><CTRL-D> to finish): D;D;S
+  P(D2(D1(TERMINAL[D]),TERMINAL[D]),S1(TERMINAL[S]))
 
-When executing the program we observe an abnormal behavior:
+There are occasions where we observe an abnormal behavior:
 
-  examples/debuggingtut$ usedebug1.pl
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Debug1.pm -t
+  Try first "D;S" and then "D; D;  S" (press <CR><CTRL-D> to finish):
   D
 
   ;
@@ -779,12 +753,11 @@ When executing the program we observe an abnormal behavior:
 
   ;
   S
-  Reducing by rule:
-          ds -> D
-  Syntax error near end of input line num 2
+  Syntax error near end of input line num 3. Expecting (;)
 
-We activate the option C<yydebug =E<gt> 0xF>
-in the call to a C<YYParser>.
+
+We can activate the option C<yydebug =E<gt> 0xF>
+in the call to the parser method C<YYParser>.
 The integer parameter C<yydebug> of C<new> and C<YYParse>
 controls the level of debugging. Different levels of 
 verbosity can be obtained by setting the bits of this
@@ -807,13 +780,16 @@ argument. It works as follows:
 Let us see what happens when the input is C<D;S>. We have introduced
 some white spaces and carriage returns between the terminals:
 
-  pl@nereida:~/LEyapp/examples$ usedebug1.pl
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Debug1.pm -d
+  Try first "D;S" and then "D; D;  S" (press <CR><CTRL-D> to finish):
   D
 
   ;
 
-  S
+  D
 
+  ;
+  S
   ----------------------------------------
   In state 0:
   Stack:[0]
@@ -823,14 +799,12 @@ some white spaces and carriage returns between the terminals:
   In state 4:
   Stack:[0,4]
   Don't need token.
-  Reduce using rule 4 (ds --> D): Reducing by rule:
-          ds -> D
-  Back to state 0, then go to state 5.
+  Reduce using rule 4 (ds --> D): Back to state 0, then go to state 5.
   ----------------------------------------
   In state 5:
   Stack:[0,5]
   Need token. Got ><
-  Syntax error near end of input line num 1
+  Syntax error near end of input line num 3. Expecting (;)
 
 What's going on?
 After reading the carriage return 
@@ -841,57 +815,66 @@ the parser receives an end of file. ¿Why?.
 Something is going wrong in the communications between lexical analyzer
 and parser. Let us review the lexical analyzer:
 
-  pl@nereida:~/LEyapp/examples$ sed -ne '/sub.*_Lexer/,/^}/p' Debug1.eyp | cat -n
-   1  sub _Lexer {
-   2
-   3          for ($input) {
-   4             s{^(\s)}{} and $tokenline += $1 =~ tr{\n}{};
-   5             return ('',undef) unless $_;
-   6             return ($1,$1) if s/^(.)//;
-   7          }
-   8          return ('',undef);
-   9  }
+  pl@nereida:~/LEyapp/examples/debuggingtut$ sed -ne '/lexer/,/^)/p' Debug1.eyp | cat -n
+     1  __PACKAGE__->lexer(
+     2    sub {
+     3      my $self = shift;
+     4
+     5      for (${$self->input()}) {  # contextualize
+     6          s{^(\s)}{} and $self->tokenline($1 =~ tr{\n}{});
+     7
+     8          return ('', undef) unless $_;
+     9          return ($1, $1) if s/^(.)//;
+    10      }
+    11      return ('', undef);
+    12    }
+    13  );
 
-The error is at line 4. Only a single white space is eaten!
-The second white in the input does not match lines 5 and 6 and the 
-contextualizing C<for> finishes. Line 8 the returns
+
+The error is at line 6. Only a single white space is eaten!
+The second carraige return in the input does not match lines 8 and 9 and the 
+contextualizing C<for> finishes. Line 11 then unconditionally returns
 the C<('',undef)> signaling the end of input.
 
-Let us write a new version C<Debug2.eyp> that fixes the problem:
+The grammar in file C<Debug2.eyp> fixes the problem:
+Now the analysis seems to work for this kind of input:
 
-  pl@nereida:~/LEyapp/examples$ sed -ne '/sub.*_Lexer/,/^}/p' Debug2.eyp | cat -n
-   1  sub _Lexer {
-   2
-   3          for ($input) {
-   4             s{^(\s+)}{} and $tokenline += $1 =~ tr{\n}{};
-   5             return ('',undef) unless $_;
-   6             return ($1,$1) if s/^(.)//;
-   7          }
-   8          return ('',undef);
-   9  }
-
-
-Now the analysis seems to work:
-
-  pl@nereida:~/LEyapp/examples$ usedebug2.pl
-  D
+  pl@nereida:~/LEyapp/examples/debuggingtut$ eyapp -b '' Debug2.eyp                     
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Debug2.pm -t -d                          
+  Provide a statement like "D; D; S" and press <CR><CTRL-D>:                            
+  D                                                                                     
 
   ;
 
-  S
+  D
 
+  ;
+  S
   ----------------------------------------
-  In state 0:
-  Stack:[0]
+  In state 0:                             
+  Stack:[0]                               
+  Need token. Got >D<                     
+  Shift and go to state 4.                
+  ----------------------------------------
+  In state 4:                             
+  Stack:[0,4]                             
+  Don't need token.                       
+  Reduce using rule 4 (ds --> D): Back to state 0, then go to state 5.
+  ----------------------------------------                            
+  In state 5:                                                         
+  Stack:[0,5]                                                         
+  Need token. Got >;<                                                 
+  Shift and go to state 8.                                            
+  ----------------------------------------                            
+  In state 8:
+  Stack:[0,5,8]
   Need token. Got >D<
-  Shift and go to state 4.
+  Shift and go to state 11.
   ----------------------------------------
-  In state 4:
-  Stack:[0,4]
+  In state 11:
+  Stack:[0,5,8,11]
   Don't need token.
-  Reduce using rule 4 (ds --> D): Reducing by rule:
-          ds -> D
-  Back to state 0, then go to state 5.
+  Reduce using rule 3 (ds --> ds ; D): Back to state 0, then go to state 5.
   ----------------------------------------
   In state 5:
   Stack:[0,5]
@@ -921,6 +904,7 @@ Now the analysis seems to work:
   Stack:[0,2,7]
   Don't need token.
   Accept.
+  P(D2(D1(TERMINAL[D]),TERMINAL[D]),S1(TERMINAL[S]))
 
 =head1 THE LR PARSING ALGORITHM: UNDERSTANDING THE OUTPUT OF C<yydebug> 
 
@@ -981,7 +965,7 @@ Function C<pop(k)> extracts C<k> states from the stack. The call C<$state-E<gt>a
 returns the attribute associated with C<$state>. The call C<$parser-E<gt>Semantic{A -E<gt>alpha}>
 returns the semantic action associated with production C<A -E<gt>alpha>.
 
-Let us see a trace for the small gramar in C<examples/debuggingtut/aSb.yp>:
+Let us see a trace for the small grammar in C<examples/debuggingtut/aSb.yp>:
 
   pl@nereida:~/LEyapp/examples$ /usr/local/bin/paste.pl aSb.yp aSb.output | head -5
   %%                                             | Rules:
@@ -1054,16 +1038,17 @@ actions and transitions to take:
 When executed with C<yydebug> set and input C<aabb>  we obtain the following 
 output:
 
-  pl@nereida:~/LEyapp/examples$ use_aSb.pl
-  ----------------------------------------
-  In state 0:
-  Stack:[0]
-  aabb                       <----------- user input
-  Need token. Got >a<
-  Shift and go to state 2.  
-  ----------------------------------------
-  In state 2:
-  Stack:[0,2]
+  pl@nereida:~/LEyapp/examples/debuggingtut$ eyapp -b '' -o use_aSb.pl aSb
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./use_aSb.pl -d
+  Provide a statement like "a a b b" and press <CR><CTRL-D>: aabb
+  ----------------------------------------                       
+  In state 0:                                                    
+  Stack:[0]                                                      
+  Need token. Got >a<                                            
+  Shift and go to state 2.                                       
+  ----------------------------------------                       
+  In state 2:                                                    
+  Stack:[0,2]                                                    
   Need token. Got >a<
   Shift and go to state 2.
   ----------------------------------------
@@ -1072,11 +1057,6 @@ output:
   Need token. Got >b<
   Reduce using rule 1 (S --> /* empty */): S -> epsilon
   Back to state 2, then go to state 4.
-
-The output C<S-E<gt> epsilon>
-is consequence of the semantic action
-associated with such production rule.
-
   ----------------------------------------
   In state 4:
   Stack:[0,2,2,4]
@@ -1087,20 +1067,16 @@ associated with such production rule.
   Don't need token.
   Reduce using rule 2 (S --> a S b): S -> a S b
   Back to state 2, then go to state 4.
+  ----------------------------------------
 
-As a result of reducing by rule 2 the semantic 
-action is executed 
-
-                { print "S -> a S b\n" }
-
-and the three last
+As a result of reducing by rule 2 
+the three last
 visited states are popped
 from the stack, and the stack becomes C<[0,2]>. But 
 that means that we are now in state 2 seeing a C<S>. 
-If you look at the table above being in state2 and seeing a C<S>
+If you look at the table above being in state 2 and seeing a C<S>
 we go to state 4.
 
-  ----------------------------------------
   In state 4:
   Stack:[0,2,4]
   Need token. Got >b<
@@ -1124,8 +1100,6 @@ we go to state 4.
 
 
 
-
-
 =head1 ERRORS INSIDE SEMANTIC ACTIONS
 
 A third type of error occurs when the code inside
@@ -1142,7 +1116,7 @@ or
   c subname  # contine up to reach sub ''name''
 
 Furthermore the file loaded by the client program is the
-generated C<.pm>. The code in 
+generated C<.pm>. The code in the generated module
 C<Debug.pm> is alien to us - Was automatically generated
 by C<Parse::Eyapp> -
 and it can be difficult to find where 
@@ -1152,156 +1126,206 @@ To watch the execution of
 a semantic action
 is simple: We use the debugger C<f file.eyp > option
 to switch the viewing filename to our grammar file.
+The following session uses the example in
+the directory C<examples/Calculator>:
 
-  pl@nereida:~/LEyapp/examples$ perl -wd usedebug2.pl
-
-  Loading DB routines from perl5db.pl version 1.28
+  pl@nereida:~/LEyapp/examples/Calculator$ perl -wd scripts/calc.pl
+  Loading DB routines from perl5db.pl version 1.3
   Editor support available.
-
   Enter h or `h h' for help, or `man perldebug' for more help.
 
-  main::(usedebug2.pl:21):        my $input = slurp_file( shift() );
-    DB<1> f Debug2.eyp
-  1       2       #line 3 "Debug2.eyp"
-  3
-  4:      our $VERSION = '0.01';
-  5
-  6       7       8       9       10
+  main::(scripts/calc.pl:8):      Math::Calc->main();
+    DB<1> f lib/Math/Calc.eyp
+  1       2       3       4       5       6       7       #line 8 "lib/Math/Calc.eyp"
+  8
+  9:      use base q{Math::Tail};
+  10:     my %s; # symbol table
 
-Now we can set a breakpoint at any line of  our grammar file. 
-Thus the C<18> in the command C<b 18> refers to line 18 in
-C<Debug2.eyp>. The command C<l> shows the corresponding lines of
-the C<.eyp> file
+Lines 37 to 41 contain the semantic action associated with the production 
+C<exp -E<gt> VAR> (see file C<examples/Calculator/lib/Math/Calc.eyp>):
 
-    DB<2> b 18
-    DB<3> l
-  11      12      13      14      15      16      #line 17 "Debug2.eyp"
-  17
-  18:b          print "Reducing by rule:\n";
-  19:           print "\tds -> D\n";
-  20:           $_[1];
+    DB<2> l 37,41
+  37:            my $id = $VAR->[0];
+  38:            my $val = $s{$id};
+  39:            $_[0]->semantic_error("Accesing undefined variable $id at line $VAR->[1].\n")
+  40             unless defined($val);
+  41:            return $val;
 
-We issue now the command C<c> (continue). The execution continues up 
-to line 18 of C<Debug2.eyp>:
+now we set a break at line 37, to see what happens when a non initialized variable is used:
 
-    DB<3> c
-  D
+    DB<3> b 37
 
-  ;
+We issue now the command C<c> (continue). The execution continues until
+line 37 of C<lib/Math/Calc.eyp> is reached:
 
-  S
-
-  Debug2::CODE(0x85129d8)(Debug2.eyp:18):
-  18:           print "Reducing by rule:\n";
-    DB<3> n
-  Reducing by rule:
+    DB<4> c
+  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
+  a = 2+b                                            # user input
+  Math::Calc::CODE(0x191da98)(lib/Math/Calc.eyp:37):
+  37:            my $id = $VAR->[0];
 
 Now we can issue any debugger commands (like C<x>, C<p>, etc.) 
 to investigate the internal state
-of our program and determine what are the reasons for any abnormal 
+of our program and determine what are the reasons of any abnormal 
 behavior.
 
-  Debug2::CODE(0x85129d8)(Debug2.eyp:19):
-  19:           print "\tds -> D\n";
-    DB<3> x $_[0]{GRAMMAR}
-  0  ARRAY(0x8538360)
-     0  ARRAY(0x855aa88)
-        0  '_SUPERSTART'
-        1  '$start'
-        2  ARRAY(0x855ab60)
-           0  'p'
-           1  '$end'
-        3  0
-     1  ARRAY(0x855a890)
-        0  'p_1'
-        1  'p'
-        2  ARRAY(0x855a8fc)
-           0  'ds'
-           1  ';'
-           2  'ss'
-        3  0
-     2  ARRAY(0x855a800)
-        0  'p_2'
-        1  'p'
-        2  ARRAY(0x855a830)
-           0  'ss'
-        3  0
-     3  ARRAY(0x855a764)
-        0  'ds_3'
-        1  'ds'
-        2  ARRAY(0x855a7a0)
-           0  'ds'
-           1  ';'
-           2  'D'
-        3  0
-     4  ARRAY(0x85421d4)
-        0  'ds_4'
-        1  'ds'
-        2  ARRAY(0x855a6e0)
-           0  'D'
-        3  0
-     5  ARRAY(0x8538474)
-        0  'ss_5'
-        1  'ss'
-        2  ARRAY(0x854f9c8)
-           0  'S'
-           1  ';'
-           2  'ss'
-        3  0
-     6  ARRAY(0x85383b4)
-        0  'ss_6'
-        1  'ss'
-        2  ARRAY(0x85383f0)
-           0  'S'
-        3  0
-    DB<4>                   
+    DB<4> n
+  Math::Calc::CODE(0x191da98)(lib/Math/Calc.eyp:38):
+  38:            my $val = $s{$id};
+    DB<4> x $id
+  0  'b'
+    DB<5> x %s
+    empty array
 
-Using a second C<c> the execution continues until
-reaching the end of the program:
+=head1 SOLVING REDUCE-REDUCE CONFLICTS
 
-    DB<3> c
-  Debugged program terminated.  Use q to quit or R to restart,
-    use o inhibit_exit to avoid stopping after program termination,
-    h q, h R or h o to get additional info.
-    DB<3>                                   
-
-=head1 SOLVING DIFFICULT CONFLICTS AND AMBIGUITIES
-
-=head2 Reduce-Reduce Conflicts
+=head2 Reduce-Reduce Conflict: Default rules
 
 Most of the time reduce-reduce conflicts are due to some ambiguity in
-the grammar. In this example the programmer has attempted to define
-a language made of mixed lists C<ID>s and C<NUM>bers :
+the grammar, as it is the case for this minimal example:
 
-  pl@europa:~/LEyapp/examples/debuggingtut$ cat -n typicalrr.eyp
-     1  %token ID NUM
+  pl@nereida:~/LEyapp/examples/debuggingtut$ sed -ne '/%%/,/%%/p' minimalrr.eyp | cat -n
+     1  %%
+     2  s:
+     3        %name S_is_a
+     4        'a'
+     5      | A
+     6  ;
+     7  A:
+     8        %name A_is_a
+     9        'a'
+    10  ;
+    11
+    12  %%
+
+In case of a reduce-reduce conflict, L<Parse::Eyapp> reduces
+using the first production in the text:
+
+  pl@nereida:~/LEyapp/examples/debuggingtut$ eyapp -b '' minimalrr.eyp
+  1 reduce/reduce conflict
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./minimalrr.pm -t
+  Try "a" and press <CR><CTRL-D>: a
+  S_is_a
+
+If we change the order of the productions 
+
+  pl@nereida:~/LEyapp/examples/debuggingtut$ sed -ne '/%start/,40p' minimalrr2.eyp | cat -n
+     1  %start s
      2
      3  %%
-     4  s:
-     5        /* empty */
-     6      | s ws
-     7      | s ns
-     8  ;
-     9  ws:
-    10        /* empty */
-    11      | ws ID
-    12  ;
-    13  ns:
-    14        /* empty */
-    15      | ns NUM
-    16  ;
-    17
-    18  %%
+     4  A:
+     5        %name A_is_a
+     6        'a'
+     7  ;
+     8
+     9  s:
+    10        %name S_is_a
+    11        'a'
+    12      | %name A
+    13        A
+    14  ;
+    15  %%
+
+the selected production changes:
+
+  pl@nereida:~/LEyapp/examples/debuggingtut$ eyapp -b '' minimalrr2
+  1 reduce/reduce conflict
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./minimalrr2.pm -t
+  Try "a" and press <CR><CTRL-D>: a
+  A(A_is_a)
+
+=head2 Reduce-Reduce conflicts: typical errors
+
+In this example the programmer has attempted to define
+a language made of mixed lists C<ID>s and C<NUM>bers :
+
+  ~/LEyapp/examples/debuggingtut$ eyapp -c typicalrr.eyp 
+  %token ID NUM 
+  %tree
+
+  %%
+
+  s:
+        /* empty */
+      | s ws
+      | s ns 
+  ;
+  ns:
+        /* empty */
+      | ns NUM 
+  ;
+  ws:
+        /* empty */
+      | ws ID 
+  ;
+
+  %%
+
 
 The grammar has several reduce-reduce conflicts:
 
-  pl@europa:~/LEyapp/examples/debuggingtut$ eyapp typicalrr.eyp
-  3 shift/reduce conflicts (see .output file)
-  State 2: reduce by rule 3: s -> s ns (default action)
-  State 2: shifts:
-    to state    5 with NUM  and 3 reduce/reduce conflicts
+  ~/LEyapp/examples/debuggingtut$ eyapp -b '' typicalrr.eyp 
+  3 shift/reduce conflicts and 3 reduce/reduce conflicts
 
-In fact we have infinite ways to rightmost derive the empty string.
+There are several sources of ambiguity in this grammar:
+
+=over 2
+
+=item * Statments like 
+
+              NUM NUM NUM
+
+are ambiguous. The following two left-most derivations
+exists:
+
+             s =*=> ns ns =*=> NUM NUM ns => NUM NUM NUM
+and
+
+             s =*=> ns ns =*=> NUM ns =*=> NUM NUM NUM
+ 
+the same with phrases like C<ID ID ID>
+
+=item * The empty word can be generated in many ways. For 
+example:
+
+        s => empty
+
+or
+
+        s => s ns => s empty => empty
+
+etc.
+
+=back
+
+The generated parser loops forever if feed with a list of identifiers:
+
+  ~/LEyapp/examples/debuggingtut$ ./typicalrr.pm -d
+  Try inputs "4 5",  "a b" and "4 5 a b"(press <CR><CTRL-D> to finish): ab
+  ----------------------------------------
+  In state 0:
+  Stack:[0]
+  Don't need token.
+  Reduce using rule 1 (s --> /* empty */): Back to state 0, then go to state 1.
+  ----------------------------------------
+  In state 1:
+  Stack:[0,1]
+  Need token. Got >ID<
+  Reduce using rule 4 (ns --> /* empty */): Back to state 1, then go to state 2.
+  ----------------------------------------
+  In state 2:
+  Stack:[0,1,2]
+  Reduce using rule 3 (s --> s ns): Back to state 0, then go to state 1.
+  ----------------------------------------
+  In state 1:
+  Stack:[0,1]
+  Reduce using rule 4 (ns --> /* empty */): Back to state 1, then go to state 2.
+  ----------------------------------------
+  In state 2:
+  Stack:[0,1,2]
+  Reduce using rule 3 (s --> s ns): Back to state 0, then go to state 1.
+  ----------------------------------------
+  ^C
 
 The problem is easily solved designing an equivalent non ambiguous grammar:
 
@@ -1317,20 +1341,36 @@ The problem is easily solved designing an equivalent non ambiguous grammar:
      9
     10  %%
 
-Of course you can also try to disambiguate using priorities. In the
-file C<examples/debuggingtut/typicalrrwithprec.eyp> there
-is a solution:
+See also these files in the C<examples/debuggintut/> directory:
 
-  lusasoft@LusaSoft:~/src/perl/Parse-Eyapp/examples/debuggingtut$ eyapp -c typicalrrwithprec.eyp
-  # This example illustrates how to express EOI in the header section: use ''
-  # For the original grammar
-  # see file
-  #   typicalrr.eyp
-  # For an alternative solution see file
-  #   correcttypicalrr.eyp
-  %right LNUM
-  %right NUM
-  %right ID
+=over 2
+
+=item * C<typicalrr2.eyp> is equivalent to C<typicalrr.eyp> but has C<%name> directives, to 
+have a nicer tree
+
+=item * C<typicalrr_fixed.eyp> eliminates the ambiguity using a combination of priorities
+and elimination of the redundant empty productions. Explicit precedence via C<%prec> directives
+are given to produce right recursive lists
+
+=item * C<typicalrr_fixed_rightrecursive.eyp> is almost equal to C<typicalrr_fixed.eyp>
+but eliminates the of C<%prec> directives by making the list production 
+right recursive
+
+=back
+
+=head2 Giving an Explicit Priority to the End-of-Input Token
+
+We can also try to disambiguate the former example
+using priorities. For that we need to give an explicit priority to the 
+end-of-input token. To refer to the end-of-input token in the header section,
+use the empty string C<''>. In the
+file C<examples/debuggingtut/typicalrrwithprec.eyp> there
+is a priority based solution:
+
+  ~/LEyapp/examples/debuggingtut$ eyapp -c typicalrrwithprec.eyp
+  %right LNUM 
+  %right NUM 
+  %right ID 
   %right '' # The string '' refers to the 'End of Input' token
   %tree bypass
 
@@ -1339,28 +1379,140 @@ is a solution:
   s:
         %name EMPTY
         /* empty */%prec ''
-      | %name WORDS
+      | %name LIST
         s ws
-      | %name NUMS
-        s ns
+      | %name LIST
+        s ns 
   ;
   ns:
         %name EMPTYNUM
         /* empty */%prec NUM
       | %name NUMS
-        NUM ns
+        NUM ns 
   ;
   ws:
         %name EMPTYID
         /* empty */%prec LNUM
       | %name IDS
-        ID ws
+        ID ws 
   ;
 
   %%
 
+
 Observe the use of C<%right ''> in the header section:
 it gives a priority to the end-of-input token.
+
+  ~/LEyapp/examples/debuggingtut$ ./typicalrrwithprec.pm -t
+  Try "4 5 a b 2 3" (press <CR><CTRL-D> to finish): 4 5 a b 2 3
+  ^D
+  LIST(
+    LIST(
+      LIST(
+        EMPTY,
+        NUMS(
+          TERMINAL[4],
+          NUMS(
+            TERMINAL[5],
+            EMPTYNUM
+          )
+        )
+      ),
+      IDS(
+        TERMINAL[a],
+        IDS(
+          TERMINAL[b],
+          EMPTYID
+        )
+      )
+    ),
+    NUMS(
+      TERMINAL[2],
+      NUMS(
+        TERMINAL[3],
+        EMPTYNUM
+      )
+    )
+  )
+
+=head2 Reduce-Reduce conflict: Enumerated versus Range declarations in Extended Pascal
+
+
+The grammar in file 
+C<examples/debuggintut/pascalenumeratedvsrange.eyp>:
+
+  ~/LEyapp/examples/debuggingtut$ eyapp -c pascalenumeratedvsrange.eyp 
+  %token TYPE DOTDOT ID 
+  %left '+' '-' 
+  %left '*' '/' 
+
+  %%
+
+  type_decl:
+        TYPE ID '=' type ';' 
+  ;
+  type:
+        '(' id_list ')'
+      | expr DOTDOT expr 
+  ;
+  id_list:
+        ID
+      | id_list ',' ID 
+  ;
+  expr:
+        '(' expr ')'
+      | expr '+' expr
+      | expr '-' expr
+      | expr '*' expr
+      | expr '/' expr
+      | ID 
+  ;
+
+  %%
+
+introduces a problem that arises in the declaration of enumerated 
+and subrange types in Pascal:
+
+  type subrange = lo .. hi;
+  type enum = (a, b, c);
+
+The original language standard allows only numeric literals and constant
+identifiers for the subrange bounds (`lo' and `hi'), but Extended Pascal
+and many other Pascal implementations allow arbitrary expressions there. This
+gives rise to the following situation, containing a superfluous pair of
+parentheses:
+
+     type subrange = (a) .. b;
+
+Compare this to the following declaration of an enumerated type with only one value:
+
+      type enum = (a);
+
+These two declarations look identical until the C<..> token. With normal LALR(1)
+one-token look-ahead it is not possible to decide between the two forms when
+the identifier C<a> is parsed. It is, however, desirable for a parser to decide
+this, since in the latter case C<a> must become a new identifier to represent
+the enumeration value, while in the former case C<a> must be evaluated with its
+current meaning, which may be a constant or even a function call.
+
+The consequence is a reduce-reduce conflict, which is summarized in
+this state of the LALR automata:
+
+  State 10:
+
+    id_list -> ID . (Rule 4)
+    expr -> ID .    (Rule 11)
+
+    ')' [reduce using rule 11 (expr)]
+    ')' reduce using rule 4 (id_list)
+    ',' reduce using rule 4 (id_list)
+    $default    reduce using rule 11 (expr)
+
+The grammar in file C<pascalenumeratedvsrangesolvedvialex.eyp> solves
+this particular problem by looking ahead in the lexical analyzer: if the parenthesis
+is followed by a sequence of comma separated identifiers finished by the closing 
+parenthesis and a semicolon we can conclude that is a enumerated type 
+declaration. For more details, have a look at the file.
 
 =head2 Reduce-Reduce Conflicts with Unambiguous Grammars
 
@@ -2596,7 +2748,7 @@ I use these rules for indenting L<Parse::Eyapp> programs:
 
 =over 2
 
-=item * Use uppercase identifiers for tokens, lowecase identifiers for 
+=item * Use uppercase identifiers for tokens, lowercase identifiers for 
 syntactic variables
 
 =item * The syntactic variable that defines the rule must be at in a single line 

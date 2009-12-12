@@ -39,7 +39,7 @@ s:
 ws:
      %name ID
      ID
-   | %name WORDS
+   | %name IDS
      ws ID
 ;
 

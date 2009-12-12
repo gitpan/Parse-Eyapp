@@ -41,8 +41,8 @@ examples/debuggingtut/DynamicvsTieIns.eyp
 examples/debuggingtut/lr_1_grammar.eyp
 examples/debuggingtut/minimalrr2.eyp
 examples/debuggingtut/minimalrr.eyp
-examples/debuggingtut/nolalrrrconflict.eyp
-examples/debuggingtut/nolalrrrconflictsolved.eyp
+examples/debuggingtut/pascalenumeratedvsrange.eyp
+examples/debuggingtut/pascalenumeratedvsrangesolvedvialex.eyp
 examples/debuggingtut/nolr_k_grammar.eyp
 examples/debuggingtut/nolr_k_grammarsolveddynamic.eyp
 examples/debuggingtut/nonslrgrammar.eyp
@@ -62,7 +62,6 @@ examples/debuggingtut/typicalrr.eyp
 examples/debuggingtut/typicalrr_fixed.eyp
 examples/debuggingtut/typicalrr_fixed_rightrecursive.eyp
 examples/debuggingtut/typicalrrwithprec.eyp
-examples/debuggingtut/typicalrr.yp
 examples/debuggingtut/DebugTail.pm
 examples/debuggingtut/RRTail.pm
 examples/debuggingtut/Tail.pm

@@ -67,7 +67,7 @@ Function C<pop(k)> extracts C<k> states from the stack. The call C<$state-E<gt>a
 returns the attribute associated with C<$state>. The call C<$parser-E<gt>Semantic{A -E<gt>alpha}>
 returns the semantic action associated with production C<A -E<gt>alpha>.
 
-Let us see a trace for the small gramar in C<examples/debuggingtut/aSb.yp>:
+Let us see a trace for the small grammar in C<examples/debuggingtut/aSb.yp>:
 
   pl@nereida:~/LEyapp/examples$ /usr/local/bin/paste.pl aSb.yp aSb.output | head -5
   %%                                             | Rules:
@@ -140,16 +140,17 @@ actions and transitions to take:
 When executed with C<yydebug> set and input C<aabb>  we obtain the following 
 output:
 
-  pl@nereida:~/LEyapp/examples$ use_aSb.pl
-  ----------------------------------------
-  In state 0:
-  Stack:[0]
-  aabb                       <----------- user input
-  Need token. Got >a<
-  Shift and go to state 2.  
-  ----------------------------------------
-  In state 2:
-  Stack:[0,2]
+  pl@nereida:~/LEyapp/examples/debuggingtut$ eyapp -b '' -o use_aSb.pl aSb
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./use_aSb.pl -d
+  Provide a statement like "a a b b" and press <CR><CTRL-D>: aabb
+  ----------------------------------------                       
+  In state 0:                                                    
+  Stack:[0]                                                      
+  Need token. Got >a<                                            
+  Shift and go to state 2.                                       
+  ----------------------------------------                       
+  In state 2:                                                    
+  Stack:[0,2]                                                    
   Need token. Got >a<
   Shift and go to state 2.
   ----------------------------------------
@@ -158,11 +159,6 @@ output:
   Need token. Got >b<
   Reduce using rule 1 (S --> /* empty */): S -> epsilon
   Back to state 2, then go to state 4.
-
-The output C<S-E<gt> epsilon>
-is consequence of the semantic action
-associated with such production rule.
-
   ----------------------------------------
   In state 4:
   Stack:[0,2,2,4]
@@ -173,20 +169,16 @@ associated with such production rule.
   Don't need token.
   Reduce using rule 2 (S --> a S b): S -> a S b
   Back to state 2, then go to state 4.
+  ----------------------------------------
 
-As a result of reducing by rule 2 the semantic 
-action is executed 
-
-                { print "S -> a S b\n" }
-
-and the three last
+As a result of reducing by rule 2 
+the three last
 visited states are popped
 from the stack, and the stack becomes C<[0,2]>. But 
 that means that we are now in state 2 seeing a C<S>. 
-If you look at the table above being in state2 and seeing a C<S>
+If you look at the table above being in state 2 and seeing a C<S>
 we go to state 4.
 
-  ----------------------------------------
   In state 4:
   Stack:[0,2,4]
   Need token. Got >b<
@@ -207,8 +199,6 @@ we go to state 4.
   Stack:[0,1,3]
   Don't need token.
   Accept.
-
-
 
 
 

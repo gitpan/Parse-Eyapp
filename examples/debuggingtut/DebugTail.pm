@@ -17,15 +17,30 @@ sub tokenline {
 }
 
 # attribute with the error handler
+
 my $_Error = sub {
   my $parser = shift;
 
-  my ($token) = $parser->YYCurval;
-  my ($what) = $token ? "input: '$token'" : "end of input";
-  my @expected = $parser->YYExpect();
+  my $yydata = $parser->YYData;
+
+    exists $yydata->{ERRMSG}
+  and do {
+      warn $yydata->{ERRMSG};
+      delete $yydata->{ERRMSG};
+      return;
+  };
+
+  my($token)=$parser->YYCurval;
+  my($what)= $token ? "input: '$token'" : "end of input";
+  my @expected = map { "'$_'" } $parser->YYExpect();
   local $" = ', ';
-  die "Syntax error near $what line num $tokenline. Expecting (@expected)\n";
+  warn << "ERRMSG";
+
+Syntax error near $what (lin num $tokenline). 
+Expected one of these terminals: @expected
+ERRMSG
 };
+
 
 sub error {
   my $self = shift;
