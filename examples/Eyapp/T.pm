@@ -98,6 +98,19 @@ our @all = ( our $fold, our $zero_times_whatever, our $whatever_times_zero, ) = 
 
   } # end of whatever_times_zero 
 
+#line 13 "Transform4.trg"
+
+=head1 SYNOPSIS
+
+Compile it with 
+
+         eyapp -m 'Calc' Rule9.yp 
+         treereg -o T.pm -p 'R::' -m T Transform4
+
+to execute, run C<foldand0rule9_4.pl> 
+
+=cut
+
 
 1;
 

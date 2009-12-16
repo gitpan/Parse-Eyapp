@@ -1,7 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
+use warnings;
+use strict;
 use Parenthesis;
 use Data::Dumper;
+$Data::Dumper::Indent = 0;
 
-$Data::Dumper::Indent = 1;
-$parser = Parenthesis->new();
-print Dumper($parser->Run);
+unshift @ARGV, '--noslurp';
+print Dumper(Parenthesis->new->main("Try inputs 'acb' and 'aacbb': "))."\n";

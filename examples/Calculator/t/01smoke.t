@@ -15,7 +15,8 @@ c = a-b
 d = a-c
 };
 my $parser = Math::Calc->new();
-my %s = %{$parser->Run( \$input )};
+$parser->input(\$input);
+my %s = %{$parser->Run()};
 is($s{a}, 6, "a=2*3 is 6");
 is($s{b}, 7, "b=a+ 1 is 7");
 is($s{c}, -1, "c=a-b is -1");

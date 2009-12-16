@@ -1,22 +1,16 @@
 --- #YAML:1.0
-name:               Parse-Eyapp
-version:            1.149
-abstract:           Extensions for Parse::Yapp
-author:
+name:                Parse-Eyapp
+version:             1.150
+abstract:            Bottom up parser generator
+license:             ~
+author:              
     - Casiano Rodriguez-Leon <casiano@ull.es>
-license:            unknown
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    Data::Dumper:  1.0
-    List::Util:    1.0
-    Pod::Usage:    1.0
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.48
+generated_by:        ExtUtils::MakeMaker version 6.42
+distribution_type:   module
+requires:     
+    Data::Dumper:                  1.0
+    List::Util:                    1.0
+    Pod::Usage:                    1.0
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3

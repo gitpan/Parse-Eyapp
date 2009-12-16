@@ -1,5 +1,16 @@
 %{
-use Data::Dumper;
+=head1 SYNOPSIS
+
+Compile it with 
+
+         eyapp -m 'Calc' Rule9.yp 
+         treereg -o T.pm -p 'R::' -m T Transform4
+
+to execute, run C<foldand0rule9_4.pl> 
+
+=cut
+
+use base q{Parse::Eyapp::TailSupport};
 %}
 
 %semantic token '=' '-' '+' '*' '/' 
@@ -35,44 +46,18 @@ exp:      %name NUM
 
 %%
 
-sub Error {
-        exists $_[0]->YYData->{ERRMSG}
-    and do {
-        print $_[0]->YYData->{ERRMSG};
-        delete $_[0]->YYData->{ERRMSG};
-        return;
-    };
-    print "Syntax error.\n";
-}
-
-sub Lexer {
+__PACKAGE__->lexer( 
+  sub {
     my($parser)=shift;
 
-        $parser->YYData->{INPUT}
-    or  $parser->YYData->{INPUT} = <STDIN>
-    or  return('',undef);
+    for (${$parser->input}) {
+        s/^\s+(?:#.*)?//;
 
-    $parser->YYData->{INPUT}=~s/^\s+//;
+        s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+        s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+        s/^(.)//                     and return($1,$1);
 
-    for ($parser->YYData->{INPUT}) {
-        s/^([0-9]+(?:\.[0-9]+)?)//
-                and return('NUM',$1);
-        s/^([A-Za-z][A-Za-z0-9_]*)//
-                and return('VAR',$1);
-        s/^(.)//s
-                and return($1,$1);
+        return ('',undef);
     }
-}
-
-sub Run {
-    my($self)=shift;
-    $self->YYParse( yylex => \&Lexer, yyerror => \&Error, 
-		    #yydebug =>0xFF
-		  );
-}
-
-sub TERMINAL::info {
-  my $node = shift;
-
-  $node->{attr};
-}
+  }
+);

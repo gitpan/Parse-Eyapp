@@ -722,8 +722,8 @@ Returns C<TRUE> if the parser is recovering from a syntax error.
 =head2  $parser->YYRestoreLRAction('conflictname', $token)
 
 This method has been designed to solve shift-reduce and reduce-reduce conflicts
-at parsing-time using the I<postponed conflict> strategy. See the corresponding 
-section in L<Parse::Eyapp::debuggintut>. It has to be called inside the semantic
+at parsing-time using the I<postponed conflict> strategy. 
+It has to be called inside the semantic
 action associated with the postponed conflict rule. The LALR table is changed
 so that the action in the presence of the token C<$token> is restored
 the one before the last call to 
@@ -834,8 +834,8 @@ The LR table is changed so that the action in state C<$conflictstate>
 in the presence of the token C<$token> will be given by C<$shiftreduceaction>. 
 The current shift-reduce action isn't saved.
 
-See examples C<DynamicallyChangingTheParser.eyp> and
-C<glrexpressions.eyp> in the directory C<examples/debuggintut>.
+See an example in
+C<Cplusplus2.eyp> in the directory C<examples/debuggintut>.
 
 
 =head2 $parser->YYSetReduce($token, $productionname ) 
@@ -852,8 +852,53 @@ to be restored using
   $parser->YYRestoreLRAction('conflictname', $token)
 
 See the examples in C<examples/debuggingtut/> in files 
-C<DynamicallyChangingTheParser2.eyp>
-and C<Cplusplus.eyp>.
+
+=over 2
+
+=item * C<DynamicallyChangingTheParser2.eyp>
+
+=item * C<confusingsolveddynamic.eyp>
+
+=item * C<DebugDynamicResolution.eyp>
+
+=item * C<DynamicallyChangingTheParser2.eyp>
+
+=item * C<DynamicallyChangingTheParser3.eyp>
+
+=item * C<DynamicallyChangingTheParser.eyp>
+
+=item * C<DynamicvsTieIns.eyp>
+
+=item * C<nolr_k_grammarsolveddynamic.eyp>
+
+=item * C<pascalenumeratedvsrangesolvedviadyn.eyp>
+
+=item * C<Cplusplus.eyp>.
+
+=back
+
+=head1 $parser->YYSetShift($token)
+
+Also:
+
+      $parser->YYSetShift([$token1, $token2, ... ])
+
+This method has been designed to solve shift-reduce 
+at parsing-time using the I<postponed conflict> strategy. See the corresponding 
+section in L<Parse::Eyapp::debuggintut>. It has to be called inside the semantic
+action associated with the postponed conflict rule C<conflictname>. 
+The LALR table is changed
+so that the action in the presence of the token C<$token> will be to shift.
+
+See the examples in C<examples/debuggingtut/> in files 
+
+=over 2
+
+=item * C<DebugDynamicResolution.eyp>
+
+=item * C<DynamicallyChangingTheParser.eyp>
+
+=back
 
 =head2 $parser->YYState
 

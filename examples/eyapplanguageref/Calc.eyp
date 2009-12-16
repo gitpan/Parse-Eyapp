@@ -1,4 +1,4 @@
-# examples/Calc.eyp
+# examples/eyapplanguageref/Calc.eyp
 %right  '='
 %left   '-' '+'
 %left   '*' '/'
@@ -46,52 +46,25 @@ exp:
 ;
 
 %%
+use base q{Parse::Eyapp::TailSupport};
 
-my $lineno = 1;
-
-sub _Error {
-  my $parser = shift;
-
-    exists $parser->YYData->{ERRMSG}
-  and do {
-      print $parser->YYData->{ERRMSG};
-      delete $parser->YYData->{ERRMSG};
-      return;
-  };
-  my($token)=$parser->YYCurval;
-  my($what)= $token ? "input: '$token'" : "end of input";
-  my @expected = $parser->YYExpect();
-  local $" = ', ';
-  print << "ERRMSG";
-
-Syntax error near $what (lin num $lineno). 
-Expected one of these terminals: @expected
-ERRMSG
-}
-
-sub make_lexer {
-  my $input = shift;
-
-  return sub {
+__PACKAGE__->lexer( sub {
     my $parser = shift;
 
-    for ($$input) {
-      m{\G[ \t]*}gc;
+    for (${$parser->input}) {
+      m{\G[ \t]*(?:#.*)?}gc;
       m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM',$1);
       m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR',$1);
-      m{\G\n}gc                      and do { $lineno++; return ("\n", "\n") };
+      m{\G\n}gc                      and do { 
+                                        $parser->tokenline(1); 
+                                        return ("\n", "\n") 
+                                     };
       m{\G(.)}gc                     and return ($1,$1);
 
       return('',undef);
     }
   }
-}
+);
 
-sub Run {
-    my($self)=shift;
-    my $input = shift or die "No input given\n";
-
-    return $self->YYParse( yylex => make_lexer($input), yyerror => \&_Error,
-      #yydebug =>0x1F
-    );
-}
+# In case is compiled with eyapp option -b
+__PACKAGE__->main unless caller;

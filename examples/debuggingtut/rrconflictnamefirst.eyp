@@ -1,8 +1,42 @@
 %token VAR ',' ':'
 
 %{
+=head1 SYNOPSIS
+
+This is an example of a non ambiguous grammar with a reduce-reduce conflict.
+
+Compile it with:
+
+            eyapp -b '' rrconflictnamefirst.eyp
+
+run it with this options:
+
+            ./rrconflictnamefirst.pm -t
+
+Try input "a,b:c d:e," then press CTRL-D (Unix) or CTRL-Z (Windows) to finish.
+
+See also:
+
+=over 2
+
+=item * Files C<reducereduceconflict_fix1.eyp> and C<reducereduceconflict_fix2.eyp> 
+offer other solutions to the problem. 
+
+=item * Section "Reduce-Reduce Conflicts with Unambiguous Grammars" in Parse::Eyapp::debuggingtut
+
+=back
+
+=cut
+
 use base q{Tail};
+$Parse::Eyapp::Node::INDENT = 1;
+
 %}
+
+%namingscheme { \&give_rhs_name }
+
+
+%tree
 
 %%
 def:    param_spec return_spec ','
@@ -25,5 +59,9 @@ name_list:
         ;
 %%
 
-__PACKAGE__->main(@ARGV) unless caller();
+__PACKAGE__->main('Try input "a,b:c d:e," then press CTRL-D (Unix) or CTRL-Z (Windows) to finish: ') unless caller();
+
+sub TERMINAL::info {
+  $_[0]->{attr}[0];
+}
 

@@ -1512,7 +1512,9 @@ The grammar in file C<pascalenumeratedvsrangesolvedvialex.eyp> solves
 this particular problem by looking ahead in the lexical analyzer: if the parenthesis
 is followed by a sequence of comma separated identifiers finished by the closing 
 parenthesis and a semicolon we can conclude that is a enumerated type 
-declaration. For more details, have a look at the file.
+declaration. For more details, have a look at the file. Another solution
+using the postponed conflict resolution strategy can be found in file
+C<pascalenumeratedvsrangesolvedviadyn.eyp>.
 
 =head2 Reduce-Reduce Conflicts with Unambiguous Grammars
 
@@ -1787,103 +1789,17 @@ we have a language with a special construct
 C<hex (hex-expr)>. After the keyword C<hex> comes an C<expression> in parentheses in
 which all integers are hexadecimal. In particular, strings in C</[A-F0-9]+/>
 like C<A1B> must be treated as an hex integer unless they were previously
-declared as variables:
+declared as variables.  Let us see an example of execution:
 
-  %strict
-
-  %token ID INT INTEGER
-  %syntactic token HEX
-
-  %right '='
-  %left '+'
-
-  %{
-  my %st;
-  %}
-
-  %tree bypass alias
-
-  %%
-  stmt:
-      decl <* ';'> expr <%name EXPS + ';'>
-        {
-          $_[2]->{st} = { %st };
-          $_[2];
-        }
-  ;
-
-  decl:
-      INT ID <+ ','>
-        {
-          $st{$_->{attr}} = 1 for $_[2]->children();
-        }
-  ;
-
-  expr:
-      %name ID
-      ID
-    | %name NUM
-      INTEGER
-    | %name HEX
-      HEX '(' { $_[0]->{HEXFLAG} = 1; } $expr ')'
-        {
-          $_[0]->{HEXFLAG} = 0;
-          $expr;
-        }
-    | %name ASSIGN
-      $ID '=' expr
-        {
-          my $parser = shift;
-          my $t = $parser->YYBuildAST(@_);
-          # Retype left (TERMINAL) child as ID
-          $t->ID->type('ID');
-          $t;
-        }
-    | %name PLUS
-      expr '+' expr
-  ;
-
-
-
-Here the lexical analyzer looks at the value of the attribute C<HEXFLAG>; when it is nonzero,
-all integers are parsed in hexadecimal, and tokens starting with letters are
-parsed as integers if possible.
-
-  sub lexer {
-    my $parser = shift;
-    my $hexflag = $parser->{HEXFLAG};
-
-    for ($parser->{input}) {    # contextualize
-      m{\G\s*(\#.*)?}gc;
-
-      m{\G(HEX\b|INT\b)}igc and return (uc($1), $1);
-
-      m{(\G\d+)}gc and return ('INTEGER', $hexflag? hex($1) : $1);
-
-
-      m{\G([a-zA-Z_]\w*)}gc and do {
-        my $match = $1;
-        $hexflag and !exists($st{$match}) 
-          and $match =~ m{^([A-F0-9]+)$}gc 
-            and return ('INTEGER', hex($match));
-        return ('ID', $1);
-      };
-
-      m{\G(.)}gc         and return ($1, $1);
-
-      return('',undef);
-    }
-  }
-
-Let us see an example of execution:
-
-  examples/debuggingtut$ cat inputforsemanticinfo2.txt
+  $ eyapp -b '' SemanticInfoInTokens.eyp
+  $ cat inputforsemanticinfo2.txt
   int A2
   A2 = HEX(A23);
   A2 = HEX(A2)
 
-  examples/debuggingtut$ ./SemanticInfoInTokens.pm -file inputforsemanticinfo2.txt
-  EXPS(ASSIGN(ID[A2],NUM[2595]),ASSIGN(ID[A2],ID[A2]))
+  $ ./SemanticInfoInTokens.pm -f inputforsemanticinfo2.txt  -t
+  EXPS(ASSIGN(TERMINAL[A2],NUM[2595]),ASSIGN(TERMINAL[A2],ID[A2]))
+
 
 The first hex expression C<HEX(A23)> is interpreted as the number C<2595>
 while the second C<HEX(A2)> refers to previously declared variable C<A2>.
@@ -1891,7 +1807,103 @@ while the second C<HEX(A2)> refers to previously declared variable C<A2>.
 An alternative solution to this problem that does not make use of
 lexical tie-ins - but still uses an attribute C<HEXFLAG> for communication
 between different semantic actions - can be found in the file 
-C<examples/debuggintut/DynamicvsTieIns.eyp>.
+C<examples/debuggintut/Tieins.eyp>.
+
+
+  pl@nereida:~/LEyapp/examples/debuggingtut$ sed -ne '5,91p' SemanticInfoInTokens.eyp | cat -n
+     1  %strict                                                                             
+     2                                                                                      
+     3  %token ID INT INTEGER                                                               
+     4  %syntactic token HEX                                                                
+     5                                                                                      
+     6  %right '='                                                                          
+     7  %left '+'                                                                           
+     8                                                                                      
+     9  %{                                                                                  
+    10  use base q{DebugTail};                                                              
+    11  my %st;                                                                             
+    12  %}                                                                                  
+    13                                                                                      
+    14  %tree bypass alias                                                                  
+    15                                                                                      
+    16  %%                                                                                  
+    17  stmt:                                                                               
+    18      decl <* ';'> expr <%name EXPS + ';'>                                            
+    19        {                                                                             
+    20          # make the symbol table an attribute                                        
+    21          # of the root node                                                          
+    22          $_[2]->{st} = { %st };                                                      
+    23          $_[2];                                                                      
+    24        }                                                                             
+    25  ;                                                                                   
+    26                                                                                      
+    27  decl:                                                                               
+    28      INT ID <+ ','>                                                                  
+    29        {                                                                             
+    30          # insert identifiers in the symbol table                                    
+    31          $st{$_->{attr}} = 1 for $_[2]->children();                                  
+    32        }                                                                             
+    33  ;                                                                                   
+    34                                                                                      
+    35  expr:                                                                               
+    36      %name ID                                                                        
+    37      ID                                                                              
+    38    | %name NUM                                                                       
+    39      INTEGER                                                                         
+    40    | %name HEX                                                                       
+    41      HEX '(' { $_[0]->{HEXFLAG} = 1; } $expr ')'                                     
+    42        {                                                                             
+    43          $_[0]->{HEXFLAG} = 0;                                                       
+    44          $expr;                                                                      
+    45        }                                                                             
+    46    | %name ASSIGN                                                                    
+    47      id '=' expr                                                                     
+    48    | %name PLUS                                                                      
+    49      expr '+' expr
+    50  ;
+    51
+    52  id : ID
+    53  ;
+    54
+    55  %%
+    56
+    57  # Context-dependant lexer
+    58  __PACKAGE__->lexer( sub {
+    59      my $parser = shift;
+    60      my $hexflag = $parser->{HEXFLAG};
+    61
+    62      for (${$parser->input}) {    # contextualize
+    63        m{\G\s*(\#.*)?}gc;
+    64
+    65        m{\G(HEX\b|INT\b)}igc and return (uc($1), $1);
+    66
+    67        m{(\G\d+)}gc and return ('INTEGER', $hexflag? hex($1) : $1);
+    68
+    69
+    70        m{\G([a-zA-Z_]\w*)}gc and do {
+    71          my $match = $1;
+    72          $hexflag and !exists($st{$match}) and $match =~ m{^([A-F0-9]+$)}gc and return ('INTEGER', hex($match));
+    73          return ('ID', $1);
+    74        };
+    75
+    76        m{\G(.)}gc         and return ($1, $1);
+    77
+    78        return('',undef);
+    79      }
+    80    }
+    81  );
+    82
+    83  *TERMINAL::info = *NUM::info = *ID::info = sub {
+    84    $_[0]->{attr}
+    85  };
+    86
+    87  __PACKAGE__->main() unless caller();
+
+
+
+Here the lexical analyzer looks at the value of the attribute C<HEXFLAG>; when it is nonzero,
+all integers are parsed in hexadecimal, and tokens starting with letters are
+parsed as integers if possible.
 
 =head2 References about Lexical tie-ins
 
@@ -2107,74 +2119,78 @@ The Eyapp program C<examples/debuggingtut/Cplusplus.eyp> solves the
 conflicts in  C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp> 
 by using the I<Postponed Conflict Resolution> strategy:
 
-  examples/debuggingtut$ head -67 Cplusplus.eyp | cat -n
-     1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
-     2  %strict
-     3  %token ID INT NUM
-     4
-     5  %right '='
-     6  %left '+'
-     7
-     8  %tree bypass
-     9
-    10  %expect 0 1 # 0 shift-reduce conflicts, 1 reduce-reduce conflict
-    11
-    12  %%
-    13  prog:
-    14      %name EMPTY
-    15      /* empty */
-    16    | %name PROG
-    17      prog stmt
-    18  ;
-    19
-    20  stmt:
-    21      %name EXP
-    22      expr ';'
-    23    | %name DECL
-    24      decl
-    25  ;
-    26
-    27  expr:
-    28      %name EXPID
-    29      ID decexpconflict
-    30    | %name NUM
-    31      NUM
-    32    | %name TYPECAST
-    33      INT '(' expr ')' /* typecast */
-    34    | %name PLUS
-    35      expr '+' expr
-    36    | %name ASSIGN
-    37      expr '=' expr
-    38  ;
-    39
-    40  decl:
-    41      %name DECLARATOR
-    42      INT declarator ';'
-    43    | %name DECLARATORINIT
-    44      INT declarator '=' expr ';'
-    45  ;
-    46
-    47  declarator:
-    48      %name DECID
-    49      ID decexpconflict
-    50    | '(' declarator ')'
-    51  ;
-    52
-    53  decexpconflict:
-    54      /* empty. Just to solve the reduce-reduce conflict */
-    55        {
-    56          my $self = shift;
-    57
-    58          if ($self->{INPUT} =~ m{^[)\s]*[;=]\s*}) {
-    59            $self->YYSetReduce(')', 'DECID' );
-    60          }
-    61          else {
-    62            $self->YYSetReduce(')', 'EXPID' );
-    63          }
-    64        }
-    65  ;
-    66
-    67  %%
+  pl@nereida:~/LEyapp/examples/debuggingtut$ head -71 Cplusplus.eyp | cat -n                           
+     1  %{                                                                                           
+     2  our $VERSION = '0.01';                                                                       
+     3  use base q{DebugTail};                                                                       
+     4  %}                                                                                           
+     5                                                                                               
+     6  %strict                                                                                      
+     7  %token ID INT NUM                                                                            
+     8                                                                                               
+     9  %right '='                                                                                   
+    10  %left '+'                                                                                    
+    11                                                                                               
+    12  %tree bypass                                                                                 
+    13                                                                                               
+    14  %expect 0 1  # 0 shift-reduce conflicts, 1 reduce-reduce conflict                            
+    15                                                                                               
+    16  %%                                                                                           
+    17  prog:                                                                                        
+    18      %name EMPTY                                                                              
+    19      /* empty */                                                                              
+    20    | %name PROG                                                                               
+    21      prog stmt                                                                                
+    22  ;                                                                                            
+    23                                                                                               
+    24  stmt:                                                                                        
+    25      %name EXP                                                                                
+    26      expr ';'                                                                                 
+    27    | %name DECL                                                                               
+    28      decl                                                                                     
+    29  ;                                                                                            
+    30                                                                                               
+    31  expr:                                                                                        
+    32      %name EXPID                                                                              
+    33      ID decexpconflict
+    34    | %name NUM
+    35      NUM
+    36    | %name TYPECAST
+    37      INT '(' expr ')' /* typecast */
+    38    | %name PLUS
+    39      expr '+' expr
+    40    | %name ASSIGN
+    41      expr '=' expr
+    42  ;
+    43
+    44  decl:
+    45      %name DECLARATOR
+    46      INT declarator ';'
+    47    | %name DECLARATORINIT
+    48      INT declarator '=' expr ';'
+    49  ;
+    50
+    51  declarator:
+    52      %name DECID
+    53      ID decexpconflict
+    54    | '(' declarator ')'
+    55  ;
+    56
+    57  decexpconflict:
+    58      /* empty. Just to solve the reduce-reduce conflict */
+    59        {
+    60          my $self = shift;
+    61
+    62          if (${$self->input()} =~ m{^[)\s]*[;=]\s*}) {
+    63            $self->YYSetReduce(')', 'DECID' );
+    64          }
+    65          else {
+    66            $self->YYSetReduce(')', 'EXPID' );
+    67          }
+    68        }
+    69  ;
+    70
+    71  %%
 
 
 The aforementioned conflict in C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp>:
@@ -2221,108 +2237,261 @@ to reduce by
 
 The program now successfully solves the ambiguity:
 
-  examples/debuggingtut$ Cplusplus.pm
-  int(x)+2;
+  pl@nereida:~/LEyapp/examples/debuggingtut$ eyapp -b '' Cplusplus
+
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Cplusplus.pm -t
+  Try first "int (x) = 2;" then "int (x) + 2;" (press <CR><CTRL-D> to finish): int(x)+2;
   PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],EXPID[x]),NUM[2]))
-  debuggingtut$ Cplusplus.pm
-  int(x)=2;
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Cplusplus.pm -t
+  Try first "int (x) = 2;" then "int (x) + 2;" (press <CR><CTRL-D> to finish): int(x)=2;
   PROG(EMPTY,DECL(TERMINAL[int],DECID[x],NUM[2]))
-  examples/debuggingtut$ Cplusplus.pm
-  int(x);
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Cplusplus.pm -t
+  Try first "int (x) = 2;" then "int (x) + 2;" (press <CR><CTRL-D> to finish): int(x);
   PROG(EMPTY,DECL(TERMINAL[int],DECID[x]))
 
-=head2 Using C<YYSetLRAction> and C<YYNextState>
+=head2 Solving the Enumerated versus Range declarations conflict using the Posponed Conflict Resolution Strategy
 
-The modulino C<glrexpressions.eyp> illustrates an alternative way to
-apply the postponed conflict resolution strategy to the aforementioned
-problem:
+In file C<pascalenumeratedvsrangesolvedviadyn.eyp> we apply the postponed conflict resolution strategy
+to the reduce reduce conflict that arises in Extended Pascal between the declaration of ranges and
+the declaration of enumerated types (see section L<Reduce-Reduce conflict: Enumerated versus Range declarations in Extended Pascal>).
+Here is the solution:
 
-  examples/debuggingtut$ head -69 glrexpressions.eyp | cat -n
-     1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
-     2  %strict
-     3  %token ID INT NUM
-     4
-     5  %right '='
-     6  %left '+'
-     7
-     8  %{
-     9  my $input;
-    10  %}
-    11
-    12  %tree bypass
-    13  %%
-    14  prog:
-    15      %name EMPTY
-    16      /* empty */
-    17    | %name PROG
-    18      prog stmt
-    19  ;
-    20
-    21  stmt:
-    22      %name EXP
-    23      expr ';'
-    24    | %name DECL
-    25      decl
-    26  ;
-    27
-    28  expr:
-    29      %name EXPID
-    30      ID decexpconflict
-    31    | %name NUM
-    32      NUM
-    33    | %name TYPECAST
-    34      INT '(' expr ')' /* typecast */
-    35    | %name PLUS
-    36      expr '+' expr
-    37    | %name ASSIGN
-    38      expr '=' expr
-    39  ;
-    40
-    41  decl:
-    42      %name DECLARATOR
-    43      INT declarator ';'
-    44    | %name DECLARATORINIT
-    45      INT declarator '=' expr ';'
-    46  ;
-    47
-    48  declarator:
-    49      %name DECID
-    50      ID decexpconflict
-    51    | '(' declarator ')'
-    52  ;
-    53
-    54  decexpconflict:
-    55      /* empty. Just for hacking the LALR tables */
-    56        {
-    57          my $self = shift;
-    58
-    59          my $conflictstate = $self->YYNextState();
-    60          if ($input =~ m{^[)\s]*[;=]\s*}) {
-    61            $self->YYSetLRAction($conflictstate, ')', 'DECID' );
-    62          }
-    63          else {
-    64            $self->YYSetLRAction($conflictstate, ')', 'EXPID' );
-    65          }
-    66        }
-    67  ;
-    68
-    69  %%
+  ~/LEyapp/examples/debuggingtut$ cat -n pascalenumeratedvsrangesolvedviadyn.eyp
+     1  %{
+     2  =head1 SYNOPSIS
+     3  
+     4  See 
+     5  
+     6  =over 2
+     7  
+     8  =item * File pascalenumeratedvsrange.eyp in examples/debuggintut/
+     9  
+    10  =item * The Bison manual L<http://www.gnu.org/software/bison/manual/html_mono/bison.html>
+    11  
+    12  =back
+    13  
+    14  Compile it with:
+    15  
+    16              eyapp -b '' pascalenumeratedvsrangesolvedviadyn.eyp
+    17  
+    18  run it with this options:
+    19  
+    20              ./pascalenumeratedvsrangesolvedviadyn.pm -t
+    21  
+    22  Try these inputs:
+    23  
+    24                  type r = (x) ..  y ;
+    25                  type r = (x+2)*3 ..  y/2 ;
+    26                  type e = (x, y, z);
+    27                  type e = (x);
+    28  
+    29  =cut
+    30  
+    31  use base q{DebugTail}; 
+    32  
+    33  my $ID = qr{[A-Za-z][A-Za-z0-9_]*};
+    34               # Identifiers separated by commas
+    35  my $IDLIST = qr{ \s*(?:\s*,\s* $ID)* \s* }x;
+    36               # list followed by a closing par and a semicolon 
+    37  my $RESTOFLIST = qr{$IDLIST \) \s* ; }x;
+    38  %}
+    39  
+    40  %namingscheme {
+    41    #Receives a Parse::Eyapp object describing the grammar
+    42    my $self = shift;
+    43  
+    44    $self->tokennames(
+    45      '(' => 'LP',
+    46      '..' => 'DOTDOT',
+    47      ',' => 'COMMA',
+    48      ')' => 'RP',
+    49      '+' => 'PLUS',
+    50      '-' => 'MINUS',
+    51      '*' => 'TIMES',
+    52      '/' => 'DIV',
+    53    );
+    54  
+    55    # returns the handler that will give names
+    56    # to the right hand sides
+    57    \&give_rhs_name;
+    58  }
+    59  
+    60  %strict
+    61  
+    62  %token ID NUM DOTDOT TYPE
+    63  %left   '-' '+'
+    64  %left   '*' '/'
+    65  
+    66  %tree
+    67  
+    68  %%
+    69  
+    70  type_decl : TYPE ID '=' type ';'
+    71  ;
+    72  
+    73  type : 
+    74        %name ENUM
+    75        '(' id_list ')'
+    76      | %name RANGE
+    77        expr DOTDOT expr
+    78  ;
+    79  
+    80  id_list : 
+    81        %name EnumID
+    82        ID rangeORenum
+    83      | id_list ',' ID
+    84  ;
+    85  
+    86  expr : '(' expr ')'
+    87      | expr '+' expr
+    88      | expr '-' expr
+    89      | expr '*' expr
+    90      | expr '/' expr
+    91      | %name RangeID
+    92        ID rangeORenum
+    93      | NUM
+    94  ;
+    95  
+    96  rangeORenum: /* empty: postponed conflict resolution */
+    97        {
+    98            my $parser = shift;
+    99            if (${$parser->input()} =~ m{\G(?= $RESTOFLIST)}gcx) {
+   100                $parser->YYSetReduce(')', 'EnumID' );
+   101              }
+   102              else {
+   103                $parser->YYSetReduce(')', 'RangeID' );
+   104              }
+   105        }
+   106  ;
+   107  
+   108  %%
+   109  
+   110  __PACKAGE__->lexer(
+   111    sub {
+   112      my $parser = shift;
+   113  
+   114      for (${$parser->input()}) {    # contextualize
+   115        m{\G(\s*)}gc;
+   116        $parser->tokenline($1 =~ tr{\n}{});
+   117  
+   118        m{\Gtype\b}gic                 and return ('TYPE', 'TYPE');
+   119  
+   120        m{\G($ID)}gc                   and return ('ID',  $1);
+   121  
+   122        m{\G([0-9]+)}gc                and return ('NUM', $1);
+   123  
+   124        m{\G\.\.}gc                    and return ('DOTDOT',  '..');
+   125  
+   126        m{\G(.)}gc                     and return ($1,    $1);
+   127  
+   128        return('',undef);
+   129      }
+   130    }
+   131  );
+   132  
+   133  unless (caller()) {
+   134    $Parse::Eyapp::Node::INDENT = 1;
+   135    my $prompt = << 'EOP';
+   136  Try this input:
+   137      type 
+   138      r
+   139      =
+   140      (x)
+   141      ..
+   142      y
+   143      ;
+   144  
+   145  Here other inputs you can try:
+   146  
+   147      type r = (x+2)*3 ..  y/2 ;
+   148      type e = (x, y, z);
+   149      type e = (x);
+   150  
+   151  Press CTRL-D (CTRL-W in windows) to produce the end-of-file
+   152  EOP
+   153    __PACKAGE__->main($prompt); 
+   154  }
 
+This example also illustrates how to modify the default production
+naming schema. Follows the result of several executions:
 
-Line 59 uses the method C<YYNextState> to compute the state after the reduction for
-the production rule 
+  ~/LEyapp/examples/debuggingtut$ ./pascalenumeratedvsrangesolvedviadyn.pm -t
+  Try this input:
+      type 
+      r
+      =
+      (x)
+      ..
+      y
+      ;
 
-      decexpconflict -> /* empty */
+  Here other inputs you can try:
 
-which is precisely the conflict state. If the incoming input is a sequence of parenthesis 
-followed by either a semicolon or an equal we call to the method C<YYSetLRAction> to set
-a reduction by the rule
+      type r = (x+2)*3 ..  y/2 ;
+      type e = (x, y, z);
+      type e = (x);
 
-     declarator -> ID
+  Press CTRL-D (CTRL-W in windows) to produce the end-of-file
+  type r = (x+2)*3 ..  y/2 ;
+  ^D
+  type_decl_is_TYPE_ID_type(
+    TERMINAL[TYPE],
+    TERMINAL[r],
+    RANGE(
+      expr_is_expr_TIMES_expr(
+        expr_is_LP_expr_RP(
+          expr_is_expr_PLUS_expr(
+            RangeID(
+              TERMINAL[x]
+            ),
+            expr_is_NUM(
+              TERMINAL[2]
+            )
+          )
+        ),
+        expr_is_NUM(
+          TERMINAL[3]
+        )
+      ),
+      TERMINAL[..],
+      expr_is_expr_DIV_expr(
+        RangeID(
+          TERMINAL[y]
+        ),
+        expr_is_NUM(
+          TERMINAL[2]
+        )
+      )
+    )
+  )
+  ~/LEyapp/examples/debuggingtut$ ./pascalenumeratedvsrangesolvedviadyn.pm -t
+  Try this input:
+      type 
+      r
+      =
+      (x)
+      ..
+      y
+      ;
 
-for that state and token C<')'>, otherwise we indicate a reduction by the rule:
+  Here other inputs you can try:
 
-     expr -> ID    
+      type r = (x+2)*3 ..  y/2 ;
+      type e = (x, y, z);
+      type e = (x);
+
+  Press CTRL-D (CTRL-W in windows) to produce the end-of-file
+  type e = (x);
+  ^D
+  type_decl_is_TYPE_ID_type(
+    TERMINAL[TYPE],
+    TERMINAL[e],
+    ENUM(
+      EnumID(
+        TERMINAL[x]
+      )
+    )
+  )
 
 
 =head2 I<Postponed Conflict Resolution>: Shift-Reduce Conflicts
@@ -2336,129 +2505,85 @@ The generated language is constituted by sequences like:
 
 As you remember the conflict was:
 
-  examples/debuggingtut$ sed -ne '/^State 13:/,/^State/p' DynamicallyChangingTheParser2.output
+  ~/LEyapp/examples/debuggingtut$ sed -ne '/^St.*13:/,/^St.*14/p' DynamicallyChangingTheParser.output  
   State 13:
 
-          ds -> D conflict . ';' ds       (Rule 6)
-          ds -> D conflict .      (Rule 7)
+      ds -> D conflict . ';' ds   (Rule 6)
+      ds -> D conflict .  (Rule 7)
 
-          ';'     shift, and go to state 16
+      ';' shift, and go to state 16
 
-          ';'     [reduce using rule 7 (ds)]
+      ';' [reduce using rule 7 (ds)]
 
   State 14:
 
-The conflict handler (lines 50-56 below) sets the LR action
-to reduce by the production with name C<LAST_D>
+
+The C<conflict> handler below sets the LR action
+to reduce by the production with name C<D1>
 
                  ds -> D
 
-in the presence of token C<';'> if indeed is the last C<'D'>.
-The semantic action associated with the production C<LAST_D> (lines
-34-37) restores the former shift action and proceeds to call
-C<Parse::Eyapp::Driver::YYBuildAST> in order to continue
-with the building of the abstract syntax tree:
+in the presence of token C<';'> if indeed is the last C<'D'>, that is, if:
 
-  examples/debuggingtut$ cat -n DynamicallyChangingTheParser2.eyp
-     1  # See section 'Hacking the Parsing Tables: ACTION and GOTOs' in
-     2  # http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
-     3  #
-     4  # See also: Debug.eyp Debug1.eyp Debug2.eyp  LookForward.eyp
-     5  # DynamicallyChangingTheParser.eyp This example illustrates how to dynamically
-     6  # change the behavior of the parser
-     7
-     8  %token D S
-     9
-    10  %{
-    11  our $VERSION = '0.01';
-    12  %}
-    13
-    14  %tree bypass
-    15
-    16  %%
-    17  p: %name PROG
-    18      block +
-    19  ;
-    20
-    21  block:
-    22      %name BLOCK
-    23      '{' ds ';' ss '}'
-    24    | %name SS
-    25      '{' ss '}'
-    26  ;
-    27
-    28  ds:
-    29      %name MORE_Ds
-    30      D conflict ';' ds
-    31    | %name LAST_D
-    32      D conflict
-    33        {
-    34           # Recover former LALR action
-    35           $_[0]->YYRestoreLRAction('conflict', ';');
-    36           # Do whatever you want
-    37           goto &Parse::Eyapp::Driver::YYBuildAST;
-    38        }
-    39  ;
-    40
-    41  ss:
-    42      %name SS
-    43      S ';' ss
-    44    | %name S
-    45      S
-    46  ;
-    47
-    48  conflict:
-    49      /* empty. Just for dynamic precedence */
-    50        {
-    51          my $self = shift;
-    52
-    53          $self->YYSetReduce(';', 'LAST_D' ) if ($self->{INPUT} =~ m{^;\s*S});
-    54
-    55          undef; # skip this node in the AST
-    56        }
-    57  ;
-    58
-    59  %%
-    60
-    61  sub _Error {
-    62    my $parser = shift;
-    63
-    64    my ($token) = $parser->YYCurval;
-    65    my ($what) = $token ? "input: '$token'" : "end of input";
-    66    warn "Syntax error near $what\n";
-    67  }
-    68
-    69  sub _Lexer {
-    70    my $self = shift;
-    71
-    72    for ($self->{INPUT}) {
-    73      s{^(\s*)}{};
-    74
-    75      return ('',undef) unless $_;
-    76
-    77      return ($1,$1) if s/^(.)//;
-    78    }
-    79    return ('',undef);
-    80  }
-    81
-    82  sub Run {
-    83    my $debug = shift || 0;
-    84    $debug = 0x1F if $debug;
-    85
-    86    my $self = __PACKAGE__->new();
-    87    $self->{INPUT} = <STDIN>;
-    88
-    89    print
-    90      $self->YYParse(
-    91        yylex => \&_Lexer,
-    92        yyerror => \&_Error,
-    93        yydebug => $debug,
-    94      )->str."\n";
-    95  }
-    96
-    97  Run(@ARGV) unless caller;
+       ${$self->input()} =~ m{^\s*;\s*S}
 
+Otherwise we set the C<shift> action via a call to the 
+C<YYSetShift> method.
 
+  ~/LEyapp/examples/debuggingtut$ sed -ne '30,$p' DynamicallyChangingTheParser.eyp | cat -n
+     1  %token D S
+     2  
+     3  %tree bypass
+     4  
+     5  # Expect just 1 shift-reduce conflict
+     6  %expect 1 
+     7  
+     8  %%
+     9  p: %name PROG
+    10      block +
+    11  ;
+    12  
+    13  block:
+    14      %name BLOCK_DS
+    15      '{' ds ';' ss '}' 
+    16    | %name BLOCK_S
+    17      '{' ss '}'
+    18  ;
+    19  
+    20  ds:
+    21      %name D2
+    22      D conflict ';' ds    
+    23    | %name D1
+    24      D conflict        
+    25  ;
+    26  
+    27  ss:
+    28      %name S2
+    29      S ';' ss      
+    30    | %name S1
+    31      S       
+    32  ;
+    33  
+    34  conflict:
+    35        /* empty. This action solves the conflict using dynamic precedence */
+    36        {
+    37          my $self = shift;
+    38  
+    39          if (${$self->input()} =~ m{^\s*;\s*S}) {
+    40            $self->YYSetReduce(';', 'D1' )
+    41          }
+    42          else {
+    43            $self->YYSetShift(';')
+    44          }
+    45  
+    46          undef; # skip this node in the AST
+    47        }
+    48  ;
+    49  
+    50  %%
+    51  
+    52  my $prompt = 'Provide a statement like "{D; S} {D; D; S}" and press <CR><CTRL-D>: ';
+    53  __PACKAGE__->main($prompt) unless caller;
 
 
 

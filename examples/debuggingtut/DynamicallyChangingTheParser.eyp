@@ -78,5 +78,7 @@ conflict:
 
 %%
 
+__PACKAGE__->lexer( \&DebugTail::lex); 
+
 my $prompt = 'Provide a statement like "{D; S} {D; D; S}" and press <CR><CTRL-D>: ';
 __PACKAGE__->main($prompt) unless caller;

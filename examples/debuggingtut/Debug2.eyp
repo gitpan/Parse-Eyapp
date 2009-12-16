@@ -59,6 +59,7 @@ ss:
 
 %%
 
+__PACKAGE__->lexer( \&DebugTail::lex); 
+
 __PACKAGE__->main('Provide a statement like "D; D; S" and press <CR><CTRL-D>: ') unless caller;
 
-1;

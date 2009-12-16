@@ -1,7 +1,7 @@
-# ListWithRefs1.eyp
 %semantic token 'c' 'd'
 %{
 use Data::Dumper;
+$Data::Dumper::Indent = 1;
 %}
 %%
 S:      'c'+  D+ 
@@ -18,34 +18,11 @@ D: 'd'
 
 %%
 
-sub _Error {
-        exists $_[0]->YYData->{ERRMSG}
-    and do {
-        print $_[0]->YYData->{ERRMSG};
-        delete $_[0]->YYData->{ERRMSG};
-        return;
-    };
-    print "Syntax error.\n";
-}
-
-sub _Lexer {
-    my($parser)=shift;
-
-        $parser->YYData->{INPUT}
-    or  $parser->YYData->{INPUT} = <STDIN>
-    or  return('',undef);
-
-    $parser->YYData->{INPUT}=~s/^[ \t\n]//;
-
-    for ($parser->YYData->{INPUT}) {
-        s/^(.)//s and return($1,$1);
-    }
-}
+use base 'Tail';
+__PACKAGE__->lexer(\&Tail::lex);
 
 sub Run {
-    my($self)=shift;
-    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, 
-      yybuildingtree => 1,
-      #, yydebug => 0x1F 
-    );
+  my ($self) = shift;
+  return $self->YYParse( yybuildingtree => 1 );
 }
+

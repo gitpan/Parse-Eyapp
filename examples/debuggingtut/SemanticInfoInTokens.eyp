@@ -1,4 +1,4 @@
-# See: DynamicvsTieIns.eyp
+# See: Tieins.eyp
 # See: http://www.gnu.org/software/bison/manual/html_mono/bison.html#Lexical-Tie_002dins
 # for a more detailed explanation.
 
@@ -11,6 +11,7 @@
 %left '+'
 
 %{
+use base q{DebugTail};
 my %st;
 %}
 
@@ -20,6 +21,8 @@ my %st;
 stmt:
     decl <* ';'> expr <%name EXPS + ';'>
       {
+        # make the symbol table an attribute 
+        # of the root node
         $_[2]->{st} = { %st };
         $_[2];
       }
@@ -28,6 +31,7 @@ stmt:
 decl:
     INT ID <+ ','>
       {
+        # insert identifiers in the symbol table
         $st{$_->{attr}} = 1 for $_[2]->children();
       }
 ;
@@ -44,113 +48,61 @@ expr:
         $expr;
       }
   | %name ASSIGN
-    $ID '=' expr 
-      {
-        my $parser = shift;
-        my $t = $parser->YYBuildAST(@_);
-        # Retype left (TERMINAL) child as ID
-        $t->ID->type('ID');
-        $t;
-      }
+    id '=' expr 
   | %name PLUS
     expr '+' expr
 ;
 
+id : ID
+;
+
 %%
 
-use Getopt::Long;
-use List::Util qw{first};
-use Data::Dumper;
-
-sub _Error {
-  my($token)=$_[0]->YYCurval;
-  my($what)= $token ? "input: '$token'" : "end of input";
-  my @expected = $_[0]->YYExpect();
-
-  local $" = ', ';
-  warn "Syntax error near $what. Expected one of these tokens: <@expected>\n";
-  warn "Remaining input:\n". substr($_[0]->{input}, pos($_[0]->{input}));
-  die # Dumper($_[0]->{STACK}[-1])
-  ;
-}
-
-
 # Context-dependant lexer
-sub lexer {
-  my $parser = shift;
-  my $hexflag = $parser->{HEXFLAG};
+__PACKAGE__->lexer( sub {
+    my $parser = shift;
+    my $hexflag = $parser->{HEXFLAG};
 
-  for ($parser->{input}) {    # contextualize
-    m{\G\s*(\#.*)?}gc;
+    for (${$parser->input}) {    # contextualize
+      m{\G\s*(\#.*)?}gc;
 
-    m{\G(HEX\b|INT\b)}igc and return (uc($1), $1);
+      m{\G(HEX\b|INT\b)}igc and return (uc($1), $1);
 
-    m{(\G\d+)}gc and return ('INTEGER', $hexflag? hex($1) : $1);
+      m{(\G\d+)}gc and return ('INTEGER', $hexflag? hex($1) : $1);
 
 
-    m{\G([a-zA-Z_]\w*)}gc and do {
-      my $match = $1;
-      $hexflag and !exists($st{$match}) and $match =~ m{^([A-F0-9]+$)}gc and return ('INTEGER', hex($match)); 
-      return ('ID', $1);
-    };
+      m{\G([a-zA-Z_]\w*)}gc and do {
+        my $match = $1;
+        $hexflag and !exists($st{$match}) and $match =~ m{^([A-F0-9]+$)}gc and return ('INTEGER', hex($match)); 
+        return ('ID', $1);
+      };
 
-    m{\G(.)}gc         and return ($1, $1);
+      m{\G(.)}gc         and return ($1, $1);
 
-    return('',undef);
+      return('',undef);
+    }
   }
-}
-
-sub Run {
-    my($self)=shift;
-    my $yydebug = shift || 0;
-
-    return $self->YYParse( 
-      yylex => \&lexer, 
-      yyerror => \&_Error,
-      yydebug => $yydebug, # 0x1F
-    );
-}
-
-sub uploadfile {
-  my $file = shift;
-  my $msg = shift;
-
-  my $input = '';
-  eval {
-    $input = Parse::Eyapp::Base::slurp_file($file) 
-  };
-  if ($@) {
-    print $msg;
-    local $/ = undef;
-    $input = <STDIN>;
-  }
-  return $input;
-}
-
-sub main {
-  my $package = shift;
-
-  my $debug = 0;
-  my $file = '';
-  my $result = GetOptions (
-    "debug!" => \$debug,  
-    "file=s" => \$file,
-  );
-
-  $debug = 0x1F if $debug;
-  $file = shift if !$file && @ARGV; 
-
-  my $parser = $package->new();
-  my $prompt = "Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:\n";
-  $parser->{input} = uploadfile($file, $prompt);
-  print $parser->Run( $debug )->str,"\n";
-}
+);
 
 *TERMINAL::info = *NUM::info = *ID::info = sub {
   $_[0]->{attr}
 };
 
-__PACKAGE__->main unless caller();
+__PACKAGE__->main() unless caller();
+
+=head1 SYNOPSIS
+
+Compile it with:
+
+            eyapp -b '' SemanticInfoInTokens.eyp
+
+Run it with:
+
+            ./SemanticInfoInTokens.pm -t -f inputforsemanticinfo.txt
+
+try also:
+
+            ./SemanticInfoInTokens.pm -t -f inputforsemanticinfo2.txt
 
 =head1 THE TYPENAME-IDENTIFIER PROBLEM WHEN PARSING THE C<C> LANGUAGE
 
@@ -194,148 +146,11 @@ Here the lexer looks at the value of the hexflag attribute; when it is nonzero,
 all integers are parsed in hexadecimal, and tokens starting with letters are
 parsed as integers if possible.
 
-=head1 RUNNING
-
-Compile it with C<-b>:
-
-  ~/LEyapp/examples/debuggingtut$ eyapp -b '' SemanticInfoInTokens.eyp
-
-and run it using option C<-file>:
-
-  ~/LEyapp/examples/debuggingtut$ ./SemanticInfoInTokens.pm -file inputforsemanticinfo.txt
-  EXPS(ASSIGN(ID[A],NUM[12]),ASSIGN(ID[B],NUM[177]),ASSIGN(ID[C],NUM[18]),ASSIGN(ID[B],PLUS(ID[A],ID[C])),ASSIGN(ID[B],PLUS(NUM[13],ID[C])))
-
-
-You can also run it using option C<-debug>. Here the user typed the input:
-
-  int A
-  A = hex(A1+A)
-
-here is the output:
-
-  lusasoft@LusaSoft:~/LEyapp/examples/debuggingtut$ ./SemanticInfoInTokens.pm -debug
-  Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:
-  int A
-  A = hex(A1+A)
-  ----------------------------------------
-  In state 0:
-  Stack:[0]
-  Need token. Got >INT<
-  Shift and go to state 5.
-  ----------------------------------------
-  In state 5:
-  Stack:[0,5]
-  Need token. Got >ID<
-  Shift and go to state 13.
-  ----------------------------------------
-  In state 13:
-  Stack:[0,5,13]
-  Don't need token.
-  Reduce using rule 9 (PLUS-4 --> ID): Back to state 5, then go to state 14.
-  ----------------------------------------
-  In state 14:
-  Stack:[0,5,14]
-  Need token. Got >ID<
-  Reduce using rule 10 (decl --> INT PLUS-4): Back to state 0, then go to state 3.
-  ----------------------------------------
-  In state 3:
-  Stack:[0,3]
-  Don't need token.
-  Reduce using rule 2 (STAR-1 --> decl): Back to state 0, then go to state 4.
-  ----------------------------------------
-  In state 4:
-  Stack:[0,4]
-  Reduce using rule 3 (STAR-2 --> STAR-1): Back to state 0, then go to state 2.
-  ----------------------------------------
-  In state 2:
-  Stack:[0,2]
-  Shift and go to state 8.
-  ----------------------------------------
-  In state 8:
-  Stack:[0,2,8]
-  Need token. Got >=<
-  Shift and go to state 15.
-  ----------------------------------------
-  In state 15:
-  Stack:[0,2,8,15]
-  Need token. Got >HEX<
-  Shift and go to state 9.
-  ----------------------------------------
-  In state 9:
-  Stack:[0,2,8,15,9]
-  Need token. Got >(<
-  Shift and go to state 16.
-  ----------------------------------------
-  In state 16:
-  Stack:[0,2,8,15,9,16]
-  Don't need token.
-  Reduce using rule 14 (@13-2 --> /* empty */): Back to state 16, then go to state 22.
-  ----------------------------------------
-  In state 22:
-  Stack:[0,2,8,15,9,16,22]
-  Need token. Got >INTEGER<
-  Shift and go to state 7.
-  ----------------------------------------
-  In state 7:
-  Stack:[0,2,8,15,9,16,22,7]
-  Don't need token.
-  Reduce using rule 12 (expr --> INTEGER): Back to state 22, then go to state 26.
-  ----------------------------------------
-  In state 26:
-  Stack:[0,2,8,15,9,16,22,26]
-  Need token. Got >+<
-  Shift and go to state 17.
-  ----------------------------------------
-  In state 17:
-  Stack:[0,2,8,15,9,16,22,26,17]
-  Need token. Got >ID<
-  Shift and go to state 8.
-  ----------------------------------------
-  In state 8:
-  Stack:[0,2,8,15,9,16,22,26,17,8]
-  Need token. Got >)<
-  Reduce using rule 11 (expr --> ID): Back to state 17, then go to state 23.
-  ----------------------------------------
-  In state 23:
-  Stack:[0,2,8,15,9,16,22,26,17,23]
-  Don't need token.
-  Reduce using rule 16 (expr --> expr + expr): Back to state 22, then go to state 26.
-  ----------------------------------------
-  In state 26:
-  Stack:[0,2,8,15,9,16,22,26]
-  Shift and go to state 27.
-  ----------------------------------------
-  In state 27:
-  Stack:[0,2,8,15,9,16,22,26,27]
-  Don't need token.
-  Reduce using rule 13 (expr --> HEX ( @13-2 expr )): Back to state 15, then go to state 21.
-  ----------------------------------------
-  In state 21:
-  Stack:[0,2,8,15,21]
-  Need token. Got ><
-  Reduce using rule 15 (expr --> ID = expr): Back to state 2, then go to state 10.
-  ----------------------------------------
-  In state 10:
-  Stack:[0,2,10]
-  Reduce using rule 6 (PLUS-3 --> expr): Back to state 2, then go to state 11.
-  ----------------------------------------
-  In state 11:
-  Stack:[0,2,11]
-  Reduce using rule 7 (stmt --> STAR-2 PLUS-3): Back to state 0, then go to state 1.
-  ----------------------------------------
-  In state 1:
-  Stack:[0,1]
-  Shift and go to state 6.
-  ----------------------------------------
-  In state 6:
-  Stack:[0,1,6]
-  Don't need token.
-  Accept.
-  EXPS(ASSIGN(ID[A],PLUS(NUM[161],ID[A])))
-
 =head1 SEE ALSO
 
 =over 2
+
+=item *  File: Tieins.eyp
 
 =item * L<http://www.gnu.org/software/bison/manual/html_mono/bison.html#Lexical-Tie_002dins>
 

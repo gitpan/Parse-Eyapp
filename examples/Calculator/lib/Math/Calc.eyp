@@ -57,5 +57,7 @@ exp:
 
 %%
 
+__PACKAGE__->lexer( \&Math::Tail::lex );
+
 # In case is compiled with eyapp option -b
 __PACKAGE__->main unless caller;

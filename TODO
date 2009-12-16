@@ -1,10 +1,10 @@
+  * Lexical Analyzer generation
+
   * Dynamic conflict  resolution:
+      %conflict CONLFICTIDENTIFIER { # conflict solver
                if (is_A()) { $self->YYSetReduce('@', 'ruleA') }
                else { $self->YYSetShift('@') }
-
-               - Copy input in a saved place. 
-               - Duplicate grammar for A.
-               - Parse using duplicated grammar
+      }
 
   * Dynamic conflict resolution: test YYSetShift
         The case where the default is a reduction is not solved. Investigate
@@ -12,14 +12,18 @@
   * Lars request (see dir contributions)
 
   * Provide debugging support for standalone modules: currently skipped
+
   * Provide an argument named 
                                 'end_of_input' => [ token list: '', NUM, etc. ]
 
     to be used in YYParse. When an error is found, if the token is in the set 'end_of_input' the input
     will be accepted if in the accepting state
-  * There is a bug in eyapp with reduce-reduce conflicts!!
+
+  * There is a bug in eyapp with reduce-reduce conflicts?! I am not sure of this
+
   * There is a bug with &give_rhs_name in Parse::Eyapp::Grammar and lists *, +, etc. see the example
       examples/debuggintut/SemanticInfoInTokens.eyp
+
     Not always a syntactic variable is a valid identifier: e.g. PLUS-1
     Probably, it is better that the method "tokennames" give names to the syntactic variables
 

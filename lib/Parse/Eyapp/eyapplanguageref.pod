@@ -246,18 +246,19 @@ of the Eyapp language using the file C<examples/eyapplanguageref/Calc.eyp>
 that accompanies this distribution. This file implements a trivial 
 calculator. Here is the header section:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '1,11p' Calc.eyp | cat -n
-  1  # examples/eyapplanguageref/Calc.eyp
-  2  %right  '='
-  3  %left   '-' '+'
-  4  %left   '*' '/'
-  5  %left   NEG
-  6  %right  '^'
-  7  %{
-  8  my %s; # symbol table
-  9  %}
- 10
- 11  %%
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$   sed -ne '1,11p' Calc.eyp | cat -n
+     1  # examples/eyapplanguageref/Calc.eyp
+     2  %right  '='
+     3  %left   '-' '+'
+     4  %left   '*' '/'
+     5  %left   NEG
+     6  %right  '^'
+     7  %{
+     8  my %s; # symbol table
+     9  %}
+    10
+    11  %%
+
 
 =head2 Declarations and Precedence
 
@@ -560,11 +561,25 @@ the semantic action with it:
 Middle production actions can refer to the attributes on its left. They count
 as one of the components of the production. Thus the program:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '1,4p' intermediateaction2.yp
- %%
- S:  'a' { $_[1]x4 }.mid 'a' { print "$_[2], $mid, $_[3]\n"; }
- ;
- %%
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n intermediateaction2.yp
+     1  %%
+     2  S:  'a' { $_[1]x4 }.mid 'a' { print "$_[2], $mid, $_[3]\n"; }
+     3  ;
+     4  %%
+     5
+     6  use base q{Parse::Eyapp::TailSupport};
+     7
+     8  __PACKAGE__->lexer(sub {
+     9      my($parser)=shift;
+    10
+    11      for (${$parser->input}) {
+    12          s/^[ \t\n]//;
+    13          s/^(.)//s and return($1,$1);
+    14          return ('', undef);
+    15      }
+    16    }
+    17  );
+
 
 The auxiliar syntactic variables are named C<@#position-#order> where C<#position>
 is the position of the action in the rhs and C<order> is an ordinal number. See
@@ -578,59 +593,102 @@ the C<.output> file for the former example:
  1:      S -> 'a' @1-1 'a'
  2:      @1-1 -> /* empty */
 
-when given input C<aa> the execution will produce as output C<aaaa, aaaa, a>.
+The program C<useintermediateaction2.pl> makes use of the generated parser:
+
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n useintermediateaction2.pl                                                      
+     1  #!/usr/bin/env perl                                                                                                          
+     2  use warnings;                                                                                                                
+     3  use strict;
+     4  use intermediateaction2;
+     5
+     6  unshift @ARGV, '--noslurp';
+     7  my $parser = intermediateaction2->new;
+     8  $parser->main("try input 'aa': ");
+
+The C<main> method is provided by C<Parse::Eyapp::TailSupport>.
+When given input C<aa> the execution will produce as output C<aaaa, aaaa, a>. The option
+C<-d> used in the following execution activates the debug mode:
+
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ./useintermediateaction2.pl -d
+  try input 'aa': aa
+  ----------------------------------------
+  In state 0:
+  Stack:[0]
+  Need token. Got >a<
+  Shift and go to state 2.
+  ----------------------------------------
+  In state 2:
+  Stack:[0,2]
+  Don't need token.
+  Reduce using rule 2 (@1-1 --> /* empty */): Back to state 2, then go to state 4.
+  ----------------------------------------
+  In state 4:
+  Stack:[0,2,4]
+  Need token. Got >a<
+  Shift and go to state 5.
+  ----------------------------------------
+  In state 5:
+  Stack:[0,2,4,5]
+  Don't need token.
+  Reduce using rule 1 (S --> a @1-1 a): aaaa, aaaa, a
+  Back to state 0, then go to state 1.
+  ----------------------------------------
+  In state 1:
+  Stack:[0,1]
+  Need token. Got ><
+  Shift and go to state 3.
+  ----------------------------------------
+  In state 3:
+  Stack:[0,1,3]
+  Don't need token.
+  Accept.
 
 
 =head2 Example of Body Section
 
 Following with the calculator example, the body is:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '12,48p' Calc.eyp | cat -n
-  1  start:
-  2      input { \%s }
-  3  ;
-  4
-  5  input: line *
-  6  ;
-  7
-  8  line:
-  9    '\n'         { undef }
- 10    | exp '\n'   { print "$_[1]\n" if defined($_[1]); $_[1] }
- 11    | error  '\n'
- 12        {
- 13          $_[0]->YYErrok;
- 14          undef
- 15        }
- 16  ;
- 17
- 18  exp:
- 19      NUM
- 20    | $VAR                   { $s{$VAR} }
- 21    | $VAR '=' $exp          { $s{$VAR} = $exp }
- 22    | exp.left '+' exp.right { $left + $right }
- 23    | exp.left '-' exp.right { $left - $right }
- 24    | exp.left '*' exp.right { $left * $right }
- 25    | exp.left '/' exp.right
- 26      {
- 27         $_[3] and return($_[1] / $_[3]);
- 28         $_[0]->YYData->{ERRMSG} = "Illegal division by zero.\n";
- 29         $_[0]->YYError; # Pretend that a syntactic error occurred: _Error will be called
- 30         undef
- 31      }
- 32    | '-' $exp %prec NEG     { -$exp }
- 33    | exp.left '^' exp.right { $left ** $right }
- 34    | '(' $exp ')'           { $exp }
- 35  ;
- 36
- 37  %%
-
-
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ sed -ne '12,48p' Calc.eyp | cat -n
+     1  start:
+     2      input { \%s }
+     3  ;
+     4
+     5  input: line *
+     6  ;
+     7
+     8  line:
+     9    '\n'         { undef }
+    10    | exp '\n'   { print "$_[1]\n" if defined($_[1]); $_[1] }
+    11    | error  '\n'
+    12        {
+    13          $_[0]->YYErrok;
+    14          undef
+    15        }
+    16  ;
+    17
+    18  exp:
+    19      NUM
+    20    | $VAR                   { $s{$VAR} }
+    21    | $VAR '=' $exp          { $s{$VAR} = $exp }
+    22    | exp.left '+' exp.right { $left + $right }
+    23    | exp.left '-' exp.right { $left - $right }
+    24    | exp.left '*' exp.right { $left * $right }
+    25    | exp.left '/' exp.right
+    26      {
+    27         $_[3] and return($_[1] / $_[3]);
+    28         $_[0]->YYData->{ERRMSG} = "Illegal division by zero.\n";
+    29         $_[0]->YYError; # Pretend that a syntactic error occurred: _Error will be called
+    30         undef
+    31      }
+    32    | '-' $exp %prec NEG     { -$exp }
+    33    | exp.left '^' exp.right { $left ** $right }
+    34    | '(' $exp ')'           { $exp }
+    35  ;
+    36
+    37  %%
 
 This example does not uses any of the Eyapp extensions (with the exception of the 
-I<star list> at line 5) and the dot and dollar notations. 
-Please, see the L<Parse::Yapp> pages and elsewhere documentation
-on C<yacc> and C<bison> for more information.
-
+C<*> operator at line 5) and the dot and dollar notations. 
 
 =head2 Solving Ambiguities and Conflicts
 
@@ -839,72 +897,42 @@ pair> C<('', undef)>
 
 See below how to write a lexical analyzer (file C<examples/eyapplanguageref/Calc.eyp>):
 
-  1  sub make_lexer {
-  2    my $input = shift;
-  3
-  4    return sub {
-  5      my $parser = shift;
-  6
-  7      for ($$input) {
-  8        m{\G[ \t]*}gc;
-  9        m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM',$1);
- 10        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR',$1);
- 11        m{\G\n}gc                      and do { $lineno++; return ("\n", "\n") };
- 12        m{\G(.)}gc                     and return ($1,$1);
- 13
- 14        return('',undef);
- 15      }
- 16    }
- 17  }
-
-The subroutine C<make_lexer> creates the lexical analyzer as
-a closure. The lexer returned by C<make_lexer> is used by the 
-C<YYParse> method:
-
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '90,97p' Calc.eyp | cat -n
- 1  sub Run {
- 2      my($self)=shift;
- 3      my $input = shift or die "No input given\n";
- 4
- 5      return $self->YYParse( yylex => make_lexer($input), yyerror => \&_Error,
- 6        #yydebug =>0x1F
- 7      );
- 8  }
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ sed -ne '48,$p' Calc.eyp | cat -n
+     1  %%
+     2  use base q{Parse::Eyapp::TailSupport};
+     3
+     4  __PACKAGE__->lexer( sub {
+     5      my $parser = shift;
+     6
+     7      for (${$parser->input}) {
+     8        m{\G[ \t]*(?:#.*)?}gc;
+     9        m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM',$1);
+    10        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR',$1);
+    11        m{\G\n}gc                      and do {
+    12                                          $parser->tokenline(1);
+    13                                          return ("\n", "\n")
+    14                                       };
+    15        m{\G(.)}gc                     and return ($1,$1);
+    16
+    17        return('',undef);
+    18      }
+    19    }
+    20  );
+    21
+    22  # In case is compiled with eyapp option -b
+    23  __PACKAGE__->main unless caller;
 
 
+The subroutine C<lexer> in C<Parse::Eyapp::TailSupport> sets the lexical analyzer 
+for the parser to the anonymous sub provided as argument.
+a closure. 
 
 =head2 The Error Report Subroutine
 
-The Error Report subroutine is also a parser method, 
-and consequently receives as parameter the parser object. 
-
-See the error report subroutine
-for the example in C<examples/Calc.eyp>:
-
-  1  %%
-  2
-  3  my $lineno = 1;
-  4
-  5  sub _Error {
-  6    my $parser = shift;
-  7
-  8      exists $parser->YYData->{ERRMSG}
-  9    and do {
- 10        print $parser->YYData->{ERRMSG};
- 11        delete $parser->YYData->{ERRMSG};
- 12        return;
- 13    };
- 14    my($token)=$parser->YYCurval;
- 15    my($what)= $token ? "input: '$token'" : "end of input";
- 16    my @expected = $parser->YYExpect();
- 17    local $" = ', ';
- 18    print << "ERRMSG";
- 19
- 20  Syntax error near $what (lin num $lineno).
- 21  Expected one of these terminals: @expected
- 22  ERRMSG
- 23  }
-
+The Error Report subroutine is also a parser attribute, 
+and must be defined. The module C<Parse::Eyapp::TailSupport>
+provides a convenient error handler that is used
+in the example in C<examples/Calc.eyp>:
 
 See the L<Parse::Yapp> pages and elsewhere documentation
 on C<yacc> and C<bison> for more information.
@@ -914,42 +942,42 @@ on C<yacc> and C<bison> for more information.
 The following is an example of a program that uses the calculator explained 
 in the two previous sections:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ cat -n usecalc.pl
-  1  #!/usr/bin/perl -w
-  2  use strict;
-  3  use Calc;
-  4
-  5  my $parser = Calc->new();
-  6  my $input = <<'EOI';
-  7  a = 2*3
-  8  d = 5/(a-6)
-  9  b = (a+1)/7
- 10  c=a*3+4)-5
- 11  a = a+1
- 12  EOI
- 13  my $t = $parser->Run(\$input);
- 14  print "========= Symbol Table ==============\n";
- 15  print "$_ = $t->{$_}\n" for sort keys %$t;
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n usecalc.pl
+     1  #!/usr/bin/perl -w
+     2  use strict;
+     3  use Calc;
+     4
+     5  my $parser = Calc->new();
+     6  $parser->input(\<<'EOI'
+     7  a = 2*3       # 1: 6
+     8  d = 5/(a-6)   # 2: division by zero
+     9  b = (a+1)/7   # 3: 1
+    10  c=a*3+4)-5    # 4: syntax error
+    11  a = a+1       # 5: 7
+    12  EOI
+    13  );
+    14  my $t = $parser->Run();
+    15  print "========= Symbol Table ==============\n";
+    16  print "$_ = $t->{$_}\n" for sort keys %$t;
 
 The output for this program is (the input for each output
 appear as a Perl comment on the right):
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ eyapp Calc.eyp
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ usecalc.pl
- 6                                              # a = 2*3
- Illegal division by zero.                      # d = 5/(a-6)
- 1                                              # b = (a+1)/7
+  pl@nereida:~/src/perl/YappWithDefaultAction/examples$ eyapp Calc.eyp
 
- Syntax error near input: ')' (lin num 4).      # c=a*3+4)-5
- Expected one of these terminals: -, /, ^, *, +,
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ./usecalc.pl
+  6
+  Illegal division by zero.
+  1
 
- 7                                              # a = a+1
- ========= Symbol Table ==============
- a = 7
- b = 1
- c = 22
-
-
+  Syntax error near ')' (line number 4).
+  Expected one of these terminals: '-' '/' '^' '*' '+' '
+  '
+  7
+  ========= Symbol Table ==============
+  a = 7
+  b = 1
+  c = 22
 
 =head1 LISTS AND OPTIONALS
 
@@ -1005,21 +1033,22 @@ a C<rhs> expression as in:
 
 The grammar:
 
-  examples/eyapplanguageref$ head -14 List3.yp | cat -n
-     1  # List3.yp
-     2  %semantic token 'c'
-     3  %{
-     4  use Data::Dumper;
-     5  %}
-     6  %%
-     7  S:      'c'+  'd'+
-     8             {
-     9                print Dumper($_[1]);
-    10                print Dumper($_[2]);
-    11             }
-    12  ;
-    13
-    14  %%
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat List3.yp
+  %semantic token 'c'
+  %{
+  use Data::Dumper;
+  %}
+  %%
+  S:      'c'+  'd'+
+             {
+                print Dumper($_[1]);
+                print Dumper($_[2]);
+             }
+  ;
+
+  %%
+  use base 'Tail';
+  __PACKAGE__->lexer(\&Tail::lex);
 
 
 Is equivalent to:
@@ -1027,7 +1056,7 @@ Is equivalent to:
   examples/eyapplanguageref$ eyapp -v List3.yp | head -9 List3.output
   Rules:
   ------
-  0:      $start -> S $end
+    0:      $start -> S $end
     1:      PLUS-1 -> PLUS-1 'c'
     2:      PLUS-1 -> 'c'
     3:      PLUS-2 -> PLUS-2 'd'
@@ -1035,24 +1064,18 @@ Is equivalent to:
     5:      S -> PLUS-1 PLUS-2
 
 
-  By default, the semantic action associated with a C<+> returns the lists of attributes
-  to which the C<+> applies:
+By default, the semantic action associated with a C<+> returns the lists of attributes
+to which the C<+> applies:
 
-  examples/eyapplanguageref$ use_list3.pl
-  ccdd
-  $VAR1 = [
-            'c',
-            'c'
-          ];
-  $VAR1 = [
-            'd',
-            'd'
-          ];
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ./use_list3.pl
+  Try input 'ccdd': ccdd
+  $VAR1 = [ 'c', 'c' ];
+  $VAR1 = [ 'd', 'd' ];
+
 
 Observe that, in spite of C<'d'> being a syntactic token
 the actions related with the C<d+> element (i.e. the actions associated
-with the C<PLUS-2> productions) create 
-the list of C<d>s.
+with the C<PLUS-2> productions) create the list of C<d>s.
 
 
 The semantic associated with a C<+> changes 
@@ -1081,38 +1104,24 @@ are skipped.
 When executing the example above but under the C<%tree> directive
 the output changes:
 
-  examples/eyapplanguageref$ head -3 List3_tree.yp; eyapp List3_tree.yp
-  # List3.yp
-  %semantic token 'c'
-  %tree
-  examples/eyapplanguageref$ diff List3.yp List3_tree.yp
-  2a3
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ diff List3.yp List3_tree.yp
+  1a2
   > %tree
+  14a16
+  >
 
 If we now run the client program with input C<ccdd> we get
 a couple of syntax trees:
 
-  examples/eyapplanguageref$ use_list3_tree.pl
-  ccdd
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ./use_list3_tree.pl
+  Try input 'ccdd': ccdd
   $VAR1 = bless( {
-                   'children' => [
-                                   bless( {
-                                            'children' => [],
-                                            'attr' => 'c',
-                                            'token' => 'c'
-                                          }, 'TERMINAL' ),
-                                   bless( {
-                                            'children' => [],
-                                            'attr' => 'c',
-                                            'token' => 'c'
-                                          }, 'TERMINAL' )
-                                 ]
-                 }, '_PLUS_LIST' );
-  $VAR1 = bless( {
-                   'children' => []
-                 }, '_PLUS_LIST' );
-
-
+    'children' => [
+      bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' ),
+      bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' )
+    ]
+  }, '_PLUS_LIST' );
+  $VAR1 = bless( { 'children' => [] }, '_PLUS_LIST' ); 
 
 The node associated with the list of C<d>s is empty since
 terminal C<d> wasn't declared semantic.
@@ -1135,11 +1144,11 @@ to assure the presence of the value in the lists of children of the node.
 Certainly you can use this property to prune parts of the tree.
 Consider the following example:
 
-  examples/eyapplanguageref$ head -19 ListWithRefs1.eyp | cat -n
-     1  # ListWithRefs1.eyp
-     2  %semantic token 'c' 'd'
-     3  %{
-     4  use Data::Dumper;
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n ListWithRefs1.eyp
+     1  %semantic token 'c' 'd'
+     2  %{
+     3  use Data::Dumper;
+     4  $Data::Dumper::Indent = 1;
      5  %}
      6  %%
      7  S:      'c'+  D+
@@ -1155,44 +1164,33 @@ Consider the following example:
     17  ;
     18
     19  %%
+    20
+    21  use base 'Tail';
+    22  __PACKAGE__->lexer(\&Tail::lex);
+    23
+    24  sub Run {
+    25    my ($self) = shift;
+    26    return $self->YYParse( yybuildingtree => 1 );
+    27  }
+
 
 
 To activate the I<tree semantic> for lists we use the C<yybuildingtree>
-option of C<YYParse>:
-
-  examples/eyapplanguageref$ tail -7 ListWithRefs1.eyp | cat -n
-     1  sub Run {
-     2      my($self)=shift;
-     3      $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
-     4        yybuildingtree => 1,
-     5        #, yydebug => 0x1F
-     6      );
-     7  }
-
+option of C<YYParse> (line 26).
 
 The execution gives an output like this:
 
-  examples/eyapplanguageref$ eyapp ListWithRefs1.eyp; use_listwithrefs1.pl
-  ccdd
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ eyapp ListWithRefs1.eyp; ./use_listwithrefs1.pl
+  Try input 'ccdd': ccdd
   $VAR1 = bless( {
-                   'children' => [
-                                   bless( {
-                                            'children' => [],
-                                            'attr' => 'c',
-                                            'token' => 'c'
-                                          }, 'TERMINAL' ),
-                                   bless( {
-                                            'children' => [],
-                                            'attr' => 'c',
-                                            'token' => 'c'
-                                          }, 'TERMINAL' )
-                                 ]
-                 }, '_PLUS_LIST' );
+    'children' => [
+      bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' ),
+      bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' )
+    ]
+  }, '_PLUS_LIST' );
   _PLUS_LIST(TERMINAL,TERMINAL)
-  $VAR1 = bless( {
-                   'children' => []
-                 }, '_PLUS_LIST' );
-  _PLUS_LIST
+  $VAR1 = bless( { 'children' => [] }, '_PLUS_LIST' ); _PLUS_LIST
+
 
 Though C<'d'> was declared semantic the default action 
 associated with the production C<D: 'd'> in line 16
@@ -1200,69 +1198,59 @@ returns C<$_[1]> (that is, the scalar C<'d'>). Since it is not
 a reference it won't be inserted in the list of children of
 C<_PLUS_LIST>.
 
-
 =head2 Recovering the Missing Nodes
 
 The solution is to be sure that the attribute is a reference:
 
-  pl@nereida:~/LEyapp/examples$ head -22 ListWithRefs.eyp | cat -n
-   1  # ListWithRefs.eyp
-   2  %semantic token 'c'
-   3  %{
-   4  use Data::Dumper;
-   5  %}
-   6  %%
-   7  S:      'c'+  D+
-   8             {
-   9                print Dumper($_[1]);
-  10                print $_[1]->str."\n";
-  11                print Dumper($_[2]);
-  12                print $_[2]->str."\n";
-  13             }
-  14  ;
-  15
-  16  D: 'd'
-  17       {
-  18         bless { attr => $_[1], children =>[]}, 'DES';
-  19       }
-  20  ;
-  21
-  22  %%
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n ListWithRefs.eyp
+     1  %semantic token 'c'
+     2  %{
+     3  use Data::Dumper;
+     4  $Data::Dumper::Indent = 1;
+     5  %}
+     6  %%
+     7  S:  'c'+  D+
+     8        {
+     9           print Dumper($_[1]);
+    10           print Dumper($_[2]);
+    11        }
+    12  ;
+    13
+    14  D: 'd'
+    15       {
+    16         bless { attr => $_[1], children =>[]}, 'DES';
+    17       }
+    18  ;
+    19
+    20  %%
+    21
+    22  use base 'Tail';
+    23  __PACKAGE__->lexer(\&Tail::lex);
+    24
+    25  sub Run {
+    26    my ($self) = shift;
+    27    return $self->YYParse( yybuildingtree => 1 );
+    28  }
+
+
 
 Now the attribute associated with C<D> is a reference 
 and appears in the list of children of C<_PLUS_LIST>:
 
-  pl@nereida:~/LEyapp/examples$ eyapp ListWithRefs.eyp; use_listwithrefs.pl
-  ccdd
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ eyapp ListWithRefs.eyp; ./use_listwithrefs.pl
+  Try input 'ccdd': ccdd
   $VAR1 = bless( {
-                   'children' => [
-                                   bless( {
-                                            'children' => [],
-                                            'attr' => 'c',
-                                            'token' => 'c'
-                                          }, 'TERMINAL' ),
-                                   bless( {
-                                            'children' => [],
-                                            'attr' => 'c',
-                                            'token' => 'c'
-                                          }, 'TERMINAL' )
-                                 ]
-                 }, '_PLUS_LIST_1' );
-  _PLUS_LIST_1(TERMINAL,TERMINAL)
+    'children' => [
+      bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' ),
+      bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' )
+    ]
+  }, '_PLUS_LIST' );
   $VAR1 = bless( {
-                   'children' => [
-                                   bless( {
-                                            'children' => [],
-                                            'attr' => 'd'
-                                          }, 'DES' ),
-                                   bless( {
-                                            'children' => [],
-                                            'attr' => 'd'
-                                          }, 'DES' )
-                                 ]
-                 }, '_PLUS_LIST_2' );
-  _PLUS_LIST_2(DES,DES)
-
+    'children' => [
+      bless( { 'children' => [], 'attr' => 'd' }, 'DES' ),
+      bless( { 'children' => [], 'attr' => 'd' }, 'DES' )
+    ]
+  }, '_PLUS_LIST' );
 
 =head2 Building a Tree with C<Parse::Eyapp::Node-E<gt>new>
 
@@ -3482,74 +3470,78 @@ The Eyapp program C<examples/debuggingtut/Cplusplus.eyp> solves the
 conflicts in  C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp> 
 by using the I<Postponed Conflict Resolution> strategy:
 
-  examples/debuggingtut$ head -67 Cplusplus.eyp | cat -n
-     1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
-     2  %strict
-     3  %token ID INT NUM
-     4
-     5  %right '='
-     6  %left '+'
-     7
-     8  %tree bypass
-     9
-    10  %expect 0 1 # 0 shift-reduce conflicts, 1 reduce-reduce conflict
-    11
-    12  %%
-    13  prog:
-    14      %name EMPTY
-    15      /* empty */
-    16    | %name PROG
-    17      prog stmt
-    18  ;
-    19
-    20  stmt:
-    21      %name EXP
-    22      expr ';'
-    23    | %name DECL
-    24      decl
-    25  ;
-    26
-    27  expr:
-    28      %name EXPID
-    29      ID decexpconflict
-    30    | %name NUM
-    31      NUM
-    32    | %name TYPECAST
-    33      INT '(' expr ')' /* typecast */
-    34    | %name PLUS
-    35      expr '+' expr
-    36    | %name ASSIGN
-    37      expr '=' expr
-    38  ;
-    39
-    40  decl:
-    41      %name DECLARATOR
-    42      INT declarator ';'
-    43    | %name DECLARATORINIT
-    44      INT declarator '=' expr ';'
-    45  ;
-    46
-    47  declarator:
-    48      %name DECID
-    49      ID decexpconflict
-    50    | '(' declarator ')'
-    51  ;
-    52
-    53  decexpconflict:
-    54      /* empty. Just to solve the reduce-reduce conflict */
-    55        {
-    56          my $self = shift;
-    57
-    58          if ($self->{INPUT} =~ m{^[)\s]*[;=]\s*}) {
-    59            $self->YYSetReduce(')', 'DECID' );
-    60          }
-    61          else {
-    62            $self->YYSetReduce(')', 'EXPID' );
-    63          }
-    64        }
-    65  ;
-    66
-    67  %%
+  pl@nereida:~/LEyapp/examples/debuggingtut$ head -71 Cplusplus.eyp | cat -n                           
+     1  %{                                                                                           
+     2  our $VERSION = '0.01';                                                                       
+     3  use base q{DebugTail};                                                                       
+     4  %}                                                                                           
+     5                                                                                               
+     6  %strict                                                                                      
+     7  %token ID INT NUM                                                                            
+     8                                                                                               
+     9  %right '='                                                                                   
+    10  %left '+'                                                                                    
+    11                                                                                               
+    12  %tree bypass                                                                                 
+    13                                                                                               
+    14  %expect 0 1  # 0 shift-reduce conflicts, 1 reduce-reduce conflict                            
+    15                                                                                               
+    16  %%                                                                                           
+    17  prog:                                                                                        
+    18      %name EMPTY                                                                              
+    19      /* empty */                                                                              
+    20    | %name PROG                                                                               
+    21      prog stmt                                                                                
+    22  ;                                                                                            
+    23                                                                                               
+    24  stmt:                                                                                        
+    25      %name EXP                                                                                
+    26      expr ';'                                                                                 
+    27    | %name DECL                                                                               
+    28      decl                                                                                     
+    29  ;                                                                                            
+    30                                                                                               
+    31  expr:                                                                                        
+    32      %name EXPID                                                                              
+    33      ID decexpconflict
+    34    | %name NUM
+    35      NUM
+    36    | %name TYPECAST
+    37      INT '(' expr ')' /* typecast */
+    38    | %name PLUS
+    39      expr '+' expr
+    40    | %name ASSIGN
+    41      expr '=' expr
+    42  ;
+    43
+    44  decl:
+    45      %name DECLARATOR
+    46      INT declarator ';'
+    47    | %name DECLARATORINIT
+    48      INT declarator '=' expr ';'
+    49  ;
+    50
+    51  declarator:
+    52      %name DECID
+    53      ID decexpconflict
+    54    | '(' declarator ')'
+    55  ;
+    56
+    57  decexpconflict:
+    58      /* empty. Just to solve the reduce-reduce conflict */
+    59        {
+    60          my $self = shift;
+    61
+    62          if (${$self->input()} =~ m{^[)\s]*[;=]\s*}) {
+    63            $self->YYSetReduce(')', 'DECID' );
+    64          }
+    65          else {
+    66            $self->YYSetReduce(')', 'EXPID' );
+    67          }
+    68        }
+    69  ;
+    70
+    71  %%
 
 
 The aforementioned conflict in C<examples/debuggingtut/SimplifiedCplusplusAmbiguity.eyp>:
@@ -3596,108 +3588,261 @@ to reduce by
 
 The program now successfully solves the ambiguity:
 
-  examples/debuggingtut$ Cplusplus.pm
-  int(x)+2;
+  pl@nereida:~/LEyapp/examples/debuggingtut$ eyapp -b '' Cplusplus
+
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Cplusplus.pm -t
+  Try first "int (x) = 2;" then "int (x) + 2;" (press <CR><CTRL-D> to finish): int(x)+2;
   PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],EXPID[x]),NUM[2]))
-  debuggingtut$ Cplusplus.pm
-  int(x)=2;
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Cplusplus.pm -t
+  Try first "int (x) = 2;" then "int (x) + 2;" (press <CR><CTRL-D> to finish): int(x)=2;
   PROG(EMPTY,DECL(TERMINAL[int],DECID[x],NUM[2]))
-  examples/debuggingtut$ Cplusplus.pm
-  int(x);
+  pl@nereida:~/LEyapp/examples/debuggingtut$ ./Cplusplus.pm -t
+  Try first "int (x) = 2;" then "int (x) + 2;" (press <CR><CTRL-D> to finish): int(x);
   PROG(EMPTY,DECL(TERMINAL[int],DECID[x]))
 
-=head2 Using C<YYSetLRAction> and C<YYNextState>
+=head2 Solving the Enumerated versus Range declarations conflict using the Posponed Conflict Resolution Strategy
 
-The modulino C<glrexpressions.eyp> illustrates an alternative way to
-apply the postponed conflict resolution strategy to the aforementioned
-problem:
+In file C<pascalenumeratedvsrangesolvedviadyn.eyp> we apply the postponed conflict resolution strategy
+to the reduce reduce conflict that arises in Extended Pascal between the declaration of ranges and
+the declaration of enumerated types (see section L<Reduce-Reduce conflict: Enumerated versus Range declarations in Extended Pascal>).
+Here is the solution:
 
-  examples/debuggingtut$ head -69 glrexpressions.eyp | cat -n
-     1  # See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
-     2  %strict
-     3  %token ID INT NUM
-     4
-     5  %right '='
-     6  %left '+'
-     7
-     8  %{
-     9  my $input;
-    10  %}
-    11
-    12  %tree bypass
-    13  %%
-    14  prog:
-    15      %name EMPTY
-    16      /* empty */
-    17    | %name PROG
-    18      prog stmt
-    19  ;
-    20
-    21  stmt:
-    22      %name EXP
-    23      expr ';'
-    24    | %name DECL
-    25      decl
-    26  ;
-    27
-    28  expr:
-    29      %name EXPID
-    30      ID decexpconflict
-    31    | %name NUM
-    32      NUM
-    33    | %name TYPECAST
-    34      INT '(' expr ')' /* typecast */
-    35    | %name PLUS
-    36      expr '+' expr
-    37    | %name ASSIGN
-    38      expr '=' expr
-    39  ;
-    40
-    41  decl:
-    42      %name DECLARATOR
-    43      INT declarator ';'
-    44    | %name DECLARATORINIT
-    45      INT declarator '=' expr ';'
-    46  ;
-    47
-    48  declarator:
-    49      %name DECID
-    50      ID decexpconflict
-    51    | '(' declarator ')'
-    52  ;
-    53
-    54  decexpconflict:
-    55      /* empty. Just for hacking the LALR tables */
-    56        {
-    57          my $self = shift;
-    58
-    59          my $conflictstate = $self->YYNextState();
-    60          if ($input =~ m{^[)\s]*[;=]\s*}) {
-    61            $self->YYSetLRAction($conflictstate, ')', 'DECID' );
-    62          }
-    63          else {
-    64            $self->YYSetLRAction($conflictstate, ')', 'EXPID' );
-    65          }
-    66        }
-    67  ;
-    68
-    69  %%
+  ~/LEyapp/examples/debuggingtut$ cat -n pascalenumeratedvsrangesolvedviadyn.eyp
+     1  %{
+     2  =head1 SYNOPSIS
+     3  
+     4  See 
+     5  
+     6  =over 2
+     7  
+     8  =item * File pascalenumeratedvsrange.eyp in examples/debuggintut/
+     9  
+    10  =item * The Bison manual L<http://www.gnu.org/software/bison/manual/html_mono/bison.html>
+    11  
+    12  =back
+    13  
+    14  Compile it with:
+    15  
+    16              eyapp -b '' pascalenumeratedvsrangesolvedviadyn.eyp
+    17  
+    18  run it with this options:
+    19  
+    20              ./pascalenumeratedvsrangesolvedviadyn.pm -t
+    21  
+    22  Try these inputs:
+    23  
+    24                  type r = (x) ..  y ;
+    25                  type r = (x+2)*3 ..  y/2 ;
+    26                  type e = (x, y, z);
+    27                  type e = (x);
+    28  
+    29  =cut
+    30  
+    31  use base q{DebugTail}; 
+    32  
+    33  my $ID = qr{[A-Za-z][A-Za-z0-9_]*};
+    34               # Identifiers separated by commas
+    35  my $IDLIST = qr{ \s*(?:\s*,\s* $ID)* \s* }x;
+    36               # list followed by a closing par and a semicolon 
+    37  my $RESTOFLIST = qr{$IDLIST \) \s* ; }x;
+    38  %}
+    39  
+    40  %namingscheme {
+    41    #Receives a Parse::Eyapp object describing the grammar
+    42    my $self = shift;
+    43  
+    44    $self->tokennames(
+    45      '(' => 'LP',
+    46      '..' => 'DOTDOT',
+    47      ',' => 'COMMA',
+    48      ')' => 'RP',
+    49      '+' => 'PLUS',
+    50      '-' => 'MINUS',
+    51      '*' => 'TIMES',
+    52      '/' => 'DIV',
+    53    );
+    54  
+    55    # returns the handler that will give names
+    56    # to the right hand sides
+    57    \&give_rhs_name;
+    58  }
+    59  
+    60  %strict
+    61  
+    62  %token ID NUM DOTDOT TYPE
+    63  %left   '-' '+'
+    64  %left   '*' '/'
+    65  
+    66  %tree
+    67  
+    68  %%
+    69  
+    70  type_decl : TYPE ID '=' type ';'
+    71  ;
+    72  
+    73  type : 
+    74        %name ENUM
+    75        '(' id_list ')'
+    76      | %name RANGE
+    77        expr DOTDOT expr
+    78  ;
+    79  
+    80  id_list : 
+    81        %name EnumID
+    82        ID rangeORenum
+    83      | id_list ',' ID
+    84  ;
+    85  
+    86  expr : '(' expr ')'
+    87      | expr '+' expr
+    88      | expr '-' expr
+    89      | expr '*' expr
+    90      | expr '/' expr
+    91      | %name RangeID
+    92        ID rangeORenum
+    93      | NUM
+    94  ;
+    95  
+    96  rangeORenum: /* empty: postponed conflict resolution */
+    97        {
+    98            my $parser = shift;
+    99            if (${$parser->input()} =~ m{\G(?= $RESTOFLIST)}gcx) {
+   100                $parser->YYSetReduce(')', 'EnumID' );
+   101              }
+   102              else {
+   103                $parser->YYSetReduce(')', 'RangeID' );
+   104              }
+   105        }
+   106  ;
+   107  
+   108  %%
+   109  
+   110  __PACKAGE__->lexer(
+   111    sub {
+   112      my $parser = shift;
+   113  
+   114      for (${$parser->input()}) {    # contextualize
+   115        m{\G(\s*)}gc;
+   116        $parser->tokenline($1 =~ tr{\n}{});
+   117  
+   118        m{\Gtype\b}gic                 and return ('TYPE', 'TYPE');
+   119  
+   120        m{\G($ID)}gc                   and return ('ID',  $1);
+   121  
+   122        m{\G([0-9]+)}gc                and return ('NUM', $1);
+   123  
+   124        m{\G\.\.}gc                    and return ('DOTDOT',  '..');
+   125  
+   126        m{\G(.)}gc                     and return ($1,    $1);
+   127  
+   128        return('',undef);
+   129      }
+   130    }
+   131  );
+   132  
+   133  unless (caller()) {
+   134    $Parse::Eyapp::Node::INDENT = 1;
+   135    my $prompt = << 'EOP';
+   136  Try this input:
+   137      type 
+   138      r
+   139      =
+   140      (x)
+   141      ..
+   142      y
+   143      ;
+   144  
+   145  Here other inputs you can try:
+   146  
+   147      type r = (x+2)*3 ..  y/2 ;
+   148      type e = (x, y, z);
+   149      type e = (x);
+   150  
+   151  Press CTRL-D (CTRL-W in windows) to produce the end-of-file
+   152  EOP
+   153    __PACKAGE__->main($prompt); 
+   154  }
 
+This example also illustrates how to modify the default production
+naming schema. Follows the result of several executions:
 
-Line 59 uses the method C<YYNextState> to compute the state after the reduction for
-the production rule 
+  ~/LEyapp/examples/debuggingtut$ ./pascalenumeratedvsrangesolvedviadyn.pm -t
+  Try this input:
+      type 
+      r
+      =
+      (x)
+      ..
+      y
+      ;
 
-      decexpconflict -> /* empty */
+  Here other inputs you can try:
 
-which is precisely the conflict state. If the incoming input is a sequence of parenthesis 
-followed by either a semicolon or an equal we call to the method C<YYSetLRAction> to set
-a reduction by the rule
+      type r = (x+2)*3 ..  y/2 ;
+      type e = (x, y, z);
+      type e = (x);
 
-     declarator -> ID
+  Press CTRL-D (CTRL-W in windows) to produce the end-of-file
+  type r = (x+2)*3 ..  y/2 ;
+  ^D
+  type_decl_is_TYPE_ID_type(
+    TERMINAL[TYPE],
+    TERMINAL[r],
+    RANGE(
+      expr_is_expr_TIMES_expr(
+        expr_is_LP_expr_RP(
+          expr_is_expr_PLUS_expr(
+            RangeID(
+              TERMINAL[x]
+            ),
+            expr_is_NUM(
+              TERMINAL[2]
+            )
+          )
+        ),
+        expr_is_NUM(
+          TERMINAL[3]
+        )
+      ),
+      TERMINAL[..],
+      expr_is_expr_DIV_expr(
+        RangeID(
+          TERMINAL[y]
+        ),
+        expr_is_NUM(
+          TERMINAL[2]
+        )
+      )
+    )
+  )
+  ~/LEyapp/examples/debuggingtut$ ./pascalenumeratedvsrangesolvedviadyn.pm -t
+  Try this input:
+      type 
+      r
+      =
+      (x)
+      ..
+      y
+      ;
 
-for that state and token C<')'>, otherwise we indicate a reduction by the rule:
+  Here other inputs you can try:
 
-     expr -> ID    
+      type r = (x+2)*3 ..  y/2 ;
+      type e = (x, y, z);
+      type e = (x);
+
+  Press CTRL-D (CTRL-W in windows) to produce the end-of-file
+  type e = (x);
+  ^D
+  type_decl_is_TYPE_ID_type(
+    TERMINAL[TYPE],
+    TERMINAL[e],
+    ENUM(
+      EnumID(
+        TERMINAL[x]
+      )
+    )
+  )
 
 
 =head2 I<Postponed Conflict Resolution>: Shift-Reduce Conflicts
@@ -3711,129 +3856,85 @@ The generated language is constituted by sequences like:
 
 As you remember the conflict was:
 
-  examples/debuggingtut$ sed -ne '/^State 13:/,/^State/p' DynamicallyChangingTheParser2.output
+  ~/LEyapp/examples/debuggingtut$ sed -ne '/^St.*13:/,/^St.*14/p' DynamicallyChangingTheParser.output  
   State 13:
 
-          ds -> D conflict . ';' ds       (Rule 6)
-          ds -> D conflict .      (Rule 7)
+      ds -> D conflict . ';' ds   (Rule 6)
+      ds -> D conflict .  (Rule 7)
 
-          ';'     shift, and go to state 16
+      ';' shift, and go to state 16
 
-          ';'     [reduce using rule 7 (ds)]
+      ';' [reduce using rule 7 (ds)]
 
   State 14:
 
-The conflict handler (lines 50-56 below) sets the LR action
-to reduce by the production with name C<LAST_D>
+
+The C<conflict> handler below sets the LR action
+to reduce by the production with name C<D1>
 
                  ds -> D
 
-in the presence of token C<';'> if indeed is the last C<'D'>.
-The semantic action associated with the production C<LAST_D> (lines
-34-37) restores the former shift action and proceeds to call
-C<Parse::Eyapp::Driver::YYBuildAST> in order to continue
-with the building of the abstract syntax tree:
+in the presence of token C<';'> if indeed is the last C<'D'>, that is, if:
 
-  examples/debuggingtut$ cat -n DynamicallyChangingTheParser2.eyp
-     1  # See section 'Hacking the Parsing Tables: ACTION and GOTOs' in
-     2  # http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
-     3  #
-     4  # See also: Debug.eyp Debug1.eyp Debug2.eyp  LookForward.eyp
-     5  # DynamicallyChangingTheParser.eyp This example illustrates how to dynamically
-     6  # change the behavior of the parser
-     7
-     8  %token D S
-     9
-    10  %{
-    11  our $VERSION = '0.01';
-    12  %}
-    13
-    14  %tree bypass
-    15
-    16  %%
-    17  p: %name PROG
-    18      block +
-    19  ;
-    20
-    21  block:
-    22      %name BLOCK
-    23      '{' ds ';' ss '}'
-    24    | %name SS
-    25      '{' ss '}'
-    26  ;
-    27
-    28  ds:
-    29      %name MORE_Ds
-    30      D conflict ';' ds
-    31    | %name LAST_D
-    32      D conflict
-    33        {
-    34           # Recover former LALR action
-    35           $_[0]->YYRestoreLRAction('conflict', ';');
-    36           # Do whatever you want
-    37           goto &Parse::Eyapp::Driver::YYBuildAST;
-    38        }
-    39  ;
-    40
-    41  ss:
-    42      %name SS
-    43      S ';' ss
-    44    | %name S
-    45      S
-    46  ;
-    47
-    48  conflict:
-    49      /* empty. Just for dynamic precedence */
-    50        {
-    51          my $self = shift;
-    52
-    53          $self->YYSetReduce(';', 'LAST_D' ) if ($self->{INPUT} =~ m{^;\s*S});
-    54
-    55          undef; # skip this node in the AST
-    56        }
-    57  ;
-    58
-    59  %%
-    60
-    61  sub _Error {
-    62    my $parser = shift;
-    63
-    64    my ($token) = $parser->YYCurval;
-    65    my ($what) = $token ? "input: '$token'" : "end of input";
-    66    warn "Syntax error near $what\n";
-    67  }
-    68
-    69  sub _Lexer {
-    70    my $self = shift;
-    71
-    72    for ($self->{INPUT}) {
-    73      s{^(\s*)}{};
-    74
-    75      return ('',undef) unless $_;
-    76
-    77      return ($1,$1) if s/^(.)//;
-    78    }
-    79    return ('',undef);
-    80  }
-    81
-    82  sub Run {
-    83    my $debug = shift || 0;
-    84    $debug = 0x1F if $debug;
-    85
-    86    my $self = __PACKAGE__->new();
-    87    $self->{INPUT} = <STDIN>;
-    88
-    89    print
-    90      $self->YYParse(
-    91        yylex => \&_Lexer,
-    92        yyerror => \&_Error,
-    93        yydebug => $debug,
-    94      )->str."\n";
-    95  }
-    96
-    97  Run(@ARGV) unless caller;
+       ${$self->input()} =~ m{^\s*;\s*S}
 
+Otherwise we set the C<shift> action via a call to the 
+C<YYSetShift> method.
 
+  ~/LEyapp/examples/debuggingtut$ sed -ne '30,$p' DynamicallyChangingTheParser.eyp | cat -n
+     1  %token D S
+     2  
+     3  %tree bypass
+     4  
+     5  # Expect just 1 shift-reduce conflict
+     6  %expect 1 
+     7  
+     8  %%
+     9  p: %name PROG
+    10      block +
+    11  ;
+    12  
+    13  block:
+    14      %name BLOCK_DS
+    15      '{' ds ';' ss '}' 
+    16    | %name BLOCK_S
+    17      '{' ss '}'
+    18  ;
+    19  
+    20  ds:
+    21      %name D2
+    22      D conflict ';' ds    
+    23    | %name D1
+    24      D conflict        
+    25  ;
+    26  
+    27  ss:
+    28      %name S2
+    29      S ';' ss      
+    30    | %name S1
+    31      S       
+    32  ;
+    33  
+    34  conflict:
+    35        /* empty. This action solves the conflict using dynamic precedence */
+    36        {
+    37          my $self = shift;
+    38  
+    39          if (${$self->input()} =~ m{^\s*;\s*S}) {
+    40            $self->YYSetReduce(';', 'D1' )
+    41          }
+    42          else {
+    43            $self->YYSetShift(';')
+    44          }
+    45  
+    46          undef; # skip this node in the AST
+    47        }
+    48  ;
+    49  
+    50  %%
+    51  
+    52  my $prompt = 'Provide a statement like "{D; S} {D; D; S}" and press <CR><CTRL-D>: ';
+    53  __PACKAGE__->main($prompt) unless caller;
 
 
 

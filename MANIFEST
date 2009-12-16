@@ -29,6 +29,7 @@ examples/debuggingtut/confusingsolvedstatic2.eyp
 examples/debuggingtut/confusingsolvedstatic.eyp
 examples/debuggingtut/correcttypicalrr.eyp
 examples/debuggingtut/Cplusplus.eyp
+examples/debuggingtut/Cplusplus2.eyp
 examples/debuggingtut/Debug1.eyp
 examples/debuggingtut/Debug2.eyp
 examples/debuggingtut/DebugDynamicResolution.eyp
@@ -37,7 +38,7 @@ examples/debuggingtut/DebugLookForward.eyp
 examples/debuggingtut/DynamicallyChangingTheParser2.eyp
 examples/debuggingtut/DynamicallyChangingTheParser3.eyp
 examples/debuggingtut/DynamicallyChangingTheParser.eyp
-examples/debuggingtut/DynamicvsTieIns.eyp
+examples/debuggingtut/Tieins.eyp
 examples/debuggingtut/lr_1_grammar.eyp
 examples/debuggingtut/minimalrr2.eyp
 examples/debuggingtut/minimalrr.eyp
@@ -259,6 +260,7 @@ lib/Parse/Eyapp/_TreeregexpSupport.pm
 lib/Parse/Eyapp/Treeregexp.yp
 lib/Parse/Eyapp/YATW.pm
 lib/Parse/Eyapp/YATW.pod
+lib/Parse/Eyapp/TailSupport.pm
 t/01calc.t
 t/03newgrammar.t
 t/04foldandzero.t

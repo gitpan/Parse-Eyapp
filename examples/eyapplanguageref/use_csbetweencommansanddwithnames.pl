@@ -1,6 +1,7 @@
-#!/usr/bin/perl -w
-
+#!/usr/bin/env perl
+use warnings;
+use strict;
 use CsBetweenCommansAndDWithNames;
 
-$parser = new CsBetweenCommansAndDWithNames();
-$parser->Run;
+unshift @ARGV, '--noslurp';
+CsBetweenCommansAndDWithNames->new->main("Try input 'c,c,cd': ");

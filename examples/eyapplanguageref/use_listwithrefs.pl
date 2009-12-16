@@ -1,5 +1,7 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
+use warnings;
+use strict;
 use ListWithRefs;
 
-$parser = new ListWithRefs();
-$parser->Run;
+unshift @ARGV, '--noslurp';
+ListWithRefs->new->main("Try input 'ccdd': ");

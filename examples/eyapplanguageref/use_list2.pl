@@ -1,7 +1,7 @@
-#!/usr/bin/perl -w
-
+#!/usr/bin/env perl
+use warnings;
+use strict;
 use List2;
-use Parse::Eyapp::Node;
 
-$parser = new List2();
-$parser->Run;
+unshift @ARGV, '--noslurp';
+List2->new->main("Try input 'aacbb': ");

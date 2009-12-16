@@ -1,6 +1,11 @@
-#!/usr/bin/perl -w
-
+#!/usr/bin/env perl
+use warnings;
+use strict;
 use List5;
 
-$parser = new List5();
-$parser->Run;
+unshift @ARGV, '--noslurp';
+List5->new->main("Try inputs 'c' and 'cc': ");
+
+sub TERMINAL::info {
+  $_[0]->attr;
+}

@@ -1,6 +1,8 @@
-#!/usr/bin/perl -w
-
+#!/usr/bin/env perl 
+use warnings;
+use strict;
 use intermediateaction2;
 
-$parser = new intermediateaction2();
-$parser->Run;
+unshift @ARGV, '--noslurp';
+my $parser = intermediateaction2->new;
+$parser->main("try input 'aa': ");

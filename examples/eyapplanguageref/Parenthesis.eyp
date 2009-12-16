@@ -5,33 +5,8 @@ S:
 ;
 %%
 
-sub _Error {
-        exists $_[0]->YYData->{ERRMSG}
-    and do {
-        print $_[0]->YYData->{ERRMSG};
-        delete $_[0]->YYData->{ERRMSG};
-        return;
-    };
-    print "Syntax error.\n";
-}
+use base 'Tail';
+__PACKAGE__->lexer(\&Tail::lex);
 
-sub _Lexer {
-    my($parser)=shift;
-
-        $parser->YYData->{INPUT}
-    or  $parser->YYData->{INPUT} = <STDIN>
-    or  return('',undef);
-
-    $parser->YYData->{INPUT}=~s/^[ \t\n]//;
-
-    for ($parser->YYData->{INPUT}) {
-        s/^(.)//s and return($1,$1);
-    }
-}
-
-sub Run {
-    my($self)=shift;
-    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error 
-      #, yydebug => 0x1F 
-    );
-}
+# modulino code: compile with: eyapp -b '' Parenthesis.eyp
+__PACKAGE__->new()->main("Try 'acb': ") unless caller();

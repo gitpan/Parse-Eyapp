@@ -1,7 +1,7 @@
-#!/usr/bin/perl -w
-
+#!/usr/bin/env perl
+use warnings;
+use strict;
 use List3_tree;
-use Parse::Eyapp::Node;
 
-$parser = new List3_tree();
-$parser->Run;
+unshift @ARGV, '--noslurp';
+List3_tree->new->main("Try input 'ccdd': ");

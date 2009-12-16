@@ -1,3 +1,23 @@
+%{
+=head1 SYNOPSIS
+
+Compile the grammar and tree transformations first:
+
+     $ eyapp Rule5
+     $ treereg Shift
+
+Then execute it with:
+
+     $ ./useruleandshift.pl
+
+Try input: 
+
+     a = b * 8
+
+=cut
+
+use base q{Parse::Eyapp::TailSupport};
+%}
 
 %semantic token  NUM VAR 
 %right  '='
@@ -7,7 +27,7 @@
 %tree
 
 %%
-line: exp '\n'   { $_[1] } 
+line: exp { $_[1] } 
 ;
 
 exp:        %name NUM    NUM 
@@ -23,40 +43,18 @@ exp:        %name NUM    NUM
 
 %%
 
-
-sub _Error {
-        exists $_[0]->YYData->{ERRMSG}
-    and do {
-        print $_[0]->YYData->{ERRMSG};
-        delete $_[0]->YYData->{ERRMSG};
-        return;
-    };
-    print "Syntax error.\n";
-}
-
-sub _Lexer {
+__PACKAGE__->lexer( 
+  sub {
     my($parser)=shift;
 
-        $parser->YYData->{INPUT}
-    or  $parser->YYData->{INPUT} = <STDIN>
-    or  return('',undef);
+    for (${$parser->input}) {
+        s/^\s+(?:#.*)?//;
 
-    $parser->YYData->{INPUT}=~s/^[ \t]//;
+        s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+        s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+        s/^(.)//s                    and return($1,$1);
 
-    for ($parser->YYData->{INPUT}) {
-        s/^([0-9]+(?:\.[0-9]+)?)//
-                and return('NUM',$1);
-        s/^([A-Za-z][A-Za-z0-9_]*)//
-                and return('VAR',$1);
-        s/^(.)//s
-                and return($1,$1);
+        return ('',undef);
     }
-}
-
-sub Run {
-    my($self)=shift;
-    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, 
-                          #yydebug =>0xFF
-			 );
-}
-
+  }
+);

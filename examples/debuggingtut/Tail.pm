@@ -3,6 +3,8 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use Pod::Usage;
+use Scalar::Util qw{blessed};
 
 sub _Error {
   my $parser = shift;
@@ -95,21 +97,29 @@ sub uploadfile {
 
 sub main {
   my $package = shift;
+  my $prompt = shift || "Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:\n";
 
-  my $debug = shift || 0;
+  my $debug = 0;
   my $file = '';
+  my $showtree = 0;
+  my $help;
   my $result = GetOptions (
     "debug!" => \$debug,  
     "file=s" => \$file,
+    "tree!"  => \$showtree,
+    "help"   => \$help,
   );
+
+  pod2usage() if $help;
 
   $debug = 0x1F if $debug;
   $file = shift if !$file && @ARGV; 
 
   my $parser = $package->new();
-  my $prompt = "Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:\n";
   $parser->{input} = uploadfile($file, $prompt);
-  $parser->Run( $debug );
+  my $tree = $parser->Run( $debug );
+
+  print $tree->str()."\n" if $showtree && blessed($tree) && $tree->isa('Parse::Eyapp::Node');
 }
 
 sub semantic_error {

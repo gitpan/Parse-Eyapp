@@ -319,6 +319,11 @@ must be available.
 
    make coverage
 
+=item * Run C<./make_eyapp_c_tests.pl> if the clean tests fail 
+and are you in a hurry.  This program builds the files in C<t/cleanok/> and C<t/cleanvok/>
+used to test the behavior of eyapp when executed with option C<'-c'>
+(See tests C<t/68cleangrammar> and C<t/69cleanwithvgrammar>
+
 =back
 
 =head1 DEPENDENCIES

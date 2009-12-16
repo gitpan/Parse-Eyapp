@@ -74,5 +74,7 @@ hacktables:
 
 %%
 
+__PACKAGE__->lexer( \&DebugTail::lex); 
+
 my $prompt = 'Provide a statement like "D;D; S;S" and press <CR><CTRL-D>: ';
 __PACKAGE__->main($prompt) unless caller;

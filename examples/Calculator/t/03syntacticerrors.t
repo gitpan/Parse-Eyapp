@@ -13,8 +13,9 @@ a = 2*3
 c = ) # error: unexpected )
 };
 my $parser = Math::Calc->new();
-$parser->Run( \$input );
+$parser->input(\$input);
+$parser->Run();
 
-like($warnings, qr{Syntax error near input: '\)' \(lin num 3\).\s+Expected one of these terminals: }, 'syntax error');
+like($warnings, qr{Syntax error near '\)' \(line number 3\).\s+Expected one of these terminals: }, 'syntax error');
 
 

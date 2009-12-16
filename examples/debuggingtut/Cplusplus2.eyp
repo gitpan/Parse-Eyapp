@@ -1,18 +1,17 @@
-%{
-our $VERSION = '0.01';
-use base q{DebugTail}; 
-%}
-
+# See http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers
 %strict
 %token ID INT NUM
 
 %right '='
 %left '+'
 
+%{
+our $VERSION = '0.01';
+use base q{DebugTail}; 
+%}
+
+
 %tree bypass
-
-%expect 0 1  # 0 shift-reduce conflicts, 1 reduce-reduce conflict
-
 %%
 prog:
     %name EMPTY
@@ -55,15 +54,16 @@ declarator:
 ;
 
 decexpconflict:
-    /* empty. Just to solve the reduce-reduce conflict */
+    /* empty. Just for hacking the LALR tables */
       {
         my $self = shift;
 
-        if (${$self->input()} =~ m{^[)\s]*[;=]\s*}) {
-          $self->YYSetReduce(')', 'DECID' );
+        my $conflictstate = $self->YYNextState();
+        if (${$self->input} =~ m{^[)\s]*[;=]\s*}) {
+          $self->YYSetLRAction($conflictstate, ')', 'DECID' );
         }
         else {
-          $self->YYSetReduce(')', 'EXPID' ); 
+          $self->YYSetLRAction($conflictstate, ')', 'EXPID' ); 
         }
       }
 ;
@@ -98,17 +98,15 @@ unless (caller()) {
   __PACKAGE__->main($prompt) 
 }
 
-####################################################
-
 =head1 SYNOPSIS
 
 Compile it with
  
-   eyapp -b '' Cplusplus
+   eyapp -b '' Cplusplus2.eyp
 
 Run it with:
 
-   ./Cplusplus.pm -t
+   ./Cplusplus2.pm -t
 
 try with inputs:
 
@@ -116,6 +114,7 @@ try with inputs:
      int (x) + 2;
 
 the result will be the generated abstract sytax tree
+
 
 =head1  C++ Ambiguities
 
@@ -142,13 +141,14 @@ Eyapp detects this as a reduce/reduce conflict:
 The C++ rule is: take it as a declaration if it looks as a declaration,
 otherwise is an expression.
 
-This Eyapp parser solves the problem by dynamically changing the parser.
+This Eyapp parser solves the problem by dynamically changing the parser
+(hacking).
 
 =head1 SEE ALSO
 
 =over 2
 
-=item * The file C<Cplusplus2.eyp> in C<examples/debuggintut>
+=item * File C<Cplusplus.eyp> in C<examples/debuggintut>
 
 =item * L<http://www.gnu.org/software/bison/manual/html_mono/bison.html#GLR-Parsers>
 

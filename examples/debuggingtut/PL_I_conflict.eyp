@@ -1,11 +1,31 @@
-# This grammar deals with the famous ambiguous PL/I phrase:
-#                if then=if then if=then
-# The (partial) solution uses YYExpect in the lexical analyzer to predict the token
-# that fulfills the parser expectatives.
-# Compile it with:
-# eyapp -b '' PL_I_conflict.eyp
-# Run it with;
-# ./PL_I_conflict.pm -debug
+%{
+=head1 SYNOPSIS
+
+This grammar deals with the famous ambiguous PL/I phrase:
+
+                if then=if then if=then
+
+The (partial) solution uses C<YYExpect> in the lexical analyzer to predict the token
+that fulfills the parser expectatives.
+
+Compile it with:
+
+               eyapp -b '' PL_I_conflict.eyp
+
+Run it with;
+
+               ./PL_I_conflict.pm -t
+
+or
+
+               ./PL_I_conflict.pm -d -t
+
+=cut
+
+use base q{DebugTail}; 
+use List::Util qw{first};
+
+%}
 
 %strict
 
@@ -43,91 +63,31 @@ id:
 
 %%
 
-use Getopt::Long;
-use List::Util qw{first};
-
-sub _Error {
-  die "Error";
-}
-
-# Returns true if $element is in the list
-sub is_in($@) {
-  my $element = shift;
-
-  return first { $_ eq $element } @_;
-}
-
 # Adaptative lexer
-sub lexer {
-  my $parser = shift;
+__PACKAGE__->lexer(
+  sub {
+    my $parser = shift;
 
-  for ($parser->{input}) {    # contextualize
-    m{\G\s*(\#.*)?}gc;
+    for (${$parser->input()}) {    # contextualize
+      m{\G\s*(\#.*)?}gc;
 
-    m{\G([a-zA-Z_]\w*)}gc and do {
-      my $id = $1;
+      m{\G([a-zA-Z_]\w*)}gc and do {
+        my $id = $1;
 
-      return ('if',   'if')   if ($id eq 'if')   && is_in('if', $parser->YYExpect);
-      return ('then', 'then') if ($id eq 'then') && is_in('then', $parser->YYExpect);
-      
-      return ('ID', $id);
-    };
+        return ('if',   'if')   if ($id eq 'if')   && $parser->expects('if');
+        return ('then', 'then') if ($id eq 'then') && $parser->expects('then');
+        
+        return ('ID', $id);
+      };
 
-    m{\G(.)}gc         and return ($1, $1);
+      m{\G(.)}gc and return ($1, $1);
 
-    return('',undef);
+      return('',undef);
+    }
   }
-}
+);
 
-sub Run {
-    my($self)=shift;
-    my $yydebug = shift || 0;
-
-    return $self->YYParse( 
-      yylex => \&lexer, 
-      yyerror => \&_Error,
-      yydebug => $yydebug, # 0x1F
-    );
-}
-
-sub uploadfile {
-  my $file = shift;
-  my $msg = shift;
-
-  my $input = '';
-  eval {
-    $input = Parse::Eyapp::Base::slurp_file($file) 
-  };
-  if ($@) {
-    print $msg;
-    local $/ = undef;
-    $input = <STDIN>;
-  }
-  return $input;
-}
-
-sub main {
-  my $package = shift;
-
-  my $debug = 0;
-  my $file = '';
-  my $result = GetOptions (
-    "debug!" => \$debug,  
-    "file=s" => \$file,
-  );
-
-  $debug = 0x1F if $debug;
-  $file = shift if !$file && @ARGV; 
-
-  my $parser = $package->new();
-  my $prompt = "Expressions. Press CTRL-D (Unix) or CTRL-Z (Windows) to finish:\n";
-  $parser->{input} = uploadfile($file, $prompt);
-  print $parser->Run( $debug )->str,"\n";
-}
-
-sub TERMINAL::info {
-  $_[0]->{attr}
-}
-
-__PACKAGE__->main unless caller();
+my $prompt = 'Try input "if then=if then if=then" '.
+             '(press <CR><CTRL-D> to finish): ';
+__PACKAGE__->main($prompt) unless caller();
 
