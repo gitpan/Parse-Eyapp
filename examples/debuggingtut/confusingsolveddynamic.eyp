@@ -31,6 +31,17 @@ use base q{DebugTail};
 %semantic token 'c' 'd' 'f' 'x' 'y'
 %expect 0 1
 
+%conflict DORF {
+        my $self = shift;
+
+        if (${$self->input()} =~ m{^.*?d}) {
+          $self->YYSetReduce('c', 'XY:D' );
+        }
+        else {
+          $self->YYSetReduce('c', 'XY:F' ); 
+        }
+      }
+
 %tree
 
 %%
@@ -40,28 +51,16 @@ A:
   | %name Ecf
     E 'c' 'f' 
 ;
-B:  %name B
-    'x' 'y'  xyconflict
+B:  %name XY:D
+    'x' 'y'       %PREC DORF
 ;
-E:  %name E
-    'x' 'y'  xyconflict
-;
-
-xyconflict:
-      /* empty. Just to solve the reduce-reduce conflict */
-      {
-        my $self = shift;
-
-        if (${$self->input()} =~ m{^.*?d}) {
-          $self->YYSetReduce('c', 'B' );
-        }
-        else {
-          $self->YYSetReduce('c', 'E' ); 
-        }
-      }
+E:  %name XY:F
+    'x' 'y'       %PREC DORF
 ;
 
 %%
+
+__PACKAGE__->lexer( \&DebugTail::lex); 
 
 unless (caller) {
   my $prompt = 'Try "x y c d" or "x y c f" and press <CR><CTRL-D>: ';

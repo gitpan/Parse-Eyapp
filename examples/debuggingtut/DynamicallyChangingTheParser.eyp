@@ -34,6 +34,18 @@ use base q{DebugTail};
 # Expect just 1 shift-reduce conflict
 %expect 1 
 
+%conflict ISLAST {
+        my $self = shift;
+
+        if (${$self->input()} =~ m{^\s*;\s*S}) {
+          $self->YYSetReduce(';', 'D1' )
+        }
+        else {
+          $self->YYSetShift(';')
+        }
+      }
+
+
 %%
 p: %name PROG
     block +
@@ -48,9 +60,10 @@ block:
 
 ds:
     %name D2
-    D conflict ';' ds    
+    D                     %PREC ISLAST 
+      ';' ds    
   | %name D1
-    D conflict        
+    D                     %PREC ISLAST        
 ;
 
 ss:
@@ -58,22 +71,6 @@ ss:
     S ';' ss      
   | %name S1
     S       
-;
-
-conflict:
-      /* empty. This action solves the conflict using dynamic precedence */
-      {
-        my $self = shift;
-
-        if (${$self->input()} =~ m{^\s*;\s*S}) {
-          $self->YYSetReduce(';', 'D1' )
-        }
-        else {
-          $self->YYSetShift(';')
-        }
-
-        undef; # skip this node in the AST
-      }
 ;
 
 %%

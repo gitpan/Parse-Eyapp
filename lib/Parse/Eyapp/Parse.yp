@@ -35,6 +35,7 @@ my $strict = 0; # When true, all tokens must be declared or a warning will be is
 my $nocompact; # Do not compact action tables. No DEFAULT field for "STATES"
 
 my %nondeclared; # Potential non declared token identifiers appearing in the program
+my @conflict;    # List of [conflict name, code handler]
 
 sub not_an_id {
   my $id = shift;
@@ -232,6 +233,7 @@ sub symbol {
 %token ASSOC         /* is %(left|right|nonassoc) */
 %token BEGINCODE     /* is %begin { Perl code ... } */
 %token CODE          /* is { Perl code ... } */
+%token CONFLICT      /* is %conflict */
 %token DEFAULTACTION /* is %defaultaction */
 %token EXPECT        /* is %expect */
 %token HEADCODE      /* is %{ Perl code ... %} */
@@ -445,6 +447,17 @@ decl:  '\n'                 #default action
                     $$nterm{$symbol}=undef;    #is a non-terminal
                 }
             }
+    |   CONFLICT ident CODE '\n'
+            {
+              my ($name, $code) = @_[2,3];
+              my ($cn, $line) = @$name;
+              push @conflict, [$name, $code];
+
+              $$syms{$cn} = $line;
+              $$nterm{$cn} = undef;
+
+              undef;
+            }
     |   EXPECT NUMBER '\n'             { $expect=$_[2][0]; undef }
     |   EXPECT NUMBER NUMBER '\n'      { $expect= [ $_[2][0], $_[3][0]]; undef }
     |   error '\n'                     { $_[0]->YYErrok }
@@ -473,6 +486,14 @@ body:
             or  _SyntaxError(2,"Start symbol $start not found ".
                                 "in rules section",$_[2][1]);
 
+            # Add conflict handlers
+            # [ left hand side,   right hand side,  precedence, rulename, code, ]
+            for my $c (@conflict) { 
+              my ($A, $code) = @$c;
+              my $rhss = [ rhs([], name => $A, code => $code->[0]), ];
+              _AddRules($A, $rhss);
+            }
+
             # # If exists an @identifiers that is not a nterm and not a term is a warn
             if ($strict) {
               for (keys %nondeclared) {
@@ -482,7 +503,8 @@ body:
             }
             # Superstart rule
             # [ left hand side,   right hand side,  precedence, rulename, code, ]
-            $$rules[0]=[ '$start', [ $start, chr(0) ], undef, undef, undef,]  
+            $$rules[0]=[ '$start', [ $start, chr(0) ], undef, undef, undef,];  
+
         }
     |   '%%'    { _SyntaxError(2,"No rules in input grammar",$_[1][1]); }
 ;
@@ -579,6 +601,7 @@ rhseltwithid :
 
 rhselt:     symbol    { [ 'SYMB', $_[1] ] }
     | code    { [ 'CODE', $_[1] ] }
+    | DPREC ident { [ 'SYMB', $_[2] ] }
     | '(' optname rhs ')' 
         { 
            my ($name, $rhs) = @_[2, 3];
@@ -696,7 +719,18 @@ rhselt:     symbol    { [ 'SYMB', $_[1] ] }
 optname: /* empty */
        | NAME IDENT 
          { 
+                      # save bypass status
            $_[2][2] = $_[1][0];
+           $_[2] 
+         }
+       | NAME IDENT LABEL
+         {  # LABELs are used for dynamic conflict resolution
+                      # save bypass status
+           $_[2][2] = $_[1][0];
+           # 0: identifier 1: line number 2: bypass 
+           # concat the label to the name
+           $_[2][0] .= "$_[3][0]";
+
            $_[2] 
          }
        ;
@@ -766,6 +800,9 @@ sub slurp_perl_code {
   return [ $code, $lineno[0] ];
 }
 
+my $ID = qr{[A-Za-z_][A-Za-z0-9_]*};
+my $LABEL = qr{:$ID};
+
 sub _Lexer {
  
     #At EOF
@@ -807,8 +844,9 @@ sub _Lexer {
 
     $lineno[0]=$lineno[1];
 
-        $$input=~/\G([A-Za-z_][A-Za-z0-9_]*)/gc
+        $$input=~/\G($ID)/gc
     and return('IDENT',[ $1, $lineno[0] ]);
+
 
         $$input=~/\G( '                # opening apostrophe
                          (?:[^'\\]|    # an ordinary character
@@ -911,6 +949,9 @@ sub _Lexer {
           return('TREE',[ $treeoptions, $lineno[0] ])
         };
 
+            $$input=~/\G%(conflict)/gc
+        and return('CONFLICT',[ undef, $lineno[0] ]);
+
             $$input=~/\G%metatree/gc
         and return('METATREE',[ undef, $lineno[0] ]);
 
@@ -922,19 +963,22 @@ sub _Lexer {
             $$input=~/\G%(prec)/gc
         and return('PREC',[ undef, $lineno[0] ]);
 
-            $$input=~/\G(<\s*%name\s*([A-Za-z_][A-Za-z0-9_]*)\s*)?\*\s*>/gc
+            $$input=~/\G%(PREC)/gc
+        and return('DPREC',[ undef, $lineno[0] ]);
+
+            $$input=~/\G(<\s*%name\s*($ID)\s*)?\*\s*>/gc
         and return('STAR',[ $2, $lineno[0] ]);
-            $$input=~/\G(%name\s*([A-Za-z_][A-Za-z0-9_]*)\s*)?\*/gc
+            $$input=~/\G(%name\s*($ID)\s*)?\*/gc
         and return('STAR',[ $2, $lineno[0] ]);
 
-            $$input=~/\G(<\s*%name\s*([A-Za-z_][A-Za-z0-9_]*)\s*)?\+\s*>/gc
+            $$input=~/\G(<\s*%name\s*($ID)\s*)?\+\s*>/gc
         and return('PLUS',[ $2, $lineno[0] ]);
-            $$input=~/\G(%name\s*([A-Za-z_][A-Za-z0-9_]*)\s*)?\+/gc
+            $$input=~/\G(%name\s*($ID)\s*)?\+/gc
         and return('PLUS',[ $2, $lineno[0] ]);
 
-            $$input=~/\G(<\s*%name\s*([A-Za-z_][A-Za-z0-9_]*)\s*)?\?\s*>/gc
+            $$input=~/\G(<\s*%name\s*($ID)\s*)?\?\s*>/gc
         and return('OPTION',[ $2, $lineno[0] ]);
-            $$input=~/\G(%name\s*([A-Za-z_][A-Za-z0-9_]*)\s*)?\?/gc
+            $$input=~/\G(%name\s*($ID)\s*)?\?/gc
         and return('OPTION',[ $2, $lineno[0] ]);
 
             $$input=~/\G%no\s+bypass/gc
@@ -947,6 +991,10 @@ sub _Lexer {
         and do {
           return('NAME',[ $bypass, $lineno[0] ]);
         };
+
+        $$input=~/\G($LABEL)/gc
+    and return('LABEL',[ $1, $lineno[0] ]);
+
     }
 
     #Always return something

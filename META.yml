@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Parse-Eyapp
-version:             1.150
+version:             1.151
 abstract:            Bottom up parser generator
 license:             ~
 author:              

@@ -119,6 +119,10 @@ release: lib/Parse/Eyapp/Parse.yp
 	   PERL5LIB=lib; $(PERL) -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
 	   rm -fR Parse-Eyapp-*.tar.gz
 
+       # as release but line numbers info. No -n option
+debug: lib/Parse/Eyapp/Parse.yp
+	   yapp -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
+
 coverage:
 	cover -delete
 	make HARNESS_PERL_SWITCHES=-MDevel::Cover test

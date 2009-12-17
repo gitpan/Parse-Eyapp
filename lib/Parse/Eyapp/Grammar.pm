@@ -202,7 +202,7 @@ sub Rules { # TODO: find proper names
     my($self)=shift;
     my($rules)=$$self{GRAMMAR}{RULES};
     my($text) = "[\n";
-    my $packages = ' qw{TERMINAL _OPTIONAL _STAR_LIST _PLUS_LIST ';
+    my $packages = q{'TERMINAL', '_OPTIONAL', '_STAR_LIST', '_PLUS_LIST', };
 
     my $index = 0;
     for (@$rules) {
@@ -212,15 +212,15 @@ sub Rules { # TODO: find proper names
         $bypass = $self->Bypass unless defined($bypass);
         # find an acceptable perl identifier as name
         $name = $self->classname($name, $index, $lhs, $rhs);
-        $packages .= "\n".(" "x9).$name unless $packages =~ m{\b$name\b};
 
-        $text.= "  [ $name => '$lhs', [ ";
+        $packages .= "\n".(" "x9)."'$name', ";
+
+        $text.= "  [ '$name' => '$lhs', [ ";
         $text.=join(', ',map { $_ eq chr(0) ? "'\$end'" : $_ =~ m{^'} ? $_ : "'$_'" } @$rhs);
         $text.=" ], $bypass ],\n";
         $index++;
     }
     $text .= ']';
-    $packages .= '} ';
     return ($text, $packages);
 }
 

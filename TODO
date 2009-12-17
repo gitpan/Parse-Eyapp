@@ -1,4 +1,5 @@
-  * Lexical Analyzer generation
+  * label for names %name B.A (label is B, names is A). A conflict can refer to 
+    a label or a name
 
   * Dynamic conflict  resolution:
       %conflict CONLFICTIDENTIFIER { # conflict solver
@@ -10,6 +11,10 @@
         The case where the default is a reduction is not solved. Investigate
 
   * Lars request (see dir contributions)
+
+  * Lexical Analyzer generation:
+      * Specify reserved words, characters, and handlers (like C code) for specific beginnings
+      * Lexer automatic construction
 
   * Provide debugging support for standalone modules: currently skipped
 
@@ -137,10 +142,6 @@
   * Reference manual. Document functions and methods
     -- Sort by alphabetical order
     -- User methods and subroutines. Internal documentation
-
-- Lexical Analysis
-  * Specify reserved words, characters, and handlers (like C code) for specific beginnings
-  * Lexer automatic construction
 
 - Treereg Tree grammars and tree walkers
  

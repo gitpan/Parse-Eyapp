@@ -97,7 +97,7 @@ sub controller {
        $depth-- if $token eq ')';
        _generate $attr->[0]." ";
      }
-     elsif ($token =~ /\b(TOKEN|ASSOC|SYNTACTIC|SEMANTIC|STRICT|START|EXPECT|NAMINGSCHEME|UNION)\b/) {
+     elsif ($token =~ /\b(TOKEN|ASSOC|CONFLICT|SYNTACTIC|SEMANTIC|STRICT|START|EXPECT|NAMINGSCHEME|UNION)\b/) {
        my $g = ($output =~ $end_cr_set)? '': "\n"; 
        _generate $g.$attr->[0]." ";
      }
@@ -291,6 +291,10 @@ sub _Lexer {
         };
             $$input=~/\G(%token)/gc
         and return('TOKEN',[ $1, $lineno[0] ]);
+
+            $$input=~/\G(%conflict)/gc
+        and return('CONFLICT',[ $1, $lineno[0] ]);
+
 
             $$input=~/\G(%strict)/gc
         and return('STRICT',[ $1, $lineno[0] ]);

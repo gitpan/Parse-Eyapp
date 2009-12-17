@@ -31,6 +31,17 @@ use base q{DebugTail};
 
 %token D S
 
+%conflict LAST_OR_MORE {
+        my $self = shift;
+
+        if (${$self->input()} =~ m{^\s*;\s*S}) {
+          $self->YYSetReduce(';', 'D:LAST' )
+        }
+        else {
+          $self->YYSetShift(';')
+        }
+      }
+
 %tree bypass
 
 %%
@@ -42,10 +53,11 @@ p:
 ;
 
 ds:
-    %name MORE_Ds
-    D hacktables ';' ds    
-  | %name LAST_D
-    D hacktables        
+    %name D
+    D                             %PREC LAST_OR_MORE 
+      ';' ds    
+  | %name D:LAST
+    D                             %PREC LAST_OR_MORE  
 ;
 
 ss:
@@ -54,23 +66,6 @@ ss:
   | %name S
     S       
 ;
-
-hacktables:
-      /* empty. This action solves the conflict using dynamic precedence */
-      {
-        my $self = shift;
-
-        if (${$self->input()} =~ m{^\s*;\s*S}) {
-          $self->YYSetReduce(';', 'LAST_D' )
-        }
-        else {
-          $self->YYSetShift(';')
-        }
-
-        undef; # skip this node in the AST
-      }
-;
-
 
 %%
 
