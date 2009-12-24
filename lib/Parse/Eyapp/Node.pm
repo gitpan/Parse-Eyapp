@@ -3,24 +3,23 @@ package Parse::Eyapp::Node;
 use strict;
 use Carp;
 
-# A strange way to say:
-#                use Parse::Eyapp::Base qw{firstval lastval};
-# The reason is to support standalone modules
-BEGIN {
-  unless (Parse::Eyapp::Base->can('firstval')) {
-    require Parse::Eyapp::Base;
-  }
-  Parse::Eyapp::Base->import('firstval', 'lastval');
-}
-
 use Parse::Eyapp::YATW;
-#use base qw(Exporter);
 use List::Util qw(first);
 use Data::Dumper;
 
-#our @EXPORT_OK = qw(new);
-
 our $FILENAME=__FILE__;
+
+sub firstval(&@) {
+  my $handler = shift;
+  
+  return (grep { $handler->($_) } @_)[0]
+}
+
+sub lastval(&@) {
+  my $handler = shift;
+  
+  return (grep { $handler->($_) } @_)[-1]
+}
 
 ####################################################################
 # Usage      : 

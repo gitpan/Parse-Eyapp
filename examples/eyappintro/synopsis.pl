@@ -44,7 +44,6 @@ my $grammar = q{
   ;
 
   %%
-  sub _Error { die "Syntax error near ".($_[0]->YYCurval?$_[0]->YYCurval:"end of file")."\n" }
 
   sub _Lexer {
     my($parser)=shift; # The parser object
@@ -61,7 +60,7 @@ my $grammar = q{
 
   sub Run {
       my($self)=shift;
-      $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, );
+      $self->YYParse( yylex => \&_Lexer, );
   }
 }; # end grammar
 

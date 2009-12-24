@@ -25,9 +25,18 @@ execute the generated modulino with:
 =cut
 
 our $VERSION = '0.01';
-use base q{DebugTail}; 
 
 %}
+
+%lexer {
+       s{^(\s+)}{} and $self->tokenline($1 =~ tr{\n}{});
+       return ('',undef) unless $_;
+
+       return ($1,$1) if s/^([sSDd])//;
+       return ('SEMICOLOND', 'SEMICOLOND') if s/^;\s*D/D/;
+       return ('SEMICOLONS', 'SEMICOLONS') if s/^;\s*S/S/;
+       die "Syntax error at line num ${$self->tokenline()}: ${substr($_,0,10)}\n";
+    }
 
 %token D S
 %syntactic token SEMICOLONS SEMICOLOND
@@ -58,22 +67,5 @@ ss:
 
 %%
 
-__PACKAGE__->lexer(
-  sub {
-    my $self = shift;
-    
-    for (${$self->input()}) {
-       s{^(\s+)}{} and $self->tokenline($1 =~ tr{\n}{});
-       return ('',undef) unless $_;
-
-       return ($1,$1) if s/^([sSDd])//;
-       return ('SEMICOLOND', 'SEMICOLOND') if s/^;\s*D/D/;
-       return ('SEMICOLONS', 'SEMICOLONS') if s/^;\s*S/S/;
-       die "Syntax error at line num ${$self->tokenline()}: ${substr($_,0,10)}\n";
-    }
-    return ('',undef);
-  }
-);
-
-__PACKAGE__->main unless caller();
+__PACKAGE__->main('Provide a statement like "D; D; S" and press <CR><CTRL-D>: ') unless caller;
 

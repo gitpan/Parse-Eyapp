@@ -89,7 +89,7 @@ sub controller {
        $attr->[0] =~ s/\s*:\s*$/:/; # remove blanks before and after colon
        _generate $g.$attr->[0]."\n      ";
      }
-     elsif ($token =~ /\b(IDENT|LITERAL)\b/) {
+     elsif ($token =~ /\b(IDENT|LITERAL|NUMBER)\b/) {
        _generate $attr->[0]." ";
      }
      elsif ($token =~ /(PREC|STAR\b|PLUS|OPTION|[)(])/) {
@@ -97,7 +97,7 @@ sub controller {
        $depth-- if $token eq ')';
        _generate $attr->[0]." ";
      }
-     elsif ($token =~ /\b(TOKEN|ASSOC|CONFLICT|SYNTACTIC|SEMANTIC|STRICT|START|EXPECT|NAMINGSCHEME|UNION)\b/) {
+     elsif ($token =~ /\b(TOKEN|ASSOC|CONFLICT|SYNTACTIC|SEMANTIC|STRICT|START|EXPECT|NAMINGSCHEME|LEXER|UNION)\b/) {
        my $g = ($output =~ $end_cr_set)? '': "\n"; 
        _generate $g.$attr->[0]." ";
      }
@@ -313,6 +313,9 @@ sub _Lexer {
 
             $$input=~/\G(%union)/gc
         and return('UNION',[ $1, $lineno[0] ]);
+
+            $$input=~/\G(%lexer)/gc
+        and return('LEXER',[ $1, $lineno[0] ]);
 
             $$input=~/\G(%defaultaction)/gc
         and return('DEFAULTACTION',[ $1, $lineno[0] ]);

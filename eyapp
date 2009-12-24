@@ -278,8 +278,8 @@ my($parser)=new Parse::Eyapp(inputfile => $filename);
 
 my($warnings)=$parser->Warnings();
 
-	$warnings
-and	print STDERR $warnings;
+	$warnings !~ m{^\s*$} 
+and	print STDERR "$warnings\n";
 
 $parser->outputtables($path, $base) if $opt_v or $warnings;
 

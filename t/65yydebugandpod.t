@@ -37,4 +37,6 @@ BEGDEB
   like($x, qr{$begideb}, 'yydebug output looks ok');
 
   unlink 't/Debug2.pm';
+  unlink 't/err';
+  unlink 't/out';
 }

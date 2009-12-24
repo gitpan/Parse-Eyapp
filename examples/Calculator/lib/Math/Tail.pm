@@ -3,7 +3,6 @@ use warnings;
 use strict;
 use Getopt::Long;
 use Pod::Usage;
-use base q{Parse::Eyapp::TailSupport};
 
 sub lex {
   my $parser = shift;
@@ -29,10 +28,6 @@ sub semantic_error {
 
   $parser->YYData->{ERRMSG} = $msg;
   $parser->YYError; 
-}
-
-sub TERMINAL::info {
-  $_[0]->{attr}[0]
 }
 
 1;

@@ -73,7 +73,6 @@ sub evaluate_using_perl { # if possible
   $res;
 }
 
-
 sub Run {
     my($self)=shift;
     my $yydebug = shift || 0;

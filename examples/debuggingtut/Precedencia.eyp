@@ -8,11 +8,7 @@ compile it with
 
 execute the generated modulino with:
 
-      ./Precedencia.pm 
-
-or
-
-      ./Precedencia.pm -nos
+      ./Precedencia.pm -nos -c '2@3@4' -info line
 
 Try with inputs:
    
@@ -38,7 +34,6 @@ use base q{Math::Tail};
 %token NUM
 %left '@'
 %right '&'  dummy
-
 
 %tree bypass
 %%

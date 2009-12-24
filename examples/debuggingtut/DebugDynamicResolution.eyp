@@ -14,10 +14,9 @@ compile it with
 
 Execute the generated modulino with:
 
-      ./DebugDynamicResolution.pm -t
+      ./DebugDynamicResolution.pm -t -nos -info ''
 
 Try input "D;D;D; S;S;S".
-
 
 =head1 See also
 

@@ -1,20 +1,18 @@
-  * label for names %name B.A (label is B, names is A). A conflict can refer to 
-    a label or a name
+  * the #line directive in Parse.yp for %lexer is buggy (worst practice)
 
-  * Dynamic conflict  resolution:
-      %conflict CONLFICTIDENTIFIER { # conflict solver
-               if (is_A()) { $self->YYSetReduce('@', 'ruleA') }
-               else { $self->YYSetShift('@') }
-      }
+  * Lexical Analyzer generation:
+      * Lexer automatic construction
+      * lexer must support a sub name
+         %lexer mylexer
 
   * Dynamic conflict resolution: test YYSetShift
         The case where the default is a reduction is not solved. Investigate
 
-  * Lars request (see dir contributions)
+  * C interface with YAML
 
-  * Lexical Analyzer generation:
-      * Specify reserved words, characters, and handlers (like C code) for specific beginnings
-      * Lexer automatic construction
+  * Parse::Eyapp::Base must be pruned
+
+  * Lars request (see dir contributions): allow AST classes to be Moose or any other OOP framework
 
   * Provide debugging support for standalone modules: currently skipped
 
@@ -25,6 +23,11 @@
     will be accepted if in the accepting state
 
   * There is a bug in eyapp with reduce-reduce conflicts?! I am not sure of this
+    with reduce-reduce conflicts. In at least one case is reducing by the second production rule instead 
+    of the first.  It appears in the C++ parser (t/99Cplusplusgrammar.t). Confirm
+
+  * Add tests to check .output tables: actions and gotos against yacc. 
+    I am not confident that some modifications I introduced in Grammar.pm were error free
 
   * There is a bug with &give_rhs_name in Parse::Eyapp::Grammar and lists *, +, etc. see the example
       examples/debuggintut/SemanticInfoInTokens.eyp
@@ -32,20 +35,16 @@
     Not always a syntactic variable is a valid identifier: e.g. PLUS-1
     Probably, it is better that the method "tokennames" give names to the syntactic variables
 
-  * str method can produce GraphViz, latex and/or other formats
+  * str method to produce GraphViz, latex and/or other formats
+
   * Treereg EXPORT and EXPORT_OK
+
   * Language generation example examples/generator
      -- Return a Test::LectroTest::Generator? 
 
-    with reduce-reduce conflicts. In at least one case is reducing by the second production rule instead 
-    of the first.  It appears in the C++ parser (t/99Cplusplusgrammar.t). Confirm
-
-  * Add tests to check .output tables: actions and gotos against yacc. 
-    I am not confident that some modifications I introduced in Grammar.pm were error free
-
   * Automatic naming scheme: tests!
 
-  * Check that all the production names (given with %name directives) are different. Emit a warning if not
+  * Check that all the production names (given with %name directives) are different. May be not
 
   * Combine Flex and eyapp
 
@@ -191,6 +190,5 @@
 
 
 ************ PROJECTS *********************
-* C interface with YAML
 * Human friendly warnings and errors, conflicts, debugger with breaks, etc.
 

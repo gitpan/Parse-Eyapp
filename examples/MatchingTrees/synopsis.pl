@@ -8,6 +8,13 @@ sub TERMINAL::info {
 }
 
 my $grammar = q{
+  %lexer {
+      m{\G\s+}gc;
+      m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
+      m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
+      m{\G(.)}gcs and return($1,$1);
+  }
+
   %right  '='     # Lowest precedence
   %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
   %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
@@ -44,25 +51,6 @@ my $grammar = q{
   ;
 
   %%
-  sub _Error { die "Syntax error near ".($_[0]->YYCurval?$_[0]->YYCurval:"end of file")."\n" }
-
-  sub _Lexer {
-    my($parser)=shift; # The parser object
-
-    for ($parser->YYData->{INPUT}) { # Topicalize
-      m{\G\s+}gc;
-      $_ eq '' and return('',undef);
-      m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
-      m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
-      m{\G(.)}gcs and return($1,$1);
-    }
-    return('',undef);
-  }
-
-  sub Run {
-      my($self)=shift;
-      $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, );
-  }
 }; # end grammar
 
 our (@all, $uminus);
@@ -70,11 +58,10 @@ our (@all, $uminus);
 Parse::Eyapp->new_grammar( # Create the parser package/class
   input=>$grammar,    
   classname=>'Calc', # The name of the package containing the parser
-  firstline=>7       # String $grammar starts at line 7 (for error diagnostics)
 ); 
 my $parser = Calc->new();                # Create a parser
-$parser->YYData->{INPUT} = "2*-3+b*0;--2\n"; # Set the input
-my $t = $parser->Run;                    # Parse it!
+$parser->input(\"2*-3+b*0;--2\n");       # Set the input
+my $t = $parser->YYParse;                # Parse it!
 local $Parse::Eyapp::Node::INDENT=2;
 print "Syntax Tree:",$t->str;
 

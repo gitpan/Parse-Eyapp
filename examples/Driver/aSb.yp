@@ -1,37 +1,16 @@
+%lexer {
+    s/^[ \t\n]*//;
+    s/^(.)//s and return($1,$1);
+}
+
 %%
-S:                 { print "S -> epsilon\n" }
-    |   'a' S 'b'  { print "S -> a S b\n" }
+S:      /* empty */ 
+    |   'a' S 'b'  
 ;
 %%
 
-sub _Error {
-        exists $_[0]->YYData->{ERRMSG}
-    and do {
-        print $_[0]->YYData->{ERRMSG};
-        delete $_[0]->YYData->{ERRMSG};
-        return;
-    };
-    print "Syntax error.\n";
-}
+=head1 SYNOPSIS
 
-sub _Lexer {
-    my($parser)=shift;
-
-        $parser->YYData->{INPUT}
-    or  $parser->YYData->{INPUT} = <STDIN>
-    or  return('',undef);
-
-    $parser->YYData->{INPUT}=~s/^[ \t\n]//;
-
-    for ($parser->YYData->{INPUT}) {
-        s/^(.)//s and return($1,$1);
-    }
-}
-
-sub Run {
-    my($self)=shift;
-    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, yydebug => 0x1F );
-}
-
-#my($calc)=new Calc;
-#$calc->Run;
+This example illustrates the C<yydebug> option.
+Compile it with C<eyapp aSb> and the run the
+script C<use_aSb.pl>.

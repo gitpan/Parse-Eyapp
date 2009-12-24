@@ -286,7 +286,7 @@ sub Accessors {
 ###########################
 sub Warnings {
     my($self)=shift;
-    my($text);
+    my($text) = '';
     my($grammar)=$$self{GRAMMAR};
 
         exists($$grammar{UUTERM})

@@ -15,8 +15,6 @@ Try input:
      a = b * 8
 
 =cut
-
-use base q{Parse::Eyapp::TailSupport};
 %}
 
 %semantic token  NUM VAR 
@@ -25,6 +23,14 @@ use base q{Parse::Eyapp::TailSupport};
 %left   '*' '/'
 %left   NEG
 %tree
+
+%lexer {
+        s/^\s+(?:#.*)?//;
+
+        s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+        s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+        s/^(.)//s                    and return($1,$1);
+    }
 
 %%
 line: exp { $_[1] } 
@@ -43,18 +49,3 @@ exp:        %name NUM    NUM
 
 %%
 
-__PACKAGE__->lexer( 
-  sub {
-    my($parser)=shift;
-
-    for (${$parser->input}) {
-        s/^\s+(?:#.*)?//;
-
-        s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
-        s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-        s/^(.)//s                    and return($1,$1);
-
-        return ('',undef);
-    }
-  }
-);

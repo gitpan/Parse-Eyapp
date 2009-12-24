@@ -23,40 +23,17 @@ exp:        %name NUM
 
 %%
 
-sub _Error {
-  my($token)=$_[0]->YYCurval;
-  my($what)= $token ? "input: '$token'" : "end of input";
-  my @expected = $_[0]->YYExpect();
+use base qw{CommonTail};
 
-  local $" = ', ';
-  die "Syntax error near $what. Expected one of these tokens: @expected\n";
-}
+=head1 SYNOPSIS
 
+The default semantic action in this translation scheme
+is to delegate the execution in methods 
+with names C<Prefix::TIMES::action>,
+C<Prefix::PLUS::action>, etc. where
+C<Prefix> is set via the C<yyprefix> parameter
+and C<PLUS>, C<TIMES> stands for the name of the rhs.
 
-my $x = '';
+See files C<calcu.pl>, C<postf.pl>
 
-sub _Lexer {
-  my($parser)=shift;
-
-  for ($x) {
-    s/^\s+//;
-    $_ eq '' and return('',undef);
-
-    s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
-    s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-    s/^(.)//s                    and return($1,$1);
-  }
-}
-
-sub Run {
-  my($self)=shift;
-  $x = shift;
-  my $debug = shift;
-
-  $self->YYParse( 
-    yylex    => \&_Lexer, 
-    yyerror  => \&_Error,
-    yydebug  => $debug,
-  );
-}
-
+=cut

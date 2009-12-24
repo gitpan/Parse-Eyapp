@@ -1,4 +1,11 @@
-# File examples/eyapplanguageref/Postfix.eyp
+%lexer {
+      s/^\s+//;
+
+      s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+      s/^(.)//s                    and return($1,$1);
+    }
+
 %right  '='
 %left   '-' '+'
 %left   '*' '/'
@@ -17,27 +24,23 @@ exp:        $NUM  { $NUM }
         |   exp.left '-'.op exp.right        
         |   exp.left '*'.op exp.right       
         |   exp.left '/'.op exp.right      
-        |   '-' $exp %prec NEG { "$exp NEG" }
+        |   '-' $exp                    %prec NEG 
+              { "$exp NEG" }
         |   '(' $exp ')' { $exp }      
 ;
 
 %%
 
-use base q{Parse::Eyapp::TailSupport};
-
-__PACKAGE__->lexer(sub {
-    my $parser = shift;
-
-    for (${$parser->input}) {
-      s/^\s+//;
-
-      s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
-      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-      s/^(.)//s                    and return($1,$1);
-      $_ eq ''                     and return('',undef);
-    }
-  }
-);
-
-# Modulino
 __PACKAGE__->main() unless caller();
+
+=head1 SYNOPSIS
+
+Compile it with:
+
+           eyapp -b Postfix.eyp
+
+Run it with:
+
+           ./Postfix.pm -c 'a =2*3+b'
+
+=cut

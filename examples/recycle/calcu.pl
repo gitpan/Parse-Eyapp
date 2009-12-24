@@ -16,12 +16,10 @@ sub Calc::TIMES::action {
 
 my $debug = shift || 0;
 my $parser = Noactions->new(yyprefix => 'Calc::');
-print "Write an expression: "; 
-my $x;
-{
-  local $/ = undef;
-  $x = <STDIN>;
-}
-my $t = $parser->Run($x, $debug);
 
-print "$t\n";
+print "Write an expression: "; 
+my $x = <STDIN>;
+
+my $t = $parser->Run($debug, $x);
+
+print "$t\n" unless $parser->YYNberr;

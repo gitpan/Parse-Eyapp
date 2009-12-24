@@ -81,10 +81,12 @@ sub _Lexer {
     }
 }
 
+use base 'Parse::Eyapp::TailSupport';
 sub Run {
     my($self)=shift;
-    $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, 
-                          #yydebug =>0xFF
-			 );
+
+    $self->lexer(\&_Lexer);
+    $self->error(\&_Error);
+    $self->YYParse();
 }
 

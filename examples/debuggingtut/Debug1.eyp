@@ -36,9 +36,19 @@ with input "D; S"
 our $VERSION = '0.01';
 use base q{DebugTail}; 
 
+# This is an exercise:
+# There is an error somewhere below ...
+# Can you find it?
+
 %}
 
 %token D S
+
+%lexer {
+        s{^(\s)}{} and $self->tokenline($1 =~ tr{\n}{});
+
+        return ($1, $1) if s/^(.)//;
+    }
 
 %tree 
 
@@ -66,24 +76,6 @@ ss:
 ;
 
 %%
-
-# This is an exercise:
-# There is an error somewhere below ...
-# Can you find it?
-
-__PACKAGE__->lexer(
-  sub {
-    my $self = shift;
-
-    for (${$self->input()}) {  # contextualize
-        s{^(\s)}{} and $self->tokenline($1 =~ tr{\n}{});
-
-        return ('', undef) unless $_;
-        return ($1, $1) if s/^(.)//;
-    }
-    return ('', undef);
-  }
-);
 
 my $prompt = 'Try first "D;S" and then "D; D;  S" '.
              '(press <CR><CTRL-D> to finish): ';

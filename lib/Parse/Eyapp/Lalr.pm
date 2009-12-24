@@ -96,10 +96,6 @@ sub Warnings {
         $text.="$nbrr reduce/reduce conflict".($nbrr != 1 ? "s" : "");
     };
 
-       (    $nbsr != $expected
-        or  $nbrr)
-    and $text.="\n";
-
     $text;
 }
 #############################

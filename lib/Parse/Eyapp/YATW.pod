@@ -427,7 +427,7 @@ is transformed in s.t. like:
 
 =head1 TREE MATCHING AND TREE SUBSTITUTION
 
-See the documentation in L<Parse::Eyapp::MatchingTrees>
+See the documentation in L<Parse::Eyapp::treematchingtut>
 
 =head1 SEE ALSO
 
@@ -471,7 +471,7 @@ L<Parse::Eyapp::datagenerationtut>
 
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/translationschemestut.pdf> 
 
-=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/MatchingTrees.pdf> 
+=item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/treematchingtut.pdf> 
 
 =item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
 (An Introduction to Compiler Construction in seven pages) in

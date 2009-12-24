@@ -30,13 +30,13 @@ use Carp;
 sub _CopyModule {
   my ($module, $function, $file) = @_;
 
-  open(DRV,$file) or	die "BUG: could not open $file";
-	my $text = join('',<DRV>);
-	close(DRV);
+  open(DRV,$file) or  die "BUG: could not open $file";
+  my $text = join('',<DRV>);
+  close(DRV);
 
   my $label = $module;
   $label =~ s/::/_/g;
-	return << "EOCODE";
+  return << "EOCODE";
   # Loading $module
   BEGIN {
     unless ($module->can('$function')) {
@@ -76,21 +76,21 @@ sub Output {
   my($version)=$Parse::Eyapp::Driver::VERSION;
   my($datapos);
   my $makenodeclasses = '';
-	$driver='';
+  $driver='';
 
       defined($package)
   or $package='Parse::Eyapp::Default'; # may be the caller package?
 
-	$head= $self->Head();
-	$rules=$self->RulesTable();
-	$states=$self->DfaTable();
-	$tail= $self->Tail();
+  $head= $self->Head();
+  $rules=$self->RulesTable();
+  $states=$self->DfaTable();
+  $tail= $self->Tail();
 
   # In case the file ends with documentation and without a 
   # =cut
   #
   $tail = $tail."\n\n=for None\n\n=cut\n\n" unless $tail =~ /\n\n=cut\n/;
-	#local $Data::Dumper::Purity = 1;
+  #local $Data::Dumper::Purity = 1;
 
   ($GRAMMAR, $PACKAGES) = $self->Rules();
   $bypass = $self->Bypass;
@@ -104,10 +104,10 @@ sub Output {
   # Thanks Tom! previous double-quote use produced errors in windows
   $FILENAME = q{'}.$self->Option('inputfile').q{'};
 
-	if ($self->Option('standalone')) {
-    # Copy Base, Driver, Node and YATW
-		$driver  =_CopyModule('Parse::Eyapp::Base', 'firstval', $Parse::Eyapp::Base::FILENAME);
-		$driver .=_CopyModule('Parse::Eyapp::Driver','YYParse', $Parse::Eyapp::Driver::FILENAME);
+  if ($self->Option('standalone')) {
+    # Copy Driver, Node and YATW
+    
+    $driver .=_CopyModule('Parse::Eyapp::Driver','YYParse', $Parse::Eyapp::Driver::FILENAME);
     $driver .= _CopyModule('Parse::Eyapp::Node', 'm', $Parse::Eyapp::Node::FILENAME);
 
     # Remove the line use Parse::Eyapp::YATW
@@ -123,9 +123,9 @@ sub Output {
 
   my($text)=$self->Option('template') || Driver_pm();
 
-	$text=~s/<<(\$.+)>>/$1/gee;
+  $text=~s/<<(\$.+)>>/$1/gee;
 
-	$text;
+  $text;
 }
 
 sub make_header_for_driver_pm {
@@ -220,7 +220,7 @@ EOT
 #             
 # Parameters : 
 my %_new_grammar = (
-  input => undef, 		
+  input => undef,     
   classname => undef,
   firstline => undef,
   linenumbers => undef,
@@ -250,11 +250,11 @@ sub new_grammar {
 
   croak "Bad grammar." 
     unless my $p = Parse::Eyapp->new(
-					input => $grammar, 
-					inputfile => $filename, 
-					firstline => $line,
-					linenumbers => $linenumbers,
-		); 
+          input => $grammar, 
+          inputfile => $filename, 
+          firstline => $line,
+          linenumbers => $linenumbers,
+    ); 
 
   my $text = $p->Output(classname => $name) or croak "Can't generate parser.";
 

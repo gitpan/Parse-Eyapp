@@ -18,10 +18,22 @@ my (
   $nberr,    # Number of errors up to now
   $prec,
   $labelno);
-my($syms,$head,$tail,$token,$term,$nterm,$rules,$precterm,$start,$nullable,
-   $semantic);
-my($expect);
-my ($namingscheme, $defaultaction);
+
+my $syms;
+my $head;    # list of texts inside header sections
+my $tail;
+my $token;
+my $term;
+my $nterm;
+my $rules;
+my $precterm;
+my $start;
+my $nullable;
+my $semantic;
+
+my ($expect);
+my $namingscheme;
+my $defaultaction;
 my $filename;
 my $tree = 0; # true if %tree or %metatree
 my $metatree = 0;
@@ -228,6 +240,37 @@ sub symbol {
 
   return ['SYMB', $id];
 }
+
+# To be used with the %lexer directive
+sub make_lexer {
+  my ($code, $line) = @_;
+
+  my $errline = $line + ($code =~ tr/\n//);
+
+my $lexertemplate = << 'ENDOFLEXER';
+__PACKAGE__->YYLexer( 
+  sub { # lexical analyzer
+    my $self = shift; 
+    for (${$self->input()}) {  # contextualize
+#line <<line>> "<<filename>>"
+      <<code>>       
+<<end_user_code>>
+      return ('', undef) if ($_ eq '') || (defined(pos($_)) && (pos($_) >= length($_)));
+      die("Error at the end of lexical analyzer. Line: <<errline>>. File: <<filename>>. No regexp matched.\n");
+    } 
+  } # end lexical analyzer
+);
+ENDOFLEXER
+
+  $lexertemplate =~ s/<<code>>/$code/g;
+  $lexertemplate =~ s/<<line>>/$line/g;
+  $lexertemplate =~ s/<<errline>>/$errline/g;
+  $lexertemplate =~ s/<<filename>>/$filename/g;
+  $lexertemplate =~ s/<<end_user_code>>/################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################/g;
+
+  return $lexertemplate;
+}
+
 %}
 
 %token ASSOC         /* is %(left|right|nonassoc) */
@@ -407,6 +450,11 @@ decl:  '\n'                 #default action
     |   HEADCODE '\n'                   { push(@$head,$_[1]); undef }
     |   UNION CODE '\n'                 { undef } #ignore
     |   DEFAULTACTION CODE '\n'         { $defaultaction = $_[2]; undef } 
+    |   LEXER CODE '\n'                 { 
+                                           my ($code, $line) = @{$_[2]};
+                                           push @$head, [ make_lexer($code, $line), $line]; 
+                                           undef 
+                                         } 
     |   TREE '\n'    
           { 
             $tree = $buildingtree = 1;
@@ -887,7 +935,7 @@ sub _Lexer {
         return ('BEGINCODE', &slurp_perl_code());
     };
 
-        $$input=~/\G{/gc
+        $$input=~/\G\s*{/gc
     and do {
         return ('CODE', &slurp_perl_code());
     };
@@ -937,8 +985,11 @@ sub _Lexer {
             $$input=~/\G%(union)/gc
         and return('UNION',[ undef, $lineno[0] ]);
 
-            $$input=~/\G%(defaultaction)/gc
+            $$input=~/\G%(defaultaction)\s*/gc
         and return('DEFAULTACTION',[ undef, $lineno[0] ]);
+
+            $$input=~/\G%(lexer)\s*/gc
+        and return('LEXER',[ undef, $lineno[0] ]);
 
             $$input=~/\G%(namingscheme)/gc
         and return('NAMINGSCHEME',[ undef, $lineno[0] ]);
@@ -949,7 +1000,7 @@ sub _Lexer {
           return('TREE',[ $treeoptions, $lineno[0] ])
         };
 
-            $$input=~/\G%(conflict)/gc
+            $$input=~/\G%(conflict)\s*/gc
         and return('CONFLICT',[ undef, $lineno[0] ]);
 
             $$input=~/\G%metatree/gc
@@ -1123,7 +1174,7 @@ sub Parse {
     $prec=0;
     $labelno=0;
 
-    $head=();
+    $head=[];
     $tail="";
 
     $syms={};

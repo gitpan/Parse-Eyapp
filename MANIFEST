@@ -67,7 +67,6 @@ examples/debuggingtut/DebugTail.pm
 examples/debuggingtut/RRTail.pm
 examples/debuggingtut/Tail.pm
 examples/Driver/aSb.yp
-examples/Driver/paste.pl
 examples/Driver/Postfix.eyp
 examples/Driver/Rule3.yp
 examples/Driver/use_aSb.pl
@@ -164,7 +163,6 @@ examples/MatchingTrees/m2.pl
 examples/MatchingTrees/numchildren.pl
 examples/MatchingTrees/Rule6.yp
 examples/MatchingTrees/synopsis.pl
-examples/MatchingTrees/Tail2.pm
 examples/Node/28foldwithnewwithvars.pl
 examples/naming/default_naming_scheme.eyp
 examples/naming/explicit_default_naming_scheme.eyp
@@ -213,6 +211,7 @@ examples/recycle/PostfixWithActions.eyp
 examples/recycle/postf.pl
 examples/recycle/README
 examples/recycle/rewritepostfixwithactions.pl
+examples/recycle/CommonTail.pm
 examples/translationschemestut/README
 examples/translationschemestut/trans_scheme_default_action.pl
 examples/translationschemestut/trans_scheme_simple_decls4.pl
@@ -260,7 +259,6 @@ lib/Parse/Eyapp/_TreeregexpSupport.pm
 lib/Parse/Eyapp/Treeregexp.yp
 lib/Parse/Eyapp/YATW.pm
 lib/Parse/Eyapp/YATW.pod
-lib/Parse/Eyapp/TailSupport.pm
 t/01calc.t
 t/03newgrammar.t
 t/04foldandzero.t
@@ -328,6 +326,9 @@ t/67outputfile.t
 t/68cleangrammar.t
 t/69cleanwithvgrammar.t
 t/70dos2unix.t
+t/71dynamicconflictresolution.t
+t/72mixedstandaloneanddynamicload.t
+t/73dynamicshiftreduceconflictresolution.t
 #t/97podcoverage.t
 t/98nopm.t
 t/99Cplusplusgrammar.t

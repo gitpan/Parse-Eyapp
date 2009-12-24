@@ -6,16 +6,17 @@ use Carp;
 use Data::Dumper;
 use List::Util qw(first);
 
-# A strange way to say:
-#                use Parse::Eyapp::Base qw{lastval}; 
-# The reason is to support standalone modules
-BEGIN {
-  unless (Parse::Eyapp::Base->can('lastval')) {
-    require Parse::Eyapp::Base;
-  }
-  Parse::Eyapp::Base->import('lastval');
+sub firstval(&@) {
+  my $handler = shift;
+  
+  return (grep { $handler->($_) } @_)[0]
 }
 
+sub lastval(&@) {
+  my $handler = shift;
+  
+  return (grep { $handler->($_) } @_)[-1]
+}
 
 sub valid_keys {
   my %valid_args = @_;

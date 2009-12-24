@@ -14,6 +14,14 @@ my $grammar = q{
   %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
   %tree           # Let us build an abstract syntax tree ...
 
+
+  %lexer {
+        m{\G\s+}gc;
+        m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
+        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
+        m{\G(.)}gcs and return($1,$1);
+      }
+
   %%
   line: 
       exp <%name EXPRESSION_LIST + ';'>  
@@ -44,21 +52,6 @@ my $grammar = q{
   ;
 
   %%
-  use base q{Parse::Eyapp::TailSupport};
-
-  __PACKAGE__->lexer( sub {
-      my($parser)=shift; # The parser object
-
-      for (${$parser->input}) { # Topicalize
-        m{\G\s+}gc;
-        $_ eq '' and return('',undef);
-        m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
-        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
-        m{\G(.)}gcs and return($1,$1);
-      }
-      return('',undef);
-    }
-  );
 }; # end grammar
 
 our (@all, $uminus);
@@ -66,7 +59,8 @@ our (@all, $uminus);
 Parse::Eyapp->new_grammar( # Create the parser package/class
   input=>$grammar,    
   classname=>'Calc', # The name of the package containing the parser
-  firstline=>7       # String $grammar starts at line 7 (for error diagnostics)
+  firstline=>7,       # String $grammar starts at line 7 (for error diagnostics)
+  outputfile => 'main',
 ); 
 my $parser = Calc->new();                # Create a parser
 $parser->input(\"2*-3+b*0;--2\n");       # Set the input

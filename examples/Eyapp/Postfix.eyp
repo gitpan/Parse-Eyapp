@@ -51,7 +51,8 @@ sub Run {
   my($self)=shift;
   print "Write an expression: "; 
   $x = <>;
-  $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error,
+  $self->YYParse( yylex => \&_Lexer, 
+    #yyerror => \&_Error,
     #yydebug => 0xFF
   );
 }

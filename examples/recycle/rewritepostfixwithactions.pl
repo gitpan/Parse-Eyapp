@@ -7,12 +7,17 @@ my $pparser = PostfixWithActions->new();
 print "Write an expression: "; 
 my $x = <STDIN>;
 
-# First, trasnlate to postfix ...
-$pparser->Run($x, $debug);
+# First, translate to postfix ...
+$pparser->Run($debug, $x);
+
+# Restore input for the parser (the lexical
+# analyzer was a destructive one)
+$pparser->input(\$x);
 
 # And then selectively substitute 
 # some semantic actions
 # to obtain an infix calculator ...
+
 my %s;
 $pparser->YYSetaction(
   ASSIGN => sub { $s{$_[1]} = $_[3] },
@@ -22,5 +27,5 @@ $pparser->YYSetaction(
   NEG    => sub { -$_[2] },
 );
 
-$pparser->Run($x, $debug);
+$pparser->Run($debug);
 

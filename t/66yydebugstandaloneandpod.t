@@ -45,4 +45,6 @@ BEGDEB
 
 
   unlink 't/Debug2.pm';
+  unlink 't/err';
+  unlink 't/out';
 }

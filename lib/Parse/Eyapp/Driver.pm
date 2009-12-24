@@ -21,12 +21,15 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.151";
+$VERSION = "1.152";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
 use Carp;
-use Scalar::Util qw{reftype looks_like_number};
+use Scalar::Util qw{blessed reftype looks_like_number};
+
+use Getopt::Long;
+use Pod::Usage;
 
 #Known parameters, all starting with YY (leading YY will be discarded)
 my (%params)=(YYLEX => 'CODE', 'YYERROR' => 'CODE', YYVERSION => '',
@@ -74,19 +77,13 @@ sub new {
     and $class=ref($class);
 
     unless($self->{ERROR}) {
-      if ($class->isa('Parse::Eyapp::TailSupport')) {
-        $self->{ERROR} = $class->error;
-      }
-      else {
-        $self->{ERROR} = \&_Error;
-      }
+      $self->{ERROR} = $class->error;
+      $self->{ERROR} = \&_Error unless ($self->{ERROR});
     }
 
-    unless($self->{LEX}) {
-      if ($class->isa('Parse::Eyapp::TailSupport')) {
-        $self->{LEX} = $class->lexer;
+    unless ($self->{LEX}) {
+        $self->{LEX} = $class->YYLexer;
         @params = ('RULES','STATES');
-      }
     }
 
     my $parser = bless($self,$class);
@@ -99,6 +96,16 @@ sub YYParse {
     my($retval);
 
   _CheckParams( \@params, \%params, \@_, $self );
+
+  unless($self->{ERROR}) {
+    $self->{ERROR} = $self->error;
+    $self->{ERROR} = \&_Error unless ($self->{ERROR});
+  }
+
+  unless($self->{LEX}) {
+    $self->{LEX} = $self->YYLexer;
+    croak "Missing mandatory parameter 'yylex' " unless $self->{LEX} && reftype($self->{LEX}) eq 'CODE';
+  }
 
   if($$self{DEBUG}) {
     _DBLoad();
@@ -154,6 +161,7 @@ sub YYAccept {
     undef;
 }
 
+# Used to set that we are in "error recovery" state
 sub YYError {
   my($self)=shift;
 
@@ -713,7 +721,8 @@ sub YYBuildTS {
   my $PREFIX = $self->YYPrefix();
   my @right = $self->YYRightside(); # Symbols on the right hand side of the production
   my $lhs = $self->YYLhs;
-  my $name = $self->YYName();
+  my $fullname = $self->YYName();
+  my ($name) = split /:/, $fullname;
   my $class;
   my @children;
 
@@ -962,17 +971,54 @@ sub expects {
   return grep { $_ eq $token } $self->YYExpect;
 }
 
-#sub YYExpect {
-#    my($self)=shift;
-#
-#    keys %{$self->{STATES}[$self->{STACK}[-1][0]]{ACTIONS}}
-#}
+# Set/Get a static/class attribute for $class
+# Searches the $class ancestor tree for  an ancestor
+# having defined such attribute. If found, that value is returned
+sub static_attribute { 
+    my $class = shift;
+    $class = ref($class) if ref($class);
+    my $attributename = shift;
 
+    # class/static method
+    no strict 'refs';
+    my $classlexer;
+    my $classname = $classlexer = $class.'::'.$attributename;
+    if (@_) {
+      ${$classlexer} = shift;
+    }
+
+    return ${$classlexer} if defined($$classlexer);
+   
+    # Traverse the inheritance tree for a defined
+    # version of the attribute
+    my @classes = @{$class.'::ISA'};
+    my %classes = map { $_ => undef } @classes;
+    while (@classes) {
+      my $c = shift @classes || return;  
+      $classlexer = $c.'::'.$attributename;
+      if (defined($$classlexer)) {
+        $$classname = $$classlexer;
+        return $$classlexer;
+      }
+      # push those that aren't already there
+      push @classes, grep { !exists $classes{$_} } @{$c.'::ISA'};
+    }
+}
+
+*Parse::Eyapp::Driver::lexer = \&Parse::Eyapp::Driver::YYLexer;
 sub YYLexer {
-  my($self)=shift;
+  my $self = shift;
 
-  $$self{LEX} = shift if @_;
-  $$self{LEX};
+  if (ref $self) { # instance method
+    # The class attribute isn't changed, only the instance
+    $self->{LEX} = shift if @_;
+
+    return $self->static_attribute('LEX', @_,) unless defined($self->{LEX}); # class/static method 
+    return $self->{LEX};
+  }
+  else {
+    return $self->static_attribute('LEX', @_,);
+  }
 }
 
 
@@ -982,14 +1028,14 @@ sub YYLexer {
 
 
 sub _CheckParams {
-  my($mandatory,$checklist,$inarray,$outhash)=@_;
-  my($prm,$value);
-  my($prmlst)={};
+  my ($mandatory,$checklist,$inarray,$outhash)=@_;
+  my ($prm,$value);
+  my ($prmlst)={};
 
   while(($prm,$value)=splice(@$inarray,0,2)) {
         $prm=uc($prm);
       exists($$checklist{$prm})
-    or  croak("Unknow parameter '$prm'");
+    or  croak("Unknown parameter '$prm'");
       ref($value) eq $$checklist{$prm}
     or  croak("Invalid value for parameter '$prm'");
         $prm=unpack('@2A*',$prm);
@@ -1001,9 +1047,294 @@ sub _CheckParams {
   }
 }
 
-sub _Error {
-  print "Parse error.\n";
+#################### TailSupport ######################
+sub line {
+  my $self = shift;
+
+  if (ref($self)) {
+    $self->{tokenline} = shift if @_;
+    return $self->{tokenline};
+  }
+
+  # Called as a class method: static
+  my $classtokenline = $self.'::tokenline';
+  ${$classtokenline} = shift if @_;
+  return ${$classtokenline};
 }
+
+our $ERROR = \&_Error;
+sub error {
+  my $self = shift;
+
+  if (ref $self) { # instance method
+    $self->{ERROR} = shift if @_;
+
+    return $self->static_attribute('ERROR', @_,) unless defined($self->{ERROR}); # class/static method 
+    return $self->{ERROR};
+  }
+  else { # class/static method
+    return $self->static_attribute('ERROR', @_,); # class/static method 
+  }
+}
+
+# attribute with the input
+# is a reference to the actual input
+# slurp_file. 
+# Parameters: object or class, filename, prompt messagge, mode (interactive or not: undef or "\n")
+sub slurp_file {
+  my $self = shift;
+  my $fn = shift;
+  my $f;
+
+  my $mode = undef;
+  if ($fn && -r $fn) {
+    open $f, $fn  or die "Can't find file '$fn'!\n";
+  }
+  else {
+    $f = \*STDIN;
+    my $msg = shift;
+    $mode = shift;
+    print($msg) if $msg;
+  }
+
+  local $/ = $mode;
+  my $input = <$f>;
+
+  if (ref($self)) {  # called as object method
+    $self->input(\$input);
+  }
+  else { # class/static method
+    my $classinput = $self.'::input';
+    ${$classinput}->input(\$input);
+  }
+}
+
+sub input {
+  my $self = shift;
+
+  $self->line(1) if @_; # used as setter
+  if (ref $self) { # instance method
+    $self->{INPUT} = shift if @_;
+
+    return $self->static_attribute('INPUT', @_,) unless defined($self->{INPUT}); # class/static method 
+    return $self->{INPUT};
+  }
+  else { # class/static method
+    return $self->static_attribute('INPUT', @_,); # class/static method 
+  }
+}
+
+
+#sub input {
+#  my $self = shift;
+#
+#  no strict 'refs';
+#  if (@_) { # used as setter. Passing ref
+#    $self->line(1);
+#    if (ref($self)) { # object method
+#      $self->{input} = shift;
+#
+#      return $self->{input};
+#    }
+#    # Static method passing string
+#    ${$self.'::input'} = shift();
+#
+#    return ${$self.'::input'};
+#  }
+#  return $self->{input} if ref $self;
+#  return ${$self.'::input'};
+#}
+
+# args: parser, debug and optionally the input or a reference to the input
+sub Run {
+  my ($self) = shift;
+  my $yydebug = shift;
+  
+  unless ($self->input && defined(${$self->input()}) && ${$self->input()} ne '') {
+    croak "Provide some input for parsing" unless defined($_[0]);
+    if (ref($_[0])) { # if arg is a reference
+      $self->input(shift());
+    }
+    else { # arg isn't a ref: make a copy
+      my $x = shift();
+      $self->input(\$x);
+    }
+  }
+  return $self->YYParse( 
+    #yylex => $self->lexer(), 
+    #yyerror => $self->error(),
+    yydebug => $yydebug, # 0xF
+  );
+}
+
+# args: class, prompt, file, optionally input (ref or not)
+# return the abstract syntax tree (or whatever was returned by the parser)
+sub main {
+  my $package = shift;
+  my $prompt = shift;
+
+  my $debug = 0;
+  my $file = '';
+  my $showtree = 0;
+  my $TERMINALinfo;
+  my $help;
+  my $slurp;
+  my $inputfromfile = 1;
+  my $commandinput = '';
+  my $result = GetOptions (
+    "debug!"         => \$debug,         # sets yydebug on
+    "file=s"         => \$file,          # read input from that file
+    "commandinput=s" => \$commandinput,  # read input from command line arg
+    "tree!"          => \$showtree,      # prints $tree->str
+    "info=s"         => \$TERMINALinfo,  # prints $tree->str and provides default TERMINAL::info
+    "help"           => \$help,          # shows SYNOPSIS section from the script pod
+    "slurp!"         => \$slurp,         # read until EOF or CR is reached
+    "inputfromfile!" => \$inputfromfile, # take input from @_
+  );
+
+  pod2usage() if $help;
+
+  $debug = 0x1F if $debug;
+  $file = shift if !$file && @ARGV; 
+  $slurp = "\n" if defined($slurp);
+  if (defined($TERMINALinfo)) {
+    $showtree = 1;
+    no warnings 'redefine';
+    no strict 'refs';
+    if ($TERMINALinfo eq '') {
+      *TERMINAL::info = sub { $_[0]->attr; }
+    }
+    elsif ($TERMINALinfo eq 'line') {
+      *TERMINAL::info = sub { $_[0]->attr->[0 ]};
+    }
+    else {
+      $TERMINALinfo = "sub { my \$self = shift; $TERMINALinfo }" unless ($TERMINALinfo =~ /^\s*sub/);
+      eval {
+        *TERMINAL::info = eval $TERMINALinfo;
+      };
+      croak "Argument '$TERMINALinfo' isn't legal: try 'line' or '' instead\n($)\n" if $@;
+    }
+  }
+
+  my $parser = $package->new();
+
+  if ($commandinput) {
+    $parser->input(\$commandinput);
+  }
+  elsif ($inputfromfile) {
+    $parser->slurp_file( $file, $prompt, $slurp);
+  }
+  else { # input must be a string argument
+    croak "No input provided for parsing! " unless defined($_[0]);
+    if (ref($_[0])) {
+      $parser->input(shift());
+    }
+    else {
+      my $x = shift();
+      $parser->input(\$x);
+    }
+  }
+
+  my $tree = $parser->Run( $debug, @_ );
+
+  if (my $ne = $parser->YYNberr > 0) {
+    print "There were $ne errors during parsing\n";
+  }
+  else {
+    if ($showtree && $tree && blessed $tree && $tree->isa('Parse::Eyapp::Node')) {
+      print $tree->str()."\n";
+    }
+    elsif ($showtree && $tree && ref $tree) {
+      require Data::Dumper;
+      print Data::Dumper::Dumper($tree)."\n";
+    }
+    elsif ($showtree && defined($tree)) {
+      print "$tree\n";
+    }
+  }
+
+  $tree
+}
+
+
+# attribute to count the lines
+sub tokenline {
+  my $self = shift;
+
+  if (ref($self)) {
+    $self->{tokenline} += shift if @_;
+    return $self->{tokenline};
+  }
+
+  # Called as a class method: static
+  my $classtokenline = $self.'::tokenline';
+  ${$classtokenline} += shift if @_;
+  return ${$classtokenline};
+}
+
+# Generic error handler
+# Convention adopted: if the attribute of a token is an object
+# assume it has 'line' and 'str' methods. Otherwise, if it
+# is an array, follows the convention [ str, line, ...]
+# otherwise is just an string representing the value of the token
+sub _Error {
+  my $parser = shift;
+
+  my $yydata = $parser->YYData;
+
+    exists $yydata->{ERRMSG}
+  and do {
+      warn $yydata->{ERRMSG};
+      delete $yydata->{ERRMSG};
+      return;
+  };
+
+  my ($attr)=$parser->YYCurval;
+
+  my $stoken = '';
+
+  if (blessed($attr) && $attr->can('str')) {
+     $stoken = " near '".$attr->str."'"
+  }
+  elsif (ref($attr) eq 'ARRAY') {
+    $stoken = " near '".$attr->[0]."'";
+  }
+  else {
+    if ($attr) {
+      $stoken = " near '$attr'";
+    }
+    else {
+      $stoken = " near end of input";
+    }
+  }
+
+  my @expected = map { "'$_'" } $parser->YYExpect();
+  my $expected = '';
+    $expected = "Expected one of these terminals: @expected"
+  if @expected;
+
+  my $tline = '';
+  if (blessed($attr) && $attr->can('line')) {
+    $tline = " (line number ".$attr->line.")" 
+  }
+  elsif (ref($attr) eq 'ARRAY') {
+    $tline = " (line number ".$attr->[1].")";
+  }
+  else {
+    # May be the parser object knows the line number ?
+    my $lineno = $parser->tokenline(0);
+    $tline = " (line number $lineno)" if $lineno > 0;
+  }
+
+  local $" = ', ';
+  warn << "ERRMSG";
+
+Syntax error$stoken$tline. 
+$expected
+ERRMSG
+};
+
+################ end TailSupport #####################
 
 sub _DBLoad {
 

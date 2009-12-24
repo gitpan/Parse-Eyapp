@@ -1,19 +1,29 @@
 %{
 our $VERSION = '0.01';
-use base q{DebugTail}; 
+
+my ($WHITES, $ID, $NUM) = (qr{\s*}, qr{[a-zA-Z_][a-zA-Z_0-9]*}, qr{\d+});
+
 %}
 
 %strict
-%token ID INT NUM
+%token ID NUM INT
+%lexer {
+    s{^($WHITES)}{};
+
+    return ('INT', $1) if s{^(int\b)}{};
+
+    return ('ID',  $1) if (s{^($ID)}{});
+
+    return ('NUM', $1) if s/^($NUM)//;
+
+    return ($1,    $1) if s{^([-+*/=();,])}{};
+  }
 
 %right '='
 %left '+'
 
-%tree bypass
-
-%expect 0 1  # 0 shift-reduce conflicts, 1 reduce-reduce conflict
-
-%conflict decORexp {
+%conflict decORexp 
+      {
         my $self = shift;
 
         if (${$self->input()} =~ m{^[)\s]*[;=]\s*}) {
@@ -23,6 +33,10 @@ use base q{DebugTail};
           $self->YYSetReduce(')', 'ID:EXP' ); 
         }
       }
+
+%expect 0 1  # 0 shift-reduce conflicts, 1 reduce-reduce conflict
+
+%tree bypass
 
 %%
 prog:
@@ -67,28 +81,6 @@ declarator:
 
 %%
 
-__PACKAGE__->lexer( 
-  sub {
-    my $self = shift;
-    
-    for (${$self->input()}) {
-      s{^(\s*)}{};
-
-      return ('', undef) unless $_;
-
-      return ('INT', $1) if s{^(int\b)}{};
-
-      return ('ID',  $1) if (s{^([a-zA-Z_]\w*)}{});
-
-      return ('NUM', $1) if s/^(\d+)//;
-
-      return ($1,    $1) if s/^(.)//;
-    }
-
-    return ('',undef);
-  }
-);
-
 unless (caller()) {
   my $prompt = 'Try first "int (x) = 2;" then "int (x) + 2;" '.
                '(press <CR><CTRL-D> to finish): ';
@@ -106,6 +98,10 @@ Compile it with
 Run it with:
 
    ./Cplusplus.pm -t
+
+or 
+
+   ./Cplusplus.pm -t -c 'int (x) + 2;'
 
 try with inputs:
 

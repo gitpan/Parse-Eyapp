@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 use warnings;
 use strict;
 use Parse::Eyapp;
@@ -10,6 +10,15 @@ my $grammar = q{
   %left   '-' '+'
   %left   '*' '/'
   %left   NEG
+
+  %lexer {
+    s/^\s+//;
+
+    s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
+    s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+    s/^(.)// and return($1,$1);
+  }
+
   %tree bypass alias
 
   %%
@@ -37,44 +46,7 @@ my $grammar = q{
   ;
 
   %%
-
-  sub _Error {
-          exists $_[0]->YYData->{ERRMSG}
-      and do {
-          print $_[0]->YYData->{ERRMSG};
-          delete $_[0]->YYData->{ERRMSG};
-          return;
-      };
-      print "Syntax error.\n";
-  }
-
-  sub _Lexer {
-      my($parser)=shift;
-
-          $parser->YYData->{INPUT}
-      or  $parser->YYData->{INPUT} = <STDIN>
-      or  return('',undef);
-
-      $parser->YYData->{INPUT}=~s/^\s+//;
-
-      for ($parser->YYData->{INPUT}) {
-          s/^([0-9]+(?:\.[0-9]+)?)//
-                  and return('NUM',$1);
-          s/^([A-Za-z][A-Za-z0-9_]*)//
-                  and return('VAR',$1);
-          s/^(.)//s
-                  and return($1,$1);
-      }
-  }
-
-  sub Run {
-      my($self)=shift;
-      $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, 
-          #yydebug =>0xFF
-        );
-  }
 }; # end grammar
-
 
 Parse::Eyapp->new_grammar(
   input=>$grammar, 
@@ -83,8 +55,12 @@ Parse::Eyapp->new_grammar(
   outputfile => 'main',
 );
 my $parser = Alias->new();
-$parser->YYData->{INPUT} = "a = -(2*3+5-1)\n";
-my $t = $parser->Run;
+my $input = shift || "a = -(2*3+5-1)\n";
+$parser->input(\$input);
+my $t = $parser->YYParse();
+
+exit(1) if $parser->YYNberr > 0;
+
 $Parse::Eyapp::Node::INDENT=0;
 print $t->VAR->str."\n";             # a 
 print "***************\n";
