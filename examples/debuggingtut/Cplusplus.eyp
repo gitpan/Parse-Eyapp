@@ -112,7 +112,8 @@ the result will be the generated abstract sytax tree
 
 =head1  C++ Ambiguities
 
-This grammar models a problematic part of the C++ grammar—the ambiguity between certain
+This grammar models a problematic part of the C++ grammar
+the ambiguity between certain
 declarations and statements. For example,
 
      int (x) = y+z;
@@ -132,7 +133,8 @@ Eyapp detects this as a reduce/reduce conflict:
 	')'	[reduce using rule 11 (declarator)]
 	$default	reduce using rule 5 (expr)
 
-The C++ rule is: take it as a declaration if it looks as a declaration,
+The C++ disambiguation rule is: 
+take it as a declaration if it looks as a declaration,
 otherwise is an expression.
 
 This Eyapp parser solves the problem by dynamically changing the parser.

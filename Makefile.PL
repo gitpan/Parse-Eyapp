@@ -196,6 +196,11 @@ publichtml: htmls
 tags: 
 	${PLTAGS} eyapp treereg vgg lib/Parse/Eyapp/*.pm lib/Parse/Eyapp/*.yp lib/Parse/Eyapp.pm 
 	ctags -a --exclude=examples --exclude=t --exclude=doc --exclude=tt2
+
+wiki:
+	#Pod::Simple::Wiki::Googlecode
+	pod2wiki --style googlecode lib/Parse/Eyapp/debuggingtut.pod | ./filter.pl > debuggingtut.wiki
+
 EOSQT
 
   # Replace variables

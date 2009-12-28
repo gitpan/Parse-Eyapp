@@ -1,4 +1,25 @@
+%{
 # GiveNamesToCalc.eyp
+=head1 SYNOPSIS
+
+This example illustrates a way to set a naming scheme for
+the grammar productions.
+
+Compile it with:
+
+  $ eyapp -b '' GiveNamesToCalc.eyp 
+
+and execute it with:
+
+  $ ./GiveNamesToCalc.pm -t -c 'a=2*3'
+
+It will produce an output like:
+
+  line_is_exp(var_is_VAR[a],exp_is_TIMES(exp_is_NUM[2],exp_is_NUM[3]))
+
+=cut
+%}
+
 %right  '='
 %left   '-' '+'
 %left   '*' '/'
@@ -6,18 +27,6 @@
 %right  '^'
 
 %tree bypass
-
-%{
-use base q{Tail};
-
-sub exp_is_NUM::info {
-  my $self = shift;
-
-  $self->{attr}[0];
-}
-
-*exp_is_VAR::info = *var_is_VAR::info = \&exp_is_NUM::info;
-%}
 
 %namingscheme { 
   #Receives a Parse::Eyapp object describing the grammar
@@ -61,8 +70,14 @@ var:
 ;
 %%
 
-unless (caller) {
-  my $t = __PACKAGE__->main(@ARGV);
-  print $t->str."\n";
-}
+use Tail;
+__PACKAGE__->lexer(\&Tail::lex);
 
+unless (caller) {
+  {
+    no warnings 'once';
+    *exp_is_VAR::info = *var_is_VAR::info = *exp_is_NUM::info = sub { $_[0]->{attr}[0] };
+  }
+
+  __PACKAGE__->main() 
+}

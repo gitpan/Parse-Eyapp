@@ -1,3 +1,10 @@
+  * labels and names %name in recycle. Fix it!
+  * Article: rewrite, both research and divulgation
+  * Documentation
+     - Simpler intro
+     - Separate parsing from tree transformation
+
+  * bison compatible GLR directive: %expect-rr 1
   * the #line directive in Parse.yp for %lexer is buggy (worst practice)
 
   * Lexical Analyzer generation:
@@ -9,8 +16,6 @@
         The case where the default is a reduction is not solved. Investigate
 
   * C interface with YAML
-
-  * Parse::Eyapp::Base must be pruned
 
   * Lars request (see dir contributions): allow AST classes to be Moose or any other OOP framework
 

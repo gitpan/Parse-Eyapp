@@ -1,17 +1,28 @@
-# The following grammar isn't a SLR(1) grammar but it is a LALR(1) grammar. 
-# Compile it with:
-#                    eyapp -b '' give_token_names.eyp
-# and run it:
-#                  $ ./give_token_names.pm  
-# Try with input: *a = b
-
 %{
-use base q{Tail};
-Tail->set_lexemename(
-  '=' => 'ASSIGN',
-  '*' => 'POINTER',
-);
+=head1 SYNOPSIS
 
+This example illustrates a way to set a naming scheme for
+the grammar productions using C<give_token_name>.
+
+C<give_token_name>: The name of the production is the Left Hand Side
+of the Production Rule followed by the word _is_ followed by the
+concatenation of the names of the tokens in the right hand side
+(separated by underscores).
+
+Compile it with:
+                    eyapp -b '' give_token_names.eyp
+and run it:
+                  $ ./give_token_names.pm  -t -c '*a = b' 
+
+It will produce an output like:
+
+    s_is_ASSIGN(l_is_STAR(r_is_l(l_is_VAR(TERMINAL))),r_is_l(l_is_VAR(TERMINAL)))
+
+The main difference between this file and C<give_names_to_tokens.eyp>
+is that the tokens in the right hand sides 
+are already identifiers: C<ASSIGN> and C<POINTER>.
+
+=cut
 %}
 
 %strict
@@ -20,7 +31,6 @@ Tail->set_lexemename(
 %namingscheme { \&give_token_name; }
 
 %tree
-
 
 %%
 s:
@@ -39,8 +49,14 @@ r:
 
 %%
 
-unless (caller) {
-  my $t = __PACKAGE__->main(@ARGV);
-  print $t->str."\n";
-}
+use base q{Tail};
+Tail->set_lexemename(
+  '=' => 'ASSIGN',
+  '*' => 'POINTER',
+);
+
+__PACKAGE__->lexer(\&Tail::lex);
+
+__PACKAGE__->main unless caller;
+
 

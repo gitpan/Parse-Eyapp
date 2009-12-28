@@ -1,5 +1,6 @@
 Revision history for Perl extension Eyapp.
 1.152
+  * Parse::Eyapp::Base was removed from standalone parsers
   * lexer, input and error as static/class attributes and inheritance
   * Parse::Eyapp::TailSupport embedded in Driver 
   * if lex or error are already set don't ask for then in YYParse

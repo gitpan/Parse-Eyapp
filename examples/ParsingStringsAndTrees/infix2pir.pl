@@ -1,15 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 use Parse::Eyapp;
-use Parse::Eyapp::Base qw(slurp_file);
-use List::Util qw(reduce);
 use Infix;
 use I2PIR;
 
-
-#sub NUM::info { $_[0]{attr} }
 sub TERMINAL::info { $_[0]{attr} }
-#{ no warnings; *VAR::info = \&NUM::info; }
 
 sub build_dec {
   our %s;
@@ -24,10 +19,7 @@ sub build_dec {
 }
 
 sub peephole_optimization {
-  $_[0] =~ s
-  {(\$N\d+)\s*=\s*(.*\n)\s*
-   ([a-zA-Z_]\w*)\s*=\s*\1}
-  {$3 = $2}gx;
+  $_[0] =~ s{(\$N\d+)\s*=\s*(.*\n)\s* ([a-zA-Z_]\w*)\s*=\s*\1}{$3 = $2}gx;
 }
 
 sub output_code {
@@ -48,11 +40,9 @@ TRANSLATION
 ################# main ######################
 my $filename = shift;
 my $parser = Infix->new(); 
-$parser->YYData->{INPUT} = slurp_file($filename, 'inf');
-#print $parser->YYData->{INPUT};
-my $t = $parser->YYParse( 
-  yylex => \&Infix::Lex, yyerror => \&Infix::Err);
-#print "\n************\n".$t->str."\n************\n";
+$parser->slurp_file($filename);
+
+my $t = $parser->YYParse() || exit(1);
 
 # Machine independent optimizations
 $t->s(our @algebra);  
@@ -65,10 +55,7 @@ $reg_assign->s($t);
 $t->bud(our @translation);
 # variable declarations
 my $dec = build_dec();
-#print $t->str,"\n";
 
 peephole_optimization($t->{tr});
 
 output_code(\$t->{tr}, \$dec);
-
-#print Dumper($t);

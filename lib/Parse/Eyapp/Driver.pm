@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.152";
+$VERSION = "1.153";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -1053,13 +1053,28 @@ sub line {
 
   if (ref($self)) {
     $self->{tokenline} = shift if @_;
+
+    return $self->static_attribute('tokenline', @_,) unless defined($self->{tokenline}); # class/static method 
     return $self->{tokenline};
   }
+  else { # class/static method
+    return $self->static_attribute('tokenline', @_,); # class/static method 
+  }
+}
 
-  # Called as a class method: static
-  my $classtokenline = $self.'::tokenline';
-  ${$classtokenline} = shift if @_;
-  return ${$classtokenline};
+# attribute to count the lines
+sub tokenline {
+  my $self = shift;
+
+  if (ref($self)) {
+    $self->{tokenline} += shift if @_;
+
+    return $self->static_attribute('tokenline', @_,) unless defined($self->{tokenline}); # class/static method 
+    return $self->{tokenline};
+  }
+  else { # class/static method
+    return $self->static_attribute('tokenline', @_,); # class/static method 
+  }
 }
 
 our $ERROR = \&_Error;
@@ -1254,22 +1269,6 @@ sub main {
   }
 
   $tree
-}
-
-
-# attribute to count the lines
-sub tokenline {
-  my $self = shift;
-
-  if (ref($self)) {
-    $self->{tokenline} += shift if @_;
-    return $self->{tokenline};
-  }
-
-  # Called as a class method: static
-  my $classtokenline = $self.'::tokenline';
-  ${$classtokenline} += shift if @_;
-  return ${$classtokenline};
 }
 
 # Generic error handler

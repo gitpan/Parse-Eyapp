@@ -1,15 +1,24 @@
+%{
+=head1 SYNOPSIS
+
+Compile it with:
+
+ $ eyapp -b '' default_naming_scheme
+
+to run it, write:
+
+ $ ./default_naming_scheme.pm -t -c '*a=b'
+
+It will produce the output:
+
+  s_1(l_3(TERMINAL,r_5(l_4(TERMINAL))),TERMINAL,r_5(l_4(TERMINAL)))
+
+=cut
+%}
 %strict
 %token VAR ASSIGN POINTER
 
 %tree
-
-%{
-use base q{Tail};
-Tail->set_lexemename(
-  '=' => 'ASSIGN',
-  '*' => 'POINTER',
-);
-%}
 
 %%
 s:
@@ -28,8 +37,12 @@ r:
 
 %%
 
-unless (caller) {
-  my $t = __PACKAGE__->main(@ARGV);
-  print $t->str."\n";
-}
+use base q{Tail};
 
+Tail->set_lexemename(
+  '=' => 'ASSIGN',
+  '*' => 'POINTER',
+);
+__PACKAGE__->lexer(\&Tail::lex);
+
+__PACKAGE__->main unless caller;

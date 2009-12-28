@@ -9,7 +9,22 @@ my $ts = q{
 
   %{
   our %s; 
+
+  my %reserved_words = ( INTEGER => 'INTEGER', FLOAT => 'FLOAT');
+  my $validchars = qr{[,;]}; 
+  my $ID = qr{[a-z_A_Z_]\w*};
+
   %}
+
+  %lexer {
+    m{\G\s+}gc;                     # skip whites
+    if (m{\G($ID)}gc) {
+      my $w = uc($1);                 # upper case the word
+      return ($w, $w) if exists $reserved_words{$w};
+      return ('NAME', $1);            # not a reserved word
+    } 
+    return ($1, $1) if m/\G($validchars)/gc;
+  }
 
   %metatree
 
@@ -33,40 +48,12 @@ my $ts = q{
   %%
 };
 
-sub Error { die "Error sintáctico\n"; }
-
-{ # Closure of $input, %reserved_words and $validchars
-  my $input = "";
-  my %reserved_words = ();
-  my $validchars = "";
-
-  sub parametrize__scanner {
-    $input = shift;
-    %reserved_words = %{shift()};
-    $validchars = shift;
-  }
-
-  sub scanner {
-    $input =~ m{\G\s+}gc;                     # skip whites
-    if ($input =~ m{\G([a-z_A_Z]\w*)\b}gc) {
-      my $w = uc($1);                 # upper case the word
-      return ($w, $w) if exists $reserved_words{$w};
-      return ('NAME', $1);            # not a reserved word
-    } 
-    return ($1, $1) if ($input =~ m/\G([$validchars])/gc);
-    die "Caracter invalido: $1\n" if ($input =~ m/\G(\S)/gc);
-    return ('', undef); # end of file
-  }
-} # end closure
 
 Parse::Eyapp->new_grammar(input=>$ts, classname=>'main', outputfile=>'Types.pm'); 
-my $parser = main->new(yylex => \&scanner, yyerror => \&Error); # Create the parser
-
-parametrize__scanner(
-  "float x,y;\ninteger a,b\n", 
-  { INTEGER => 'INTEGER', FLOAT => 'FLOAT'}, 
-  ",;" 
-);
+my $parser = main->new(); # Create the parser
+my $input = shift || "float x,y;\ninteger a,b\n";
+$parser->input(\$input);
+print "Input: $input";
 
 my $t = $parser->YYParse() or die "Syntax Error analyzing input";
 
@@ -76,6 +63,6 @@ $Data::Dumper::Indent = 1;
 $Data::Dumper::Terse = 1;
 $Data::Dumper::Deepcopy  = 1;
 $Data::Dumper::Deparse = 1;
-print Dumper($t);
-print Dumper(\%s);
+print "Tree:\n".Dumper($t);
+print "Symbol table:\n".Dumper(\%s);
 

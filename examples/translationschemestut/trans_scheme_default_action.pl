@@ -21,6 +21,14 @@ our %sym; # symbol table
 %left   '-' '+'
 %left   '*' '/'
 
+%lexer {
+        s/^\s+//;
+        $_ or  return('',undef);
+        s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
+        s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+        s/^(.)// and return($1,$1);
+}
+
 %%
 line:       %name EXP  
               exp <+ ';'> /* Expressions separated by semicolons */ 
@@ -50,28 +58,6 @@ exp:
 ;
 
 %%
-# tail code is available at tree construction time 
-sub _Error {
-  die "Syntax error.\n";
-}
-
-sub _Lexer {
-    my($parser)=shift;
-
-    for ($parser->YYData->{INPUT}) {
-        s/^\s+//;
-        $_ or  return('',undef);
-        s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
-        s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-        s/^(.)// and return($1,$1);
-    }
-    return('',undef);
-}
-
-sub Run {
-    my($self)=shift;
-    return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error );
-}
 }; # end translation scheme
 
 sub TERMINAL::info { $_[0]->attr }
@@ -81,11 +67,19 @@ my $p = Parse::Eyapp->new_grammar(
   classname=>'main',
   firstline => 6,
   outputfile => 'main.pm');
+
 die $p->qtables() if $p->Warnings;
+
 my $parser = main->new();
+
 print "Write a sequence of arithmetic expressions: " if is_interactive();
-$parser->YYData->{INPUT} = <>;
-my $t = $parser->Run() or die "Syntax Error analyzing input";
+
+$parser->slurp_file();
+
+my $t = $parser->YYParse();
+
+exit(1) if $parser->YYNberr > 0;
+
 $t->translation_scheme;
 
 $Parse::Eyapp::Node::INDENT = 2;
