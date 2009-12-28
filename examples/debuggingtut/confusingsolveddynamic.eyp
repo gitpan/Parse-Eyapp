@@ -29,7 +29,7 @@ use base q{DebugTail};
 %}
 
 %semantic token 'c' 'd' 'f' 'x' 'y'
-%expect 0 1
+%expect-rr 1
 
 %conflict DORF {
         my $self = shift;

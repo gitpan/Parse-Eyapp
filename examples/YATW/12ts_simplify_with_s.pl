@@ -5,9 +5,13 @@ use Parse::Eyapp;
 use Parse::Eyapp::Treeregexp;
 
 my $translationscheme = q{
-  %{
-  # head code is available at tree construction time 
-  %}
+  %lexer {
+          s/^\s*//;
+
+          s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
+          s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
+          s/^(.)// and return($1,$1);
+  }
 
   %defaultaction  { $lhs->{n} = $_[1]->{n} }
   %metatree
@@ -41,28 +45,6 @@ my $translationscheme = q{
   ;
 
   %%
-  # tail code is available at tree construction time 
-  sub _Error { die "Syntax error.\n"; }
-
-  sub _Lexer {
-      my($parser)=shift;
-
-      $parser->YYData->{INPUT} or  return('',undef);
-
-      $parser->YYData->{INPUT}=~s/^\s*//;
-
-      for ($parser->YYData->{INPUT}) {
-          s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
-          s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-          s/^(.)// and return($1,$1);
-          s/^\s*//;
-      }
-  }
-
-  sub Run {
-      my($self)=shift;
-      return $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error );
-  }
 }; # end translation scheme
 
 sub is_code {
@@ -83,11 +65,17 @@ Parse::Eyapp->new_grammar(
 ); 
 my $parser = Calc->new();                # Create the parser
 
-$parser->YYData->{INPUT} = "2*-3\n";  print "2*-3\n"; # Set the input
-my $t = $parser->Run;                    # Parse it
+$parser->slurp_file('', "Give an expression (like -2*3): ","\n");
+print ${$parser->input}; # Set the input
+
+my $t = $parser->YYParse;                # Parse it
+
+exit(1) if $parser->YYNberr > 0;
+
 print $t->str."\n";
 my $p = Parse::Eyapp::YATW->new(PATTERN => \&is_code);
 $p->s($t);
+
 { no warnings; # make attr info available only for this display
   local *TERMINAL::info = sub { $_[0]{attr} };
   print $t->str."\n";

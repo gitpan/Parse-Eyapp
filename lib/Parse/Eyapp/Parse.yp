@@ -508,6 +508,12 @@ decl:  '\n'                 #default action
             }
     |   EXPECT NUMBER '\n'             { $expect=$_[2][0]; undef }
     |   EXPECT NUMBER NUMBER '\n'      { $expect= [ $_[2][0], $_[3][0]]; undef }
+    |   EXPECTRR NUMBER '\n'           { 
+                                          $expect = 0 unless defined($expect);
+                                          croak "Number of reduce-reduce conflicts is redefined (line $_[2][1], file: $filename)\n" if ref($expect);
+                                          $expect= [ $expect, $_[2][0]]; 
+                                          undef 
+                                        }
     |   error '\n'                     { $_[0]->YYErrok }
 ;    
 
@@ -848,8 +854,55 @@ sub slurp_perl_code {
   return [ $code, $lineno[0] ];
 }
 
+my %headertoken = (
+  start => 'START',
+  expect => 'EXPECT',
+  token => 'TOKEN',
+  strict => 'STRICT',
+  type => 'TYPE',
+  union => 'UNION',
+  namingscheme => 'NAMINGSCHEME',
+  metatree => 'METATREE',
+  nocompact => 'NOCOMPACT',
+  conflict => 'CONFLICT',
+);
+
+# Used for <%name LIST_of_STH +>, <%name OPT_STH ?>
+my %listtoken = (
+  '*' => 'STAR',
+  '+' => 'PLUS',
+  '?' => 'OPTION',
+);
+
 my $ID = qr{[A-Za-z_][A-Za-z0-9_]*};
-my $LABEL = qr{:$ID};
+my $LABEL = qr{:[A-Za-z0-9_]+};
+my $STRING = qr {
+   '             # opening apostrophe
+   (?:[^'\\]|    # an ordinary character
+        \\\\|    # escaped \ i.e. \\
+         \\'|    # escaped apostrophe i.e. \'
+          \\     # escape i.e. \
+  )*?            # non greedy repetitions
+  '              # closing apostrophe
+}x;
+
+# Head section: \n separates declarations
+my $HEADERWHITESPACES = qr{ 
+  (?:  
+      [\t\ ]+     # Any white space char but \n
+    | \#[^\n]*    # Perl like comments
+    |   /\*.*?\*/ # C like comments
+  )+
+}xs;
+
+# Head section: \n is not significant
+my $BODYWHITESPACES = qr{
+  (?:
+      \s+        # Any white space char, including \n
+    | \#[^\n]*   # Perl like comments
+    |  /\*.*?\*/ # C like comments
+  )+
+}xs;
 
 sub _Lexer {
  
@@ -870,22 +923,13 @@ sub _Lexer {
 
     #Skip blanks
             $lexlevel == 0
-        ?   $$input=~m{\G((?:             # Head section: \n separates declarations
-                                [\t\ ]+   # Any white space char but \n
-                            |   \#[^\n]*  # Perl like comments
-                            |   /\*.*?\*/ # C like comments
-                            )+)}xsgc
-        :   $$input=~m{\G((?:
-                                \s+       # any white space char, including \n
-                            |   \#[^\n]*  # Perl like comments
-                            |   /\*.*?\*/ # C like comments
-                            )+)}xsgc
+        ?   $$input=~m{\G($HEADERWHITESPACES)}gc
+        :   $$input=~m{\G($BODYWHITESPACES)}gc
     and do {
         my($blanks)=$1;
 
         #Maybe At EOF
-            pos($$input) >= length($$input)
-        and return('',[ undef, -1 ]);
+        pos($$input) >= length($$input) and return('',[ undef, -1 ]);
 
         $lineno[1]+= $blanks=~tr/\n//;
     };
@@ -896,20 +940,12 @@ sub _Lexer {
     and return('IDENT',[ $1, $lineno[0] ]);
 
 
-        $$input=~/\G( '                # opening apostrophe
-                         (?:[^'\\]|    # an ordinary character
-                              \\\\|    # escaped \ i.e. \\
-                               \\'|    # escaped apostrophe i.e. \'
-                                \\     # escape i.e. \
-                        )*?            # non greedy repetitions
-                      '                # closing apostrophe
-                    )/gxc
+        $$input=~/\G($STRING)/gc
     and do {
         my $string = $1;
 
         # The string 'error' is reserved for the special token 'error'
-            $string eq "'error'"
-        and do {
+        $string eq "'error'" and do {
             _SyntaxError(0,"Literal 'error' ".
                            "will be treated as error token",$lineno[0]);
             return('IDENT',[ 'error', $lineno[0] ]);
@@ -918,7 +954,9 @@ sub _Lexer {
         my $lines = $string =~ tr/\n//;
         _SyntaxError(2, "Constant string $string contains newlines",$lineno[0]) if $lines;
         $lineno[1] += $lines;
+
         $string = chr(0) if $string eq "''";
+
         return('LITERAL',[ $string, $lineno[0] ]);
     };
 
@@ -929,13 +967,7 @@ sub _Lexer {
         return($1, [ $1, $lineno[0] ]);
     };
 
-
-        $$input=~/\G%begin\s*{/gc
-    and do {
-        return ('BEGINCODE', &slurp_perl_code());
-    };
-
-        $$input=~/\G\s*{/gc
+        $$input=~/\G\s*{/gc   # }
     and do {
         return ('CODE', &slurp_perl_code());
     };
@@ -944,55 +976,19 @@ sub _Lexer {
             $$input=~/\G%(left|right|nonassoc)/gc
         and return('ASSOC',[ uc($1), $lineno[0] ]);
 
-            $$input=~/\G%(start)/gc
-        and return('START',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(expect)/gc
-        and return('EXPECT',[ undef, $lineno[0] ]);
-
             $$input=~/\G%{/gc
         and do {
             my($code);
 
-                $$input=~/\G(.*?)%}/sgc
-            or  _SyntaxError(2,"Unmatched %{ opened line $lineno[0]",-1);
+            $$input=~/\G(.*?)%}/sgc or  _SyntaxError(2,"Unmatched %{ opened line $lineno[0]",-1);
 
             $code=$1;
             $lineno[1]+= $code=~tr/\n//;
             return('HEADCODE',[ $code, $lineno[0] ]);
         };
-            $$input=~/\G%(token)/gc
-        and return('TOKEN',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(strict)/gc
-        and return('STRICT',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(nocompact)/gc
-        and return('NOCOMPACT',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(semantic\s+token)/gc
-        and return('SEMANTIC',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(syntactic\s+token)/gc
-        and return('SYNTACTIC',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(type)/gc
-        and return('TYPE',[ undef, $lineno[0] ]);
 
             $$input=~/\G%prefix\s+([A-Za-z_][A-Za-z0-9_:]*::)/gc
         and return('PREFIX',[ $1, $lineno[0] ]);
-
-            $$input=~/\G%(union)/gc
-        and return('UNION',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(defaultaction)\s*/gc
-        and return('DEFAULTACTION',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(lexer)\s*/gc
-        and return('LEXER',[ undef, $lineno[0] ]);
-
-            $$input=~/\G%(namingscheme)/gc
-        and return('NAMINGSCHEME',[ undef, $lineno[0] ]);
 
             $$input=~/\G%(tree((?:\s+(?:bypass|alias)){0,2}))/gc
         and do {
@@ -1000,37 +996,38 @@ sub _Lexer {
           return('TREE',[ $treeoptions, $lineno[0] ])
         };
 
-            $$input=~/\G%(conflict)\s*/gc
-        and return('CONFLICT',[ undef, $lineno[0] ]);
+            $$input=~/\G%(?:(semantic|syntactic)\s+token)/gc
+        and return(uc($1),[ undef, $lineno[0] ]);
 
-            $$input=~/\G%metatree/gc
-        and return('METATREE',[ undef, $lineno[0] ]);
+            $$input=~/\G%(lexer|defaultaction|union)\s*/gc
+        and return(uc($1),[ undef, $lineno[0] ]);
 
             $$input=~/\G([0-9]+)/gc
         and return('NUMBER',[ $1, $lineno[0] ]);
 
+            $$input=~/\G%expect-rr/gc
+        and do {
+           return('EXPECTRR',[ undef, $lineno[0] ]);
+        };
+
+            $$input=~/\G%($ID)/gc
+        and do {
+           return($headertoken{$1},[ undef, $lineno[0] ]);
+        };
     }
-    else {# In rule section
-            $$input=~/\G%(prec)/gc
-        and return('PREC',[ undef, $lineno[0] ]);
+    else {  # In rule section
 
-            $$input=~/\G%(PREC)/gc
-        and return('DPREC',[ undef, $lineno[0] ]);
+            # like in <%name LIST_of_STH *>
+            # like in <%name LIST_of_STH +>
+            # like in <%name OPT_STH ?>
+            $$input=~/\G(?:<\s*%name\s*($ID)\s*)?([*+?])\s*>/gc
+        and return($listtoken{$2},[ $1, $lineno[0] ]);
 
-            $$input=~/\G(<\s*%name\s*($ID)\s*)?\*\s*>/gc
-        and return('STAR',[ $2, $lineno[0] ]);
-            $$input=~/\G(%name\s*($ID)\s*)?\*/gc
-        and return('STAR',[ $2, $lineno[0] ]);
-
-            $$input=~/\G(<\s*%name\s*($ID)\s*)?\+\s*>/gc
-        and return('PLUS',[ $2, $lineno[0] ]);
-            $$input=~/\G(%name\s*($ID)\s*)?\+/gc
-        and return('PLUS',[ $2, $lineno[0] ]);
-
-            $$input=~/\G(<\s*%name\s*($ID)\s*)?\?\s*>/gc
-        and return('OPTION',[ $2, $lineno[0] ]);
-            $$input=~/\G(%name\s*($ID)\s*)?\?/gc
-        and return('OPTION',[ $2, $lineno[0] ]);
+            # like in %name LIST_of_STH *
+            # like in %name LIST_of_STH +
+            # like in %name OPT_STH ?
+            $$input=~/\G(?:%name\s*($ID)\s*)?([*+?])/gc
+        and return($listtoken{$2},[ $1, $lineno[0] ]);
 
             $$input=~/\G%no\s+bypass/gc
         and do {
@@ -1038,13 +1035,23 @@ sub _Lexer {
           return('NAME',[ 0, $lineno[0] ]);
         };
 
+            $$input=~/\G%(prec)/gc
+        and return('PREC',[ undef, $lineno[0] ]);
+
+            $$input=~/\G%(PREC)/gc
+        and return('DPREC',[ undef, $lineno[0] ]);
+
             $$input=~/\G%name/gc
         and do {
+          # return current bypass status
           return('NAME',[ $bypass, $lineno[0] ]);
         };
 
-        $$input=~/\G($LABEL)/gc
-    and return('LABEL',[ $1, $lineno[0] ]);
+            $$input=~/\G($LABEL)/gc
+        and return('LABEL',[ $1, $lineno[0] ]);
+
+            $$input=~/\G%begin\s*{/gc  # }
+        and return ('BEGINCODE', &slurp_perl_code());
 
     }
 
@@ -1056,8 +1063,7 @@ sub _Lexer {
 
     $char =~ s/\cM/\n/; # dos to unix
 
-        $char eq "\n"
-    and ++$lineno[1];
+    $char eq "\n" and ++$lineno[1];
 
     ( $char ,[ $char, $lineno[0] ]);
 

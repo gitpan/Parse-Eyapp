@@ -1,5 +1,9 @@
 Revision history for Perl extension Eyapp.
 1.152
+  * %expect-rr
+  * labels and names %name in recycle fixed. See example examples/recycle/rewritepostfixwithactions.pl
+
+1.152
   * Parse::Eyapp::Base was removed from standalone parsers
   * lexer, input and error as static/class attributes and inheritance
   * Parse::Eyapp::TailSupport embedded in Driver 

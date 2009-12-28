@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.153";
+$VERSION = "1.154";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -1321,8 +1321,8 @@ sub _Error {
   }
   else {
     # May be the parser object knows the line number ?
-    my $lineno = $parser->tokenline(0);
-    $tline = " (line number $lineno)" if $lineno > 0;
+    my $lineno = $parser->line;
+    $tline = " (line number $lineno)" if $lineno > 1;
   }
 
   local $" = ', ';

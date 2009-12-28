@@ -12,7 +12,11 @@ Parse::Eyapp::Treeregexp->new( STRING => q{
 # Syntax analysis
 my $parser = new Rule6();
 my $input = "0*0*0";
-my $t = $parser->Run(\$input);
+$parser->input(\$input);
+my $t = $parser->YYParse();
+
+exit(1) if $parser->YYNberr > 0;
+
 print "Tree:",$t->str,"\n";
 
 # Search

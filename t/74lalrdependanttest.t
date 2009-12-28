@@ -5,7 +5,7 @@ use Test::More tests => 4;
 use_ok qw( Parse::Eyapp );
 
 SKIP: {
-  skip "developer test", 4 unless ($ENV{DEVELOPER} && ($ENV{DEVELOPER} eq 'casiano'));
+  skip "developer test", 3 unless ($ENV{DEVELOPER} && ($ENV{DEVELOPER} eq 'casiano'));
 
   my $grammar = q{
     /* intermediate action and %tree */

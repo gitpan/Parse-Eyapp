@@ -5,32 +5,35 @@
 %left   NEG
 
 %%
-line: $exp  { print "$exp\n" }
+line: %name EXP
+      $exp  { print "$exp\n" }
 ;
 
-exp:        $NUM  
+exp:        %name OPERAND:NUM
+            $NUM  
                 { $NUM }            
-        |   $VAR  
+        |   %name OPERAND:VAR
+            $VAR  
                 { $VAR }            
-        |   %name ASSIGN  
+        |   %name OP:ASSIGN  
               VAR.left '='exp.right         
                 { 
                   # & stands for 'address of'
                   "$_[3] &$_[1] ASSIGN"; 
                 }
-        |   %name PLUS    
+        |   %name OP:PLUS    
               exp.left '+'exp.right         
                 { "$_[1] $_[3] PLUS"; }
-        |   %name MINUS   
+        |   %name OP:MINUS   
               exp.left '-'exp.right        
                 { "$_[1] $_[3] MINUS"; }
-        |   %name TIMES   
+        |   %name OP:TIMES   
               exp.left '*'exp.right       
                 { "$_[1] $_[3] TIMES"; }
-        |   %name DIV     
+        |   %name OP:DIV    
               exp.left '/'exp.right      
                 { "$_[1] $_[3] DIV"; }
-        |   %name NEG '-' $exp %prec NEG 
+        |   %name OP:NEG '-' $exp %prec NEG 
                 { "$exp NEG" }
         |   '(' $exp ')' 
                 { $exp }      
