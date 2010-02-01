@@ -14,6 +14,7 @@ use strict;
 use Parse::Eyapp::Options;
 use Parse::Eyapp::Parse;
 use Scalar::Util qw{reftype};
+use Data::Dumper;
 
 ###############
 # Constructor #
@@ -30,8 +31,10 @@ sub new {
     or  croak "No input grammar";
 
     $values = $parser->Parse($self->Option('input'), 
-                             $self->Option('firstline'), # Line where the grammar source starts
+                             $self->Option('firstline'),  # Line where the grammar source starts
                              $self->Option('inputfile'),  # The file or program containing the grammar
+                             $self->Option('tree'),       # %tree activated
+                             $self->Option('nocompact'),  # %nocompact
                              #$self->Option('prefixname'),  # yyprefix
                              #$self->Option('buildingtree')  # If building AST
                             );
@@ -131,6 +134,16 @@ sub give_token_name {
   return $name;
 }
 
+sub camelize
+{
+    my $s = shift;
+
+    my @a = split(/(?<=[A-Za-z])_(?=[A-Za-z])|\b/, $s);
+    my $a = shift @a;
+    @a = map { ucfirst $_ } @a;
+    join('', ($a, @a));
+}
+
 sub give_rhs_name {
   my ($self, $index, $lhs, $rhs) = @_;
 
@@ -138,27 +151,32 @@ sub give_rhs_name {
   $rhs = '';
 
   unless (@rhs) { # Empty RHS
-    return $lhs.'_is_empty';
+    return camelize($lhs).'_is_empty';
   }
 
   my $names = $self->{GRAMMAR}{TOKENNAMES} || {};
   for (@rhs) {
     if ($self->is_token($_)) { 
+      # remove apostrophes
       s/^'(.*)'$/$1/;
+
+      # explicit name given ?
       my $name = $names->{$_} || '';
+
+      # no name was given, use symbol if is an ID
       unless ($name) {
         $name = $_ if /^\w+$/;
       }
       $rhs .= "_$name" if $name;
     }
-    else {
-      s/\W/_/g;
-      $rhs .= "_$_";
+    else { # syntactic variable
+      next if exists $self->{GRAMMAR}{CONFLICTHANDLERS}{$_};
+      $rhs .= '_'.camelize($_) if /^\w*$/;
     }
   }
 
   # check if another production with such name exists?
-  my $name = $lhs.'_is'.$rhs;
+  my $name = camelize($lhs).'_is'.$rhs;
   return $name;
 }
 
@@ -189,7 +207,12 @@ sub classname {
   }
 
   my $naming_scheme = $self->{GRAMMAR}{NAMINGSCHEME};
-  $name = $naming_scheme->($self, $index, $lhs, $rhs) unless $name;
+  if (!$name) {
+    $name = $naming_scheme->($self, $index, $lhs, $rhs);
+  }
+  elsif ($name =~ /^:/) { # it is a label only
+    $name = $naming_scheme->($self, $index, $lhs, $rhs).$name;
+  }
 
   return $name;
 }
@@ -238,6 +261,15 @@ sub Terms {
                          # Warning! bug. Before: map { $_ eq chr(0) ? "'\$end' => 0" : "$_ => $semantic{$_}"} @terms);
                          map { $_ eq chr(0) ? "'' => { ISSEMANTIC => 0 }" : "$_ => { ISSEMANTIC => $semantic{$_} }"} @terms); 
     $text .= ",\n\terror => { ISSEMANTIC => 0 },\n}";
+}
+
+sub conflictHandlers {
+  my $self = shift;
+
+  my $t = Dumper $self->{GRAMMAR}{CONFLICTHANDLERS};
+  $t =~ s/^\$VAR\d*\s*=\s*//;
+  $t =~s/;$//;
+  $t;
 }
 
 #####################################
@@ -377,76 +409,6 @@ sub RulesTable {
     $text.="\n]";
 
     $text;
-}
-
-###############################################################
-# Method to produce conflict information
-# to be used by dynamic conflict solving, e.g. 
-# YYSetReduce(token, 'rule_name')
-# YYSetShift(token)
-# 
-# Rules:
-# ------
-# 0:	$start -> s $end
-# 1:	s -> /* empty */
-# 2:	s -> s ws
-# 3:	s -> s ns
-# 4:	ns -> /* empty */
-# 5:	ns -> ns NUM
-# 6:	ws -> /* empty */
-# 7:	ws -> ws ID
-# 
-#   DB<3> x $self->{CONFLICTS}{FORCED}
-# 0  HASH(0x88e2998)
-#    'DETAIL' => HASH(0x88a7d0c)
-#       1 => HASH(0x88dbe98)
-#          'LIST' => ARRAY(0x88dbeb0)
-#             0  ARRAY(0x88dbec8)
-#                0  'NUM'
-#                1  '-6' 3 
-#             1  ARRAY(0x88dbab4)
-#                0  'ID'
-#                1  '-6'
-#             2  ARRAY(0x88dba90)
-#                0  "\c@"
-#                1  '-4'
-#             3  ARRAY(0x88dbf58)
-#                0  "\c@"
-#                1  '-6'
-#          'TOTAL' => ARRAY(0x88e235c)
-#             0  1
-#             1  3
-#       2 => HASH(0x88dbfac)
-#          'LIST' => ARRAY(0x88dbfd0)
-#             0  ARRAY(0x88dbfe8)
-#                0  'NUM'
-#                1  '-3'
-#          'TOTAL' => ARRAY(0x88dbd3c)
-#             0  1
-#       4 => HASH(0x88dbdd8)
-#          'LIST' => ARRAY(0x88dbe38)
-#             0  ARRAY(0x88dbe50)
-#                0  'ID'
-#                1  '-2'
-#          'TOTAL' => ARRAY(0x88dbdb4)
-#             0  1
-#    'TOTAL' => ARRAY(0x88e238c)
-#       0  3
-#       1  3
-# 
-###############################################################
-sub _Conflicts {
-  my $self = shift;
-  my $conflicts = $self->{CONFLICTS}{FORCED}{DETAIL};
-
-  # Just while developping
-  require Data::Dumper;
-  Data::Dumper->import;
-  local $Data::Dumper::Indent = 0;
-  local $_ = Dumper($conflicts);
-
-  s/^\$VAR\d*\s*=\s*//;
-  $_
 }
 
 ################################
@@ -620,14 +582,20 @@ sub _ReduceGrammar {
                    TAIL => $values->{TAIL},
                    EXPECT => $values->{EXPECT},
                    # Casiano modifications
-                   SEMANTIC       => $values->{SEMANTIC}, # added to simplify AST
-                   BYPASS         => $values->{BYPASS},   # added to simplify AST
-                   BUILDINGTREE   => $values->{BUILDINGTREE},   # influences the semantic of lists * + ?
-                   ACCESSORS      => $values->{ACCESSORS}, # getter-setter for %tree and %metatree
-                   PREFIX         => $values->{PREFIX},   # yyprefix
-                   NAMINGSCHEME   => $values->{NAMINGSCHEME}, # added to allow programmable production naming schemes (%name)
-                   NOCOMPACT      => $values->{NOCOMPACT}, # Do not compact action tables. No DEFAULT field for "STATES"
-                   TOKENNAMES     => {},
+                   SEMANTIC          => $values->{SEMANTIC},          # added to simplify AST
+                   BYPASS            => $values->{BYPASS},            # added to simplify AST
+                   BUILDINGTREE      => $values->{BUILDINGTREE},      # influences the semantic of lists * + ?
+                   ACCESSORS         => $values->{ACCESSORS},         # getter-setter for %tree and %metatree
+                   PREFIX            => $values->{PREFIX},            # yyprefix
+                   NAMINGSCHEME      => $values->{NAMINGSCHEME},      # added to allow programmable production naming schemes (%name)
+                   NOCOMPACT         => $values->{NOCOMPACT},         # Do not compact action tables. No DEFAULT field for "STATES"
+                   CONFLICTHANDLERS  => $values->{CONFLICTHANDLERS},  # list of conflict handlers
+                   TERMDEF           => $values->{TERMDEF},           # token => associated regular expression (for lexical analyzer)
+                   WHITES            => $values->{WHITES},            # string with the code to skip whites (for lexical analyzer)
+                   LEXERISDEFINED    => $values->{LEXERISDEFINED},    # true if %lexer was used
+                   MODULINO          => $values->{MODULINO},          # hash perlpath => path, prompt => question
+                   STRICT            => $values->{STRICT},            # true if %stric
+                   TOKENNAMES     => {},                              # for naming schemes
                  }, __PACKAGE__;
 
     my($rules,$nterm,$term) =  @$values {'RULES', 'NTERM', 'TERM'};

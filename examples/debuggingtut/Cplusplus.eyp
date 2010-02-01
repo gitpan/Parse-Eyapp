@@ -1,22 +1,28 @@
 %{
 our $VERSION = '0.01';
 
-my ($WHITES, $ID, $NUM) = (qr{\s*}, qr{[a-zA-Z_][a-zA-Z_0-9]*}, qr{\d+});
+my $WHITES = qr{\G\s*};
+my $INT    = qr{\Gint\b};
+my $ID     = qr{\G([a-zA-Z_][a-zA-Z_0-9]*)};
+my $NUM    = qr{\G(\d+)};
+my $PUN    = qr{\G([-+*/=();,])};
 
+# If the incoming input looks like this then it is a declaration
+my $ISDEC  = qr{\G(?=
+                      [)\s]*  # closing parenthesis, s.t. like: ') ) )'
+                      [;=]\   # followed by semicolon or '='
+                  )
+               }x;
 %}
 
-%strict
 %token ID NUM INT
 %lexer {
-    s{^($WHITES)}{};
+    m{$WHITES}gc;
 
-    return ('INT', $1) if s{^(int\b)}{};
-
-    return ('ID',  $1) if (s{^($ID)}{});
-
-    return ('NUM', $1) if s/^($NUM)//;
-
-    return ($1,    $1) if s{^([-+*/=();,])}{};
+    return ('INT', $1) if m{$INT}gc;
+    return ('ID',  $1) if m{$ID}gc;
+    return ('NUM', $1) if m{$NUM}gc;
+    return ($1,    $1) if m{$PUN}gc;
   }
 
 %right '='
@@ -24,9 +30,7 @@ my ($WHITES, $ID, $NUM) = (qr{\s*}, qr{[a-zA-Z_][a-zA-Z_0-9]*}, qr{\d+});
 
 %conflict decORexp 
       {
-        my $self = shift;
-
-        if (${$self->input()} =~ m{^[)\s]*[;=]\s*}) {
+        if (m{$ISDEC}) {
           $self->YYSetReduce(')', 'ID:DEC' );
         }
         else {
@@ -34,7 +38,7 @@ my ($WHITES, $ID, $NUM) = (qr{\s*}, qr{[a-zA-Z_][a-zA-Z_0-9]*}, qr{\d+});
         }
       }
 
-%expect 0 1  # 0 shift-reduce conflicts, 1 reduce-reduce conflict
+%expect-rr 1  # expect 1 reduce-reduce conflict
 
 %tree bypass
 
@@ -97,18 +101,18 @@ Compile it with
 
 Run it with:
 
-   ./Cplusplus.pm -t
+   ./Cplusplus.pm -t -nos -i
 
 or 
 
-   ./Cplusplus.pm -t -c 'int (x) + 2;'
+   ./Cplusplus.pm -t -i -c 'int (x) + 2;'
 
 try with inputs:
 
      int (x) = 2;
      int (x) + 2;
 
-the result will be the generated abstract sytax tree
+the output will be a description of the generated abstract syntax tree
 
 =head1  C++ Ambiguities
 

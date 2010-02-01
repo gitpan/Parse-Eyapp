@@ -1,17 +1,12 @@
 #%semantic token '*' '='
+%token NUM   = /([0-9]+(?:\.[0-9]+)?)/
+%token PRINT = /print\b/
+%token VAR   = /([A-Za-z_][A-Za-z0-9_]*)/
+
 %right  '='     
 %left   '-' '+' 
 %left   '*' '/' 
 %left   NEG    
-
-%lexer  {
-    m{\G[ \t]*}gc;
-    m{\G(\n)+}gc                    and $self->tokenline($1 =~ tr/\n//);
-    m{\G([0-9]+(?:\.[0-9]+)?)}gc    and return ('NUM',   $1);
-    m{\Gprint}gc                    and return ('PRINT', 'PRINT');
-    m{\G([A-Za-z_][A-Za-z0-9_]*)}gc and return ('VAR',   $1);
-    m{\G(.)}gc                      and return ($1,      $1);
-  }
 
 #%tree 
 %tree  bypass

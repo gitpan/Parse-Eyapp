@@ -6,7 +6,6 @@
 %right  '^'
 
 %{
-use base q{Parse::Eyapp::TailSupport};
 my %s; # symbol table
 %}
 
@@ -63,3 +62,14 @@ __PACKAGE__->lexer(sub {
 # Modulino
 __PACKAGE__->main() unless caller();
 
+=head1 SYNOPSIS
+
+Compile it with:
+
+   eyapp -b '' -o cu.pl CalcUsingTail.eyp 
+
+run it with:
+
+        $ ./cu.pl
+
+=cut

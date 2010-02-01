@@ -42,6 +42,9 @@ sub lastval(&@) {
   return (grep { $handler->($_) } @_)[-1]
 }
 
+# Receives a handler $h and a list @_
+# Elements of @_ with the same value of $h go to the same sublist
+# Returns a list of lists
 sub part(&@) {
   my $h = shift;
 

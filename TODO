@@ -1,8 +1,119 @@
+  * %tree: 
+     - info  clause (autobuild ::info for TERMINAL) 
+     - naming scheme clause
+
+  * Tests
+     - tests all examples/*/*yp for syntax checking
+     - test for yyfilename
+     - Add tests to check .output tables: actions and gotos against yacc. 
+        I am not confident that some modifications I introduced in Grammar.pm were error free
+     - Automatic naming scheme: tests!
+     - Some rules can be optimized away. Then the name dissapears!!
+     - tests with syntax errors
+     - Debug mode and standalone works?
+
+  *  Debugging: set breakpoints in the code from yydebug=> 1
+
+  * Lexical Analyzer generation:
+      * error line numbers-> source code
+      * lexer must support a sub name
+         %lexer mylexer
+
+  * What if the input comes from a stream? then $parser->input is undef
+    Shall I support interactive streams?
+      - YYLookaheads assumes that input comes from $parser->input
+      - The default lexer assumes that input comes from $parser->input
+      Change it to use an input stack
+
+  * PPCR:
+     - The whole implementation approach seems wrong. Make actions an array. Associate the handler with the state.
+       That allows a syntax like:
+                          %conflict handler {... } 
+                          %shift-reduce prod1 [token1, token2, ...] prod2 [tokens] handler
+                          %reduce-reduce prod3 [token1, token2, ...] prod4 [tokens] otherhandler
+                          ....
+
+     - There is a bug: I have to check that reductions in PPCR only occur inside the conflictive states
+
+     - Warning Grammar.pm 
+         sub Parse::Eyapp::Grammar::conflictHandlers  rewrite! or use Data::Dumper forever?
+
+  * %package directive: equvalent to eyapp -m option 
+
+  * -%modulino directive 
+      %modulino perlinterpreter prompt
+      Equivalent to eyapp -b 'perlinterpreter' and __PACKAGE__->main(prompt) 
+      %modulino '/usr/local/lib/perl/5.10.1/bin/perl5.10.1' 'Try input "type e = (x);": '
+      
+      avoid repetitive __PACKAGE->main when using options -C and -b
+
   * Article: rewrite, both research and divulgation
 
   * Documentation
      - Simpler intro
      - Separate parsing from tree transformation
+
+
+  * EBNF (a|b|c)*
+    - eyapp option -TREE: same as %tree
+      currently only give_rhs is used, but it has to be parametrized
+
+  * - eyapp option namingscheme
+
+    - eyapp option -start (defines the start symbol)
+       Eyapp -> Lalr -> Grammar -> Options
+                            `----> Parse
+    - intermediate actions in give_rhs_name? check, test
+    
+  * Error message when a conflict handler isn't used is inaccurate:
+
+      ~/LEyapp/examples/debuggingtut$ eyapp dynamicgrammar.eyp 
+      Useless non-terminals:
+
+          rangeORenum, declared line 10
+
+      Useless rules:
+
+          rangeORenum -> 
+
+      1 shift/reduce conflict and 0 reduce/reduce conflicts
+
+  *  Line numbers seem to be in a buggy state.
+     There is also a "bug" with tokenline and the static attribute approach: tokenline
+     attribute is defined to 1 while the static/attribute approach searches while "undef"
+
+  * Lars request (see dir contributions): allow AST classes to be Moose or any other OOP framework
+
+  * Provide a module providing regexp for most common non destructive lexing: NUMs, IDs, etc
+
+      use Parse::Eyapp::LexSupport qw{INT PERLWS ID};
+
+      Created by "new" so that $self is in scope
+
+         $INT = qr{\G(\d+)}gc; $WS = qr{{\G(\s*) (?{  $self->tokenline($1 =~ tr{\n}{}) }) }gxc; etc.
+
+      tokens can be "defined" with:
+
+          %token DOTDOT /(\.\.)/ 
+          %token INT /(\d+)/ 
+
+      The parser will define $DOTDOT = qr{/\G(\.\.)/;
+      and then:
+
+      PERLWS(); # No need to update the line number
+
+      m{\Gtype\b}gic           and return ('TYPE', 'TYPE'); # old way
+
+      m{$ID}gc                 and return ('ID',  $1);
+
+      INT()                    and return ('NUM', $1);
+
+      DOTDOT()                 and return ('DOTDOT',  $DOTDOT);
+
+      m{\G(.)}gc               and return ($1,    $1);
+
+  * Parse::Eyapp::Driver::main 
+     - option to send output to a file
 
   * bison directives: 
 
@@ -19,19 +130,13 @@
         Directive: %output="filename"
 
 
-  * the #line directive in Parse.yp for %lexer is buggy (worst practice)
+  * the #line directive in Parse.yp for %lexer is prone to be buggy (worst practice)
 
-  * Lexical Analyzer generation:
-      * Lexer automatic construction
-      * lexer must support a sub name
-         %lexer mylexer
 
   * Dynamic conflict resolution: test YYSetShift
         The case where the default is a reduction is not solved. Investigate
 
-  * C interface with YAML
-
-  * Lars request (see dir contributions): allow AST classes to be Moose or any other OOP framework
+  * Further study YAML (class preservation)
 
   * Provide debugging support for standalone modules: currently skipped
 
@@ -44,9 +149,6 @@
   * There is a bug in eyapp with reduce-reduce conflicts?! I am not sure of this
     with reduce-reduce conflicts. In at least one case is reducing by the second production rule instead 
     of the first.  It appears in the C++ parser (t/99Cplusplusgrammar.t). Confirm
-
-  * Add tests to check .output tables: actions and gotos against yacc. 
-    I am not confident that some modifications I introduced in Grammar.pm were error free
 
   * There is a bug with &give_rhs_name in Parse::Eyapp::Grammar and lists *, +, etc. see the example
       examples/debuggintut/SemanticInfoInTokens.eyp
@@ -61,7 +163,6 @@
   * Language generation example examples/generator
      -- Return a Test::LectroTest::Generator? 
 
-  * Automatic naming scheme: tests!
 
   * Check that all the production names (given with %name directives) are different. May be not
 
@@ -153,7 +254,6 @@
     It may influence optimizations like the PARENTHESIS one?
   * bypass method for YATW and Node objects
 
-  * test for yyfilename
   * Fix the yyprefix consistency problem between new and YYParse (args)
   * What is YYFilename in Driver.pm
 
@@ -163,12 +263,6 @@
 
 - Treereg Tree grammars and tree walkers
  
-  * Tests
-     - Some rules can be optimized away. Then the name dissapears!!
-     - When a token is in uppercase then it does not agree with the string?
-     - tests with syntax errors
-     - Standalone works?
-     - Debug mode works?
 
   * Uniformize 
      - Lower case in new_grammar, uppercase in Treeregexp new, etc.

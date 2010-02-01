@@ -24,6 +24,123 @@ use List::Util qw(first);
 
 use Carp;
 
+# Remove tokens that not appear in the right hand side
+# of any production
+# Check if not quote tokens aren't defined
+sub deleteNotUsedTokens {
+  my ($self, $term, $termDef) = @_;
+  
+  my $rules = $self->{GRAMMAR}{RULES};
+  my @usedSymbols = map { @{$_->[1]} } @$rules;
+  my %usedSymbols;
+  @usedSymbols{@usedSymbols} = ();
+
+  for my $token (keys %$term) {
+    delete $term->{$token} unless exists $usedSymbols{$token};
+  }
+
+  # Emit a warning if exists a non '' token in %usedSymbols that is not in %termdef
+  if ($self->{GRAMMAR}{STRICT}) {
+    my @undefined = grep { ! exists $termDef->{$_} } grep { m{^[^']} } keys %$term;
+    if (@undefined) {
+      @undefined = map { "Warning: may be you forgot to define token '$_'?: %token $_ = /someRegExp/" } @undefined;
+
+      local $" = "\n";
+      warn "@undefined\n";
+    }
+  }
+}
+
+# builds a trivial lexer
+sub makeLexer {
+  my $self = shift;
+
+  my $WHITES = 'm{\G(\s+)}gc and $self->tokenline($1 =~ tr{\n}{});';
+  my $w = $self->{GRAMMAR}{WHITES}[0];
+  if (defined $w)  {
+    # if CODE then literally
+    if ($self->{GRAMMAR}{WHITES}[2] eq 'CODE') {
+      $WHITES = $w;
+    }
+    else {
+      $w =~ s{^/}{/\\G};
+      $WHITES = $w.'gc and $self->tokenline($1 =~ tr{\n}{});';
+    }
+  }
+  my %term = %{$self->{GRAMMAR}{TERM}};
+  delete $term{"\c@"};
+  delete $term{'error'};
+
+  my %termdef = %{$self->{GRAMMAR}{TERMDEF}}; 
+
+  $self->deleteNotUsedTokens(\%term, \%termdef);
+
+
+  # remove from %term the tokens that were explictly defined
+  my @index = grep { !(exists $termdef{$_}) } keys %term;
+  %term = map { ($_, $term{$_}) } @index;
+
+  my @term = map { s/'$//; s/^'//; $_ } keys %term;
+
+  @term = sort { length($b) <=> length($a) } @term;
+  @term = map { quotemeta } @term;
+  # Keep escape characters as \n \r, etc.
+  @term = map { s/\\\\(.)/\\$1/g; $_ } @term;
+
+  my $TERM = join '|', @term;
+  $TERM = "\\G($TERM)";
+ 
+  # Translate defined tokens
+  # sort by line number
+  my @termdef = sort { $termdef{$a}->[1] <=> $termdef{$b}->[1] } keys %termdef;
+
+  my $DEFINEDTOKENS = '';
+  for my $t (@termdef) {
+    if ($termdef{$t}[2] eq 'REGEXP') {
+      my $reg = $termdef{$t}[0];
+      $reg =~ s{^/}{/\\G};
+      $DEFINEDTOKENS .= << "EORT";
+      ${reg}gc and return ('$t', \$1);
+EORT
+    }
+    else { # token definition is code
+      $DEFINEDTOKENS .= $termdef{$t}[0];
+    }
+  }
+
+  my $frame = _lexerFrame();
+  $frame =~ s/<<WHITES>>/$WHITES/;
+  $frame =~ s/<<TERM>>/$TERM/;
+  $frame =~ s/<<DEFINEDTOKENS>>/$DEFINEDTOKENS/;
+
+  return $frame;
+}
+
+sub _lexerFrame {
+  return << 'EOLEXER';
+# Default lexical analyzer
+our $LEX = sub {
+    my $self = shift;
+
+    for (${$self->input}) {
+      <<WHITES>>;
+
+      m{<<TERM>>}gc and return ($1, $1);
+
+<<DEFINEDTOKENS>>
+
+      return ('', undef) if ($_ eq '') || (defined(pos($_)) && (pos($_) >= length($_)));
+      /\G\s*(\S+)/;
+      my $near = substr($1,0,10); 
+      die( "Error inside the lexical analyzer near '". $near
+          ."'. Line: ".$self->line()
+          .". File: '".$self->YYFilename()."'. No match found.\n");
+    }
+  }
+;
+EOLEXER
+}
+
 ####################################################################
 # Returns    : The string '{\n file contents }\n'  with pre and post comments
 # Parameters : a file name
@@ -72,7 +189,22 @@ sub Output {
   my ($GRAMMAR, $TERMS, $FILENAME, $PACKAGES); # Cas
   my($package)=$self->Option('classname');
 
-  my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree, $prefix);
+  my $modulino = $self->Option('modulino'); # prompt or undef 
+
+  if (defined($modulino)) {
+    $modulino = <<"MODULINO";
+unless (caller) {
+  exit !__PACKAGE__->main('$modulino');
+}
+MODULINO
+  }
+  else {
+    $modulino = '';
+  }
+
+  my $defaultLexer = $self->{GRAMMAR}{LEXERISDEFINED} ? q{} : $self->makeLexer();
+
+  my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree, $prefix, $conflict_handlers);
   my($version)=$Parse::Eyapp::Driver::VERSION;
   my($datapos);
   my $makenodeclasses = '';
@@ -95,6 +227,8 @@ sub Output {
   ($GRAMMAR, $PACKAGES) = $self->Rules();
   $bypass = $self->Bypass;
   $prefix = $self->Prefix;
+
+  $conflict_handlers = $self->conflictHandlers;
 
   $buildingtree = $self->Buildingtree;
   $accessors = $self->Accessors;
@@ -160,6 +294,10 @@ push @<<$package>>::ISA, 'Parse::Eyapp::Driver';
 
 <<$driver>>
 
+<<$defaultLexer>>
+
+sub unexpendedInput { substr($_, pos $_) }
+
 <<$head>>
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 
@@ -188,6 +326,7 @@ sub new {
     yybuildingtree => <<$buildingtree>>,
     yyprefix       => '<<$prefix>>',
     yyaccessors    => <<$accessors_hash>>,
+    yyconflicthandlers => <<$conflict_handlers>>,
     @_,
   );
   bless($self,$class);
@@ -197,8 +336,9 @@ sub new {
 }
 
 <<$tail>>
-
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+
+<<$modulino>>
 
 1;
 EOT

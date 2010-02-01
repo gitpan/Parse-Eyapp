@@ -19,9 +19,6 @@ D: 'd'
 
 %%
 
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
-
 sub Run {
   my ($self) = shift;
   return $self->YYParse( yybuildingtree => 1 );

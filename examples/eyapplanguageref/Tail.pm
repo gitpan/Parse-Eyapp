@@ -2,8 +2,6 @@ package Tail;
 use warnings;
 use strict;
 
-use base q{Parse::Eyapp::TailSupport};
-
 sub lex {
     my($parser)=shift;
 

@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.154";
+$VERSION = "1.155";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -42,6 +42,7 @@ my (%params)=(YYLEX => 'CODE', 'YYERROR' => 'CODE', YYVERSION => '',
        YYTERMS    => 'HASH',
        YYBUILDINGTREE  => '',
        YYACCESSORS => 'HASH',
+       YYCONFLICTHANDLERS => 'HASH',
        ); 
 my (%newparams) = (%params, YYPREFIX => '',);
 
@@ -328,6 +329,12 @@ sub YYTopState {
   $self->{STACK}[$length];
 }
 
+sub YYStack {
+  my $self = shift;
+
+  return $self->{STACK};
+}
+
 # To dynamically set syntactic actions
 # Change it to state, token, action
 # it is more natural
@@ -355,8 +362,77 @@ sub YYRestoreLRAction {
   }
 }
 
+# Fools the lexer to get a new token
+# without modifying the parsing position (pos)
+# Warning, warning! this and YYLookaheads assume
+# that the input comes from the string
+# referenced by $self->input.
+# It will not work for a stream 
+sub YYLookahead {
+  my $self = shift;
+
+  my $pos = pos(${$self->input});
+  my ($nextToken, $val) = $self->YYLexer->($self);
+  # restore pos
+  pos(${$self->input}) = $pos;
+  return $nextToken;
+}
+
+# Fools the lexer to get $spec new tokens
+sub YYLookaheads {
+  my $self = shift;
+  my $spec = shift || 1; # a number
+
+  my $pos = pos(${$self->input});
+  my @r; # list of lookahead tokens
+
+  my ($t, $v);
+  if (looks_like_number($spec)) {
+    for my $i (1..$spec) { 
+      ($t, $v) = $self->YYLexer->($self);
+      push @r, $t;
+      last if $t eq '';
+    }
+  }
+  else { # if string
+    do {
+      ($t, $v) = $self->YYLexer->($self);
+      push @r, $t;
+    } while ($t ne $spec && $t ne '');
+  }
+
+  # restore pos
+  pos(${$self->input}) = $pos;
+
+  return @r;
+}
+
+sub YYLookBothWays {
+  my $self = shift;
+  my $stackFirst = shift;
+  my $inputLast  = shift;
+
+  my @stackTokens = $self->YYSymbolStack($stackFirst,-1);
+  my @inputTokens = $self->YYLookaheads($inputLast);
+
+  if (wantarray) {
+    return (@stackTokens, @inputTokens);
+  }
+  else {
+    local $" = shift || '';
+    return "@stackTokens@inputTokens";
+  }
+}
+
 sub YYSetReduce {
   my ($self, $token, $action) = @_;
+
+  $token = [ $token ] unless ref($token);
+  
+  # The reduction action must be performed only if
+  # the next token is inside the $token set
+  my $lookahead = $self->YYLookahead();
+  return unless (grep { $_ eq $lookahead } @$token);
 
   croak "YYSetReduce error: specify a production" unless defined($action);
 
@@ -365,12 +441,15 @@ sub YYSetReduce {
 
   # Action can be given using the name of the production
   unless (looks_like_number($action)) {
+    if ($action =~ /^:/) {
+      ($action) = grep { /$action/ } $self->YYNames;
+    }
     my $actionnum = $self->YYIndex($action);
-    croak "YYSetReduce error: can't find production '$action'. Did you forget to name it?" unless looks_like_number($actionnum);
+    unless (looks_like_number($actionnum)) {
+      croak "YYSetReduce error: can't find production '$action'. Did you forget to name it?";
+    }
     $action = -$actionnum;
   }
-
-  $token = [ $token ] unless ref($token);
 
   my $conflictname = $self->YYLhs;
   for (@$token) {
@@ -671,16 +750,20 @@ sub YYBuildAST {
   for(my $i = 0; $i < @right; $i++) {
     local $_ = $right[$i]; # The symbol
     my $ch = $_[$i]; # The attribute/reference
-    if ($self->YYIssemantic($_)) {
-      my $class = $PREFIX.'TERMINAL';
-      my $node = bless { token => $_, attr => $ch, children => [] }, $class;
-      push @children, $node;
-      next;
-    }
 
-    if ($self->YYIsterm($_)) {
-      TERMINAL::save_attributes($ch, $node) if UNIVERSAL::can($PREFIX."TERMINAL", "save_attributes");
-      next;
+    # is $ch already a Parse::Eyapp::Node. May be a terminal and a syntax variable share the same name?
+    unless (UNIVERSAL::isa($ch, 'Parse::Eyapp::Node')) {
+      if ($self->YYIssemantic($_)) {
+        my $class = $PREFIX.'TERMINAL';
+        my $node = bless { token => $_, attr => $ch, children => [] }, $class;
+        push @children, $node;
+        next;
+      }
+
+      if ($self->YYIsterm($_)) {
+        TERMINAL::save_attributes($ch, $node) if UNIVERSAL::can($PREFIX."TERMINAL", "save_attributes");
+        next;
+      }
     }
 
     if (UNIVERSAL::isa($ch, $PREFIX."_PAREN")) { # Warning: weak code!!!
@@ -1003,6 +1086,7 @@ sub static_attribute {
       # push those that aren't already there
       push @classes, grep { !exists $classes{$_} } @{$c.'::ISA'};
     }
+    return undef;
 }
 
 *Parse::Eyapp::Driver::lexer = \&Parse::Eyapp::Driver::YYLexer;
@@ -1052,13 +1136,13 @@ sub line {
   my $self = shift;
 
   if (ref($self)) {
-    $self->{tokenline} = shift if @_;
+    $self->{TOKENLINE} = shift if @_;
 
-    return $self->static_attribute('tokenline', @_,) unless defined($self->{tokenline}); # class/static method 
-    return $self->{tokenline};
+    return $self->static_attribute('TOKENLINE', @_,) unless defined($self->{TOKENLINE}); # class/static method 
+    return $self->{TOKENLINE};
   }
   else { # class/static method
-    return $self->static_attribute('tokenline', @_,); # class/static method 
+    return $self->static_attribute('TOKENLINE', @_,); # class/static method 
   }
 }
 
@@ -1067,13 +1151,13 @@ sub tokenline {
   my $self = shift;
 
   if (ref($self)) {
-    $self->{tokenline} += shift if @_;
+    $self->{TOKENLINE} += shift if @_;
 
-    return $self->static_attribute('tokenline', @_,) unless defined($self->{tokenline}); # class/static method 
-    return $self->{tokenline};
+    return $self->static_attribute('TOKENLINE', @_,) unless defined($self->{TOKENLINE}); # class/static method 
+    return $self->{TOKENLINE};
   }
   else { # class/static method
-    return $self->static_attribute('tokenline', @_,); # class/static method 
+    return $self->static_attribute('TOKENLINE', @_,); # class/static method 
   }
 }
 
@@ -1124,12 +1208,21 @@ sub slurp_file {
   }
 }
 
+our $INPUT = \undef;
 sub input {
   my $self = shift;
 
   $self->line(1) if @_; # used as setter
   if (ref $self) { # instance method
-    $self->{INPUT} = shift if @_;
+    if (@_) {
+      if (ref $_[0]) {
+        $self->{INPUT} = shift;
+      }
+      else {
+        my $input = shift;
+        $self->{INPUT} = \$input;
+      }
+    }
 
     return $self->static_attribute('INPUT', @_,) unless defined($self->{INPUT}); # class/static method 
     return $self->{INPUT};
@@ -1196,40 +1289,27 @@ sub main {
   my $slurp;
   my $inputfromfile = 1;
   my $commandinput = '';
+  my $quotedcommandinput = '';
+  my $yaml = 0;
+
   my $result = GetOptions (
     "debug!"         => \$debug,         # sets yydebug on
     "file=s"         => \$file,          # read input from that file
     "commandinput=s" => \$commandinput,  # read input from command line arg
     "tree!"          => \$showtree,      # prints $tree->str
-    "info=s"         => \$TERMINALinfo,  # prints $tree->str and provides default TERMINAL::info
+    "info"           => \$TERMINALinfo,  # prints $tree->str and provides default TERMINAL::info
     "help"           => \$help,          # shows SYNOPSIS section from the script pod
     "slurp!"         => \$slurp,         # read until EOF or CR is reached
-    "inputfromfile!" => \$inputfromfile, # take input from @_
+    "argfile!"       => \$inputfromfile, # take input string from @_
+    "yaml"           => \$yaml,          # dumps YAML for $tree: YAML must be installed
+    "margin=i"       => \$Parse::Eyapp::Node::INDENT,      
   );
 
   pod2usage() if $help;
 
   $debug = 0x1F if $debug;
-  $file = shift if !$file && @ARGV; 
+  $file = shift if !$file && @ARGV; # file is taken from the @ARGS unless already defined
   $slurp = "\n" if defined($slurp);
-  if (defined($TERMINALinfo)) {
-    $showtree = 1;
-    no warnings 'redefine';
-    no strict 'refs';
-    if ($TERMINALinfo eq '') {
-      *TERMINAL::info = sub { $_[0]->attr; }
-    }
-    elsif ($TERMINALinfo eq 'line') {
-      *TERMINAL::info = sub { $_[0]->attr->[0 ]};
-    }
-    else {
-      $TERMINALinfo = "sub { my \$self = shift; $TERMINALinfo }" unless ($TERMINALinfo =~ /^\s*sub/);
-      eval {
-        *TERMINAL::info = eval $TERMINALinfo;
-      };
-      croak "Argument '$TERMINALinfo' isn't legal: try 'line' or '' instead\n($)\n" if $@;
-    }
-  }
 
   my $parser = $package->new();
 
@@ -1254,21 +1334,42 @@ sub main {
 
   if (my $ne = $parser->YYNberr > 0) {
     print "There were $ne errors during parsing\n";
+    return undef;
   }
   else {
-    if ($showtree && $tree && blessed $tree && $tree->isa('Parse::Eyapp::Node')) {
-      print $tree->str()."\n";
-    }
-    elsif ($showtree && $tree && ref $tree) {
-      require Data::Dumper;
-      print Data::Dumper::Dumper($tree)."\n";
-    }
-    elsif ($showtree && defined($tree)) {
-      print "$tree\n";
-    }
-  }
+    if ($showtree) {
+      if ($tree && blessed $tree && $tree->isa('Parse::Eyapp::Node')) {
 
-  $tree
+        if (defined($TERMINALinfo)) {
+          $showtree = 1;
+          *TERMINAL::info = sub {  (ref($_[0]->attr) eq 'ARRAY')? $_[0]->attr->[0] : $_[0]->attr };
+        }
+
+          print $tree->str()."\n";
+      }
+      elsif ($tree && ref $tree) {
+        require Data::Dumper;
+        print Data::Dumper::Dumper($tree)."\n";
+      }
+      elsif (defined($tree)) {
+        print "$tree\n";
+      }
+    }
+    if ($yaml && ref($tree)) {
+      eval {
+        require YAML;
+      };
+      if ($@) {
+        print "You must install 'YAML' to use this option\n";
+      }
+      else {
+        YAML->import;
+        print Dump($tree);
+      }
+    }
+
+    return $tree
+  }
 }
 
 # Generic error handler
@@ -1307,10 +1408,12 @@ sub _Error {
     }
   }
 
-  my @expected = map { "'$_'" } $parser->YYExpect();
+  my @expected = map { ($_ ne '')? "'$_'" : q{'end of input'}} $parser->YYExpect();
   my $expected = '';
-    $expected = "Expected one of these terminals: @expected"
-  if @expected;
+  if (@expected) {
+    $expected = (@expected >1) ? "Expected one of these terminals: @expected" 
+                              : "Expected terminal: @expected"
+  }
 
   my $tline = '';
   if (blessed($attr) && $attr->can('line')) {
@@ -1363,6 +1466,52 @@ sub _DBLoad {
   }
 }
 
+### Receives an  index for the parsing stack: -1 is the top
+### Returns the symbol associated with the state $index
+sub YYSymbol {
+  my $self = shift;
+  my $index = shift;
+  
+  return $self->{STACK}[$index][2];
+}
+
+# YYSymbolStack(0,-k) string with symbols from 0 to last-k
+# YYSymbolStack(-k-2,-k) string with symbols from last-k-2 to last-k
+# YYSymbolStack(-k-2,-k, filter) string with symbols from last-k-2 to last-k that match with filter
+# YYSymbolStack('SYMBOL',-k, filter) string with symbols from the last occurrence of SYMBOL to last-k
+#                                    where filter can be code, regexp or string
+sub YYSymbolStack {
+  my $self = shift;
+  my ($a, $b, $filter) = @_;
+  
+  # $b must be negative
+  croak "Error: Second index in YYSymbolStack must be negative\n" unless $b < 0;
+
+  my $stack = $self->{STACK};
+  my $bottom = -@{$stack};
+  unless (looks_like_number($a)) {
+    # $a is a string: search from the top to the bottom for $a. Return empty list if not found
+    # $b must be a negative number
+    # $b must be a negative number
+    my $p = $b;
+    while ($p >= $bottom) {
+      last if (defined($stack->[$p][2]) && ($stack->[$p][2] eq $a));
+      $p--;
+    }
+    return () if $p < $bottom;
+    $a = $p;
+  }
+  # If positive, $a is an offset from the bottom of the stack 
+  $a = $bottom+$a if $a >= 0;
+  
+  my @a = map { $self->YYSymbol($_) or '' } $a..$b;
+   
+  return @a                          unless defined $filter;          # no filter
+  return (grep { $filter->{$_} } @a) if reftype($filter) && (reftype($filter) eq 'CODE');   # sub
+  return (grep  /$filter/, @a)       if reftype($filter) && (reftype($filter) eq 'SCALAR'); # regexp
+  return (grep { $_ eq $filter } @a);                                  # string
+}
+
 #Note that for loading debugging version of the driver,
 #this file will be parsed from 'sub _Parse' up to '}#_Parse' inclusive.
 #So, DO NOT remove comment at end of sub !!!
@@ -1373,6 +1522,7 @@ sub _Parse {
      = @$self{ 'RULES', 'STATES', 'LEX', 'ERROR' };
   my($errstatus,$nberror,$token,$value,$stack,$check,$dotpos)
      = @$self{ 'ERRST', 'NBERR', 'TOKEN', 'VALUE', 'STACK', 'CHECK', 'DOTPOS' };
+
 
 #DBG> my($debug)=$$self{DEBUG};
 #DBG> my($dbgerror)=0;
@@ -1390,7 +1540,7 @@ sub _Parse {
   $$errstatus=0;
   $$nberror=0;
   ($$token,$$value)=(undef,undef);
-  @$stack=( [ 0, undef ] );
+  @$stack=( [ 0, undef, undef ] );
   $$check='';
 
     while(1) {
@@ -1403,9 +1553,9 @@ sub _Parse {
 #DBG>   $debug & 0x2
 #DBG> and print STDERR "In state $stateno:\n";
 #DBG>   $debug & 0x08
-#DBG> and print STDERR "Stack:[".
-#DBG>          join(',',map { $$_[0] } @$stack).
-#DBG>          "]\n";
+#DBG> and print STDERR "Stack: ".
+#DBG>          join('->',map { defined($$_[2])? "'$$_[2]'->".$$_[0] : $$_[0] } @$stack).
+#DBG>          "\n";
 
 
         if  (exists($$actions{ACTIONS})) {
@@ -1455,7 +1605,7 @@ sub _Parse {
         };
 
 
-                push(@$stack,[ $act, $$value ]);
+                push(@$stack,[ $act, $$value, $$token ]);
 
           $$token ne '' #Don't eat the eof
         and $$token=$$value=undef;
@@ -1537,7 +1687,7 @@ sub _Parse {
 #DBG>     };
 
           push(@$stack,
-                     [ $$states[$$stack[-1][0]]{GOTOS}{$lhs}, $semval ]);
+                     [ $$states[$$stack[-1][0]]{GOTOS}{$lhs}, $semval, $lhs ]);
                 $$check='';
                 $self->{CURRENT_LHS} = undef;
                 next;
@@ -1618,7 +1768,7 @@ sub _Parse {
 #DBG>            $$states[$$stack[-1][0]]{ACTIONS}{error}.
 #DBG>            ".\n";
 
-    push(@$stack, [ $$states[$$stack[-1][0]]{ACTIONS}{error}, undef ]);
+    push(@$stack, [ $$states[$$stack[-1][0]]{ACTIONS}{error}, undef, 'error' ]);
 
     }
 

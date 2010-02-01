@@ -27,7 +27,7 @@ SKIP: {
 my $begideb = quotemeta(<< 'BEGDEB');
 ----------------------------------------
 In state 0:
-Stack:[0]
+Stack: 0
 Need token. Got >D<
 Shift and go to state 4.
 BEGDEB

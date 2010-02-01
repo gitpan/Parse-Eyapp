@@ -15,12 +15,8 @@ my $grammar = q{
   %tree           # Let us build an abstract syntax tree ...
 
 
-  %lexer {
-        m{\G\s+}gc;
-        m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
-        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
-        m{\G(.)}gcs and return($1,$1);
-      }
+  %token NUM = /([0-9]+(?:\.[0-9]+)?)/
+  %token VAR = /([A-Za-z][A-Za-z0-9_]*)/
 
   %%
   line: 

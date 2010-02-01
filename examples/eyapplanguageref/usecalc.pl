@@ -3,7 +3,7 @@ use strict;
 use Calc;
 
 my $parser = Calc->new();
-$parser->input(\<<'EOI'
+$parser->input(<<'EOI'
 a = 2*3       # 1: 6
 d = 5/(a-6)   # 2: division by zero
 b = (a+1)/7   # 3: 1

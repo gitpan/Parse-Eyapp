@@ -10,7 +10,4 @@ S:      'c'+  'd'+
               print Dumper($_[2]);
            } 
 ;
-
 %%
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);

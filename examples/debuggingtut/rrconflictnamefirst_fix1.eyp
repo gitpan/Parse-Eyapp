@@ -1,10 +1,10 @@
-%token VAR ',' ':'
-
 %{
 =head1 SYNOPSIS
 
 This is a modification of the example in rrconflictnamefirst.eyp.
 That is an example of a non ambiguous grammar with a reduce-reduce conflict.
+The main difference here is the introduction of the syntactic variable 
+typeafter
 
 Compile it with:
 
@@ -12,9 +12,7 @@ Compile it with:
 
 run it with this options:
 
-            ./rrconflictnamefirst_fix1.pm -t
-
-Try input "a,b:c d:e," then press CTRL-D (Unix) or CTRL-Z (Windows) to finish.
+            ./rrconflictnamefirst_fix1.pm -t -i -m 1 -c 'a,b:c d:e,'
 
 See also:
 
@@ -29,10 +27,15 @@ offer other solutions to the problem.
 
 =cut
 
-use base q{Tail};
-$Parse::Eyapp::Node::INDENT = 1;
-
 %}
+
+%lexer {
+      m{\G([ \t\n]*(\#.*)?\s*)}gc and $self->tokenline($1 =~ tr/\n//);
+
+      m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM', $1);
+      m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR', $1);
+      m{\G(.)}gc                     and return ($1,    $1);
+}
 
 %namingscheme { \&give_rhs_name }
 
@@ -63,7 +66,4 @@ name_list:
 
 __PACKAGE__->main('Try input "a,b:c d:e," then press CTRL-D (Unix) or CTRL-Z (Windows) to finish: ') unless caller();
 
-sub TERMINAL::info {
-  $_[0]->{attr}[0];
-}
 

@@ -1,18 +1,4 @@
 %%
-S:  'a' { $_[1]x4 }.mid 'a' { print "$_[2], $mid, $_[3]\n"; }
+S:  'a' { $_[1]x4 }.mid 'a' { print "\n<<$_[2], $mid, $_[3]>>\n"; }
 ;
 %%
-
-use base q{Parse::Eyapp::TailSupport};
-
-__PACKAGE__->lexer(sub {
-    my($parser)=shift;
-
-    for (${$parser->input}) {
-        s/^[ \t\n]//;
-        s/^(.)//s and return($1,$1);
-        return ('', undef);
-    }
-  }
-);
-

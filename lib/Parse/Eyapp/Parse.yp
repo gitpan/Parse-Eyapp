@@ -23,10 +23,13 @@ my $syms;
 my $head;    # list of texts inside header sections
 my $tail;
 my $token;
-my $term;
+my $term;    # hash ref. key: token, value: an array describing the assoc and priority { '-' => [ 'LEFT' 1 ], '*' => [ 'LEFT' 2 ], }
+my $termdef; # token definitions. key is token, value is regexp
+my $whites;  # string with the code for white spaces (when automatic generated lexer)
+my $lexer;   # boolean: true if %lexer was used
 my $nterm;
 my $rules;
-my $precterm;
+my $precterm; # hash ref. key token used in %prec. value: priority
 my $start;
 my $nullable;
 my $semantic;
@@ -47,7 +50,7 @@ my $strict = 0; # When true, all tokens must be declared or a warning will be is
 my $nocompact; # Do not compact action tables. No DEFAULT field for "STATES"
 
 my %nondeclared; # Potential non declared token identifiers appearing in the program
-my @conflict;    # List of [conflict name, code handler]
+my %conflict;    # Hash of conflict name => { codeh => 'code handler', line => #line, #prodnumber1 => [pos1, pos2], #prodnumber2 => [pos1,pos2,pos3], ... }
 
 sub not_an_id {
   my $id = shift;
@@ -183,8 +186,7 @@ sub process_production {
   for my $s (0..$#$rhs) {
       my($what,$value)=@{$$rhs[$s]};
 
-          $what eq 'CODE'
-      and do { # TODO: modify name scheme: RULE_POSITION
+      if ($what eq 'CODE') { # TODO: modify name scheme: RULE_POSITION
           my($tmplhs)='@'.$position."-$s";
 
           if ($value) {
@@ -206,7 +208,12 @@ sub process_production {
           push(@$rules,[ $tmplhs, [], undef, undef, $value ]);
           push(@newrhs, $tmplhs);
           next;
-      };
+      }
+      elsif ($what eq 'CONFLICTHANDLER') {
+        my $ch = $value->[0];
+        push @{$conflict{$ch}{production}{-$position}}, $s; 
+      }
+      
       push(@newrhs, $$value[0]);
   }
   return \@newrhs;
@@ -250,13 +257,13 @@ sub make_lexer {
 my $lexertemplate = << 'ENDOFLEXER';
 __PACKAGE__->YYLexer( 
   sub { # lexical analyzer
-    my $self = shift; 
+    my $self = $_[0]; 
     for (${$self->input()}) {  # contextualize
 #line <<line>> "<<filename>>"
       <<code>>       
 <<end_user_code>>
       return ('', undef) if ($_ eq '') || (defined(pos($_)) && (pos($_) >= length($_)));
-      die("Error at the end of lexical analyzer. Line: <<errline>>. File: <<filename>>. No regexp matched.\n");
+      die("Error inside the lexical analyzer. Line: <<errline>>. File: <<filename>>. No regexp matched.\n");
     } 
   } # end lexical analyzer
 );
@@ -281,6 +288,7 @@ ENDOFLEXER
 %token EXPECT        /* is %expect */
 %token HEADCODE      /* is %{ Perl code ... %} */
 %token IDENT         /* is [A-Za-z_][A-Za-z0-9_]* */
+%token LABEL         /* is :[A-Za-z0-9_]+ */
 %token LITERAL       /* is a string literal like 'hello' */
 %token METATREE      /* is %metatree */
 %token NAME          /* is %name */             
@@ -356,10 +364,10 @@ decls:  decls decl  #default action
 ;
 
 decl:  '\n'                 #default action
-    |   SEMANTIC typedecl symlist '\n'
+    |   SEMANTIC typedecl toklist '\n'
             {
                 for (@{$_[3]}) {
-                    my($symbol,$lineno)=@$_;
+                    my($symbol,$lineno, $def)=@$_;
 
                         exists($$token{$symbol})
                     and do {
@@ -375,7 +383,7 @@ decl:  '\n'                 #default action
                 }
                 undef
             }
-    |   SYNTACTIC typedecl symlist '\n'
+    |   SYNTACTIC typedecl toklist '\n'
             {
                 for (@{$_[3]}) {
                     my($symbol,$lineno)=@$_;
@@ -394,10 +402,10 @@ decl:  '\n'                 #default action
                 }
                 undef
             }
-    |   TOKEN typedecl symlist '\n'
+    |   TOKEN typedecl toklist '\n'
             {
                 for (@{$_[3]}) {
-                    my($symbol,$lineno)=@$_;
+                    my($symbol,$lineno, $def)=@$_;
 
                         exists($$token{$symbol})
                     and do {
@@ -409,6 +417,7 @@ decl:  '\n'                 #default action
                     };
                     $$token{$symbol}=$lineno;
                     $$term{$symbol} = [ ];
+                    $$termdef{$symbol} = $def if $def;
                 }
                 undef
             }
@@ -442,6 +451,26 @@ decl:  '\n'                 #default action
               $prefix=$_[1][0]; 
               undef 
             }
+    |   WHITES CODE '\n'                
+            {
+              push @{$_[2]}, 'CODE';
+              $whites = $_[2]; 
+            }
+    |   WHITES REGEXP '\n'                
+            {
+              push @{$_[2]}, 'REGEXP';
+              $whites = $_[2]; 
+            }
+    |   WHITES '=' CODE '\n'                
+            {
+              push @{$_[3]}, 'CODE';
+              $whites = $_[3]; 
+            }
+    |   WHITES '=' REGEXP '\n'                
+            {
+              push @{$_[3]}, 'REGEXP';
+              $whites = $_[3]; 
+            }
     |   NAMINGSCHEME CODE '\n'
             {
               $namingscheme = $_[2];
@@ -453,6 +482,7 @@ decl:  '\n'                 #default action
     |   LEXER CODE '\n'                 { 
                                            my ($code, $line) = @{$_[2]};
                                            push @$head, [ make_lexer($code, $line), $line]; 
+                                           $lexer = 1;
                                            undef 
                                          } 
     |   TREE '\n'    
@@ -499,7 +529,24 @@ decl:  '\n'                 #default action
             {
               my ($name, $code) = @_[2,3];
               my ($cn, $line) = @$name;
-              push @conflict, [$name, $code];
+
+
+              my ($c, $li) = @$code;
+
+              # TODO: this must be in Output
+              my $conflict_header = <<"CONFLICT_HEADER";
+  my \$self = \$_[0];
+  for (\${\$self->input()}) {  
+#line $li "$filename" 
+CONFLICT_HEADER
+              $c =~ s/^/$conflict_header/; # }
+
+              # {
+              # follows the closing curly bracket of the for .. to contextualize!!!!!!                 v
+              $c =~ s/$/\n################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################\n  }\n/;
+              #$code->[0] = $c;
+              $conflict{$cn}{codeh} = $c;
+              $conflict{$cn}{line} = $line;
 
               $$syms{$cn} = $line;
               $$nterm{$cn} = undef;
@@ -525,6 +572,23 @@ symlist:    symlist symbol  { push(@{$_[1]},$_[2]); $_[1] }
     |       symbol          { [ $_[1] ] }
 ;
 
+toklist:    toklist tokendef        { push(@{$_[1]},$_[2]); $_[1] }
+    |       tokendef                { [ $_[1] ] }
+;
+
+tokendef:   symbol '=' REGEXP    { 
+                                    push @{$_[3]}, 'REGEXP';
+                                    push @{$_[1]}, $_[3]; 
+                                    $_[1] 
+                                 } 
+    |       symbol '=' CODE      { 
+                                    push @{$_[3]}, 'CODE';
+                                    push @{$_[1]}, $_[3]; 
+                                    $_[1] 
+                                 } 
+    |       symbol               
+;
+
 identlist:  identlist ident { push(@{$_[1]},$_[2]); $_[1] }
     |       ident           { [ $_[1] ] }
 ;
@@ -542,10 +606,12 @@ body:
 
             # Add conflict handlers
             # [ left hand side,   right hand side,  precedence, rulename, code, ]
-            for my $c (@conflict) { 
-              my ($A, $code) = @$c;
-              my $rhss = [ rhs([], name => $A, code => $code->[0]), ];
-              _AddRules($A, $rhss);
+            for my $A (keys %conflict) { 
+              my $lhs = [$A, $conflict{$A}{line}];
+              my $code = $conflict{$A}{codeh};
+              my $rhss = [ rhs([], name => $lhs, code => $code), ];
+              _AddRules($lhs, $rhss);
+              delete $conflict{$A}{codeh};
             }
 
             # # If exists an @identifiers that is not a nterm and not a term is a warn
@@ -655,7 +721,7 @@ rhseltwithid :
 
 rhselt:     symbol    { [ 'SYMB', $_[1] ] }
     | code    { [ 'CODE', $_[1] ] }
-    | DPREC ident { [ 'SYMB', $_[2] ] }
+    | DPREC ident { [ 'CONFLICTHANDLER', $_[2] ] }
     | '(' optname rhs ')' 
         { 
            my ($name, $rhs) = @_[2, 3];
@@ -787,7 +853,13 @@ optname: /* empty */
 
            $_[2] 
          }
-       ;
+       | NAME LABEL
+         {  # LABELs are used for dynamic conflict resolution
+                      # save bypass status
+           $_[2][2] = $_[1][0];
+           $_[2] 
+         }
+;
 
 prec: PREC symbol
         {
@@ -865,6 +937,7 @@ my %headertoken = (
   metatree => 'METATREE',
   nocompact => 'NOCOMPACT',
   conflict => 'CONFLICT',
+  whites    => 'WHITES',
 );
 
 # Used for <%name LIST_of_STH +>, <%name OPT_STH ?>
@@ -902,6 +975,16 @@ my $BODYWHITESPACES = qr{
     | \#[^\n]*   # Perl like comments
     |  /\*.*?\*/ # C like comments
   )+
+}xs;
+
+my $REGEXP = qr{
+   /             # opening slash
+   (?:[^/\\]|    # an ordinary character
+        \\\\|    # escaped \ i.e. \\
+         \\/|    # escaped slash i.e. \/
+          \\     # escape i.e. \
+  )*?            # non greedy repetitions
+  /              # closing slash
 }xs;
 
 sub _Lexer {
@@ -967,14 +1050,11 @@ sub _Lexer {
         return($1, [ $1, $lineno[0] ]);
     };
 
-        $$input=~/\G\s*{/gc   # }
-    and do {
-        return ('CODE', &slurp_perl_code());
-    };
+        $$input=~/\G\s*{/gc and return ('CODE', &slurp_perl_code());  # }
 
     if($lexlevel == 0) {# In head section
-            $$input=~/\G%(left|right|nonassoc)/gc
-        and return('ASSOC',[ uc($1), $lineno[0] ]);
+
+        $$input=~/\G%(left|right|nonassoc)/gc and return('ASSOC',[ uc($1), $lineno[0] ]);
 
             $$input=~/\G%{/gc
         and do {
@@ -987,8 +1067,7 @@ sub _Lexer {
             return('HEADCODE',[ $code, $lineno[0] ]);
         };
 
-            $$input=~/\G%prefix\s+([A-Za-z_][A-Za-z0-9_:]*::)/gc
-        and return('PREFIX',[ $1, $lineno[0] ]);
+        $$input=~/\G%prefix\s+([A-Za-z_][A-Za-z0-9_:]*::)/gc and return('PREFIX',[ $1, $lineno[0] ]);
 
             $$input=~/\G%(tree((?:\s+(?:bypass|alias)){0,2}))/gc
         and do {
@@ -996,36 +1075,32 @@ sub _Lexer {
           return('TREE',[ $treeoptions, $lineno[0] ])
         };
 
-            $$input=~/\G%(?:(semantic|syntactic)\s+token)/gc
-        and return(uc($1),[ undef, $lineno[0] ]);
+        $$input=~/\G%(?:(semantic|syntactic)\s+token)\b/gc and return(uc($1),[ undef, $lineno[0] ]);
 
-            $$input=~/\G%(lexer|defaultaction|union)\s*/gc
-        and return(uc($1),[ undef, $lineno[0] ]);
+        $$input=~/\G%(lexer|defaultaction|union)\b\s*/gc   and return(uc($1),[ undef, $lineno[0] ]);
 
-            $$input=~/\G([0-9]+)/gc
-        and return('NUMBER',[ $1, $lineno[0] ]);
+        $$input=~/\G([0-9]+)/gc   and return('NUMBER',[ $1, $lineno[0] ]);
 
-            $$input=~/\G%expect-rr/gc
-        and do {
-           return('EXPECTRR',[ undef, $lineno[0] ]);
-        };
+        $$input=~/\G%expect-rr/gc and return('EXPECTRR',[ undef, $lineno[0] ]);
 
-            $$input=~/\G%($ID)/gc
-        and do {
-           return($headertoken{$1},[ undef, $lineno[0] ]);
-        };
+        $$input=~/\G%($ID)/gc     and return($headertoken{$1},[ undef, $lineno[0] ]);
+
+        $$input=~/\G($REGEXP)/gc  and return('REGEXP',[ $1, $lineno[0] ]);
+
     }
     else {  # In rule section
 
             # like in <%name LIST_of_STH *>
             # like in <%name LIST_of_STH +>
             # like in <%name OPT_STH ?>
+            # returns STAR or PLUS or OPTION
             $$input=~/\G(?:<\s*%name\s*($ID)\s*)?([*+?])\s*>/gc
         and return($listtoken{$2},[ $1, $lineno[0] ]);
 
             # like in %name LIST_of_STH *
             # like in %name LIST_of_STH +
             # like in %name OPT_STH ?
+            # returns STAR or PLUS or OPTION
             $$input=~/\G(?:%name\s*($ID)\s*)?([*+?])/gc
         and return($listtoken{$2},[ $1, $lineno[0] ]);
 
@@ -1162,6 +1237,9 @@ sub _AddRules {
     and _SyntaxError(0,"More than one empty rule for symbol $lhs",$lineno);
 }
 
+# This sub is called fro Parse::Eyapp::Grammar::new
+#                0        1         2       3    4
+# Args: object, input, fistline, filename, tree, nocompact
 sub Parse {
     my($self)=shift;
 
@@ -1176,6 +1254,18 @@ sub Parse {
     my $firstline = $_[1];
     $filename = $_[2] or croak "Unknown input file";
     @lineno= $firstline? ($firstline, $firstline) : (1,1);
+
+    $tree = $_[3];
+    if ($tree) { # factorize!
+      $buildingtree = 1;
+      $bypass = 0;
+      $alias = 0;
+      $defaultaction = [ ' goto &Parse::Eyapp::Driver::YYBuildAST ', 0]; 
+      $namingscheme = [ '\&give_rhs_name', 0];
+    }
+
+    $nocompact = $_[4];
+
     $nberr=0;
     $prec=0;
     $labelno=0;
@@ -1186,6 +1276,7 @@ sub Parse {
     $syms={};
     $token={};
     $term={};
+    $termdef={};
     $nterm={};
     $rules=[ undef ];   #reserve slot 0 for start rule
     $precterm={};
@@ -1194,6 +1285,7 @@ sub Parse {
     $nullable={};
     $expect=0;
     $semantic = {};
+    $strict = 0;
 
     pos($$input)=0;
 
@@ -1209,6 +1301,11 @@ sub Parse {
               'PREFIX',
               'NAMINGSCHEME',
               'NOCOMPACT',
+              'CONFLICTHANDLERS',
+              'TERMDEF',
+              'WHITES',
+              'LEXERISDEFINED',
+              'STRICT',
             }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
                $nullable, $precterm, $syms, $start, $expect, 
@@ -1216,6 +1313,11 @@ sub Parse {
                $prefix,
                $namingscheme,
                $nocompact,
+               \%conflict,
+               $termdef,
+               $whites,
+               $lexer,
+               $strict,
             );
 
     undef($input);
@@ -1231,6 +1333,8 @@ sub Parse {
     undef($syms);
     undef($token);
     undef($term);
+    undef($termdef);
+    undef($whites);
     undef($nterm);
     undef($rules);
     undef($precterm);
@@ -1241,6 +1345,7 @@ sub Parse {
     undef($defaultaction);
     undef($semantic);
     undef($buildingtree);
+    undef($strict);
 
     $parsed
 }

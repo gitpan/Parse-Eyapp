@@ -15,14 +15,24 @@ eyapp - A Perl front-end to the Parse::Eyapp module
 
   eyapp [options] grammar[.yp]
 
-  eyapp -V               # Produce .output file
+  eyapp -V                      # Produce .output file
 
-  eyapp -h               # help
+  eyapp -h                      # help
 
-  eyapp -c grammar.eyp   # Strip semantic actions
+  eyapp -c grammar.eyp          # Strip semantic actions
 
-  eyapp -vc grammar.eyp  # Strip comments also
+  eyapp -vc grammar.eyp         # Strip comments also
 
+  eyapp  -b shebang grammar.eyp #  Adds '#!<shebang>' as the very first line of the output file
+
+  eyapp  -B prompt grammar.eyp  #  Adds a modulino call at the end
+
+  eyapp  -C grammar.eyp         # An abbreviation for the combined use of -b ''  -B ''
+
+  eyapp  -T grammar.eyp         #  Equivalent to %tree
+
+  eyapp  -N grammar.eyp         # Equivalent to %nocompact. Do not compact action tables. 
+                                  Use to have more accurate information when there are conflicts
 
 =head1 DESCRIPTION
 
@@ -100,10 +110,30 @@ This will output a file called F<myscript.pl> whose very first line is:
 The argument is mandatory, but if you specify an empty string, the value
 of I<$Config{perlpath}> will be used instead.
 
+=item I<-B prompt>   
+
+Adds a modulino call '__PACKAGE->main(<prompt>) unless caller();' 
+as the very last line of the output file. The argument is mandatory.
+
+
+=item  I<-C grammar.eyp>         
+
+An abbreviation for the combined use of I<-b ''> and  I<-B ''>
+
+=item I<-T grammar.eyp>         
+
+Equivalent to C<%tree>.
+
+
+=item I<-N grammar.eyp>         
+
+Equivalent to %nocompact. Do not compact action tables. 
+Use to have more accurate information when there are conflicts
+
 =item I<grammar>
 
 The input grammar file. If no suffix is given, and the file does not exists,
-an attempt to open the file with a suffix of  F<.yp> is tried before exiting.
+an attempt to open the file with a suffix of  F<.eyp> is tried before exiting.
 
 =item I<-V>
 
@@ -175,19 +205,22 @@ use Parse::Eyapp;
 
 use strict;
 
-our ( $opt_n, $opt_m, $opt_V, $opt_v, $opt_o, $opt_h, $opt_s, $opt_t, $opt_b, $opt_c,);
+our ( $opt_n, $opt_m, $opt_V, $opt_v, $opt_o, $opt_h, $opt_s, $opt_t, $opt_b, $opt_c, $opt_B, $opt_C);
+our $opt_T; # build AST
+our $opt_N; # Do not compact action tables. No DEFAULT field for "STATES"
 
 sub Usage {
 	my($prog)=(fileparse($0,'\..*'))[0];
 	die <<EOF;
 
-Usage:	$prog [options] grammar[.yp]
+Usage:	$prog [options] grammar[.eyp]
   or	$prog -V
   or	$prog -h
 
     -m module   Give your parser module the name <module>
                 default is <grammar>
     -v          Create a file <grammar>.output describing your parser
+                Implies option -N
     -s          Create a standalone module in which the driver is included
     -n          Disable source file line numbering embedded in your parser
     -o outfile  Create the file <outfile> for your parser module
@@ -197,21 +230,25 @@ Usage:	$prog [options] grammar[.yp]
                 module file.  Default is to use internal template defined
                 in Parse::Eyapp::Output
     -b shebang  Adds '#!<shebang>' as the very first line of the output file
-
-    grammar     The grammar file. If no suffix is given, and the file
-                does not exists, .yp is added
-
+    -B prompt   Adds a modulino call '__PACKAGE->main(<prompt>) unless caller();' 
+                as the very last line of the output file
+    -C          An abbreviation for the combined use of -b ''  -B ''
+    -T          Equivalent to %tree
+    -N          Equivalent to %nocompact. Do not compact action tables. Use when conflicts
     -c grammar  Displays the "clean" grammar without actions     
-
+    -vc grammar Displays the "clean" grammar without actions. Strip comments also
     -V          Display current version of Parse::Eyapp and gracefully exits
     -h          Display this help screen
+
+    grammar     The grammar file. If no suffix is given, and the file
+                does not exists, .eyp is added
 
 EOF
 }
 
 my($nbargs)=@ARGV;
 
-	getopts('Vhvsnc:b:m:t:o:')
+	getopts('CTVNhvsnc:b:B:m:t:o:')
 or	Usage;
 
    (  ($opt_V and $nbargs > 1)
@@ -274,14 +311,18 @@ or	do {
 	or	die "Cannot open $filename for reading.\n";
 };
 
-my($parser)=new Parse::Eyapp(inputfile => $filename);
+my @args = (inputfile => $filename, );
+
+push @args, (tree => 1) if $opt_T;
+push @args, (nocompact => 1) if ($opt_N or $opt_v);
+
+my ($parser) = Parse::Eyapp->new(@args);
 
 my($warnings)=$parser->Warnings();
 
-	$warnings !~ m{^\s*$} 
-and	print STDERR "$warnings\n";
+$warnings !~ m{^\s*$} and print STDERR "$warnings\n";
 
-$parser->outputtables($path, $base) if $opt_v or $warnings;
+$parser->outputtables($path, $base) if $opt_v;
 
 my($outfile)="$path$base.pm";
 my($package)="$base";
@@ -303,6 +344,11 @@ $opt_n = $opt_n ? 0 : 1;
 	open(OUT,">$outfile")
 or	die "Cannot open $outfile for writing.\n";
 
+    defined($opt_C) and do {
+      $opt_b = '' unless defined $opt_b;
+      $opt_B = '' unless defined $opt_B;
+    };
+
     defined($opt_b)
 and do {
         $opt_b
@@ -315,6 +361,7 @@ my $text = $parser->Output(
                           standalone => $opt_s,
                           linenumbers => $opt_n,
                           template    => $opt_t,
+                          modulino    => $opt_B,
                           #prefixname => 'R::',
                          );
 compute_lines(\$text, $outfile, $Parse::Eyapp::Output::pattern) if $opt_n;

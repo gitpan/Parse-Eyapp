@@ -15,26 +15,19 @@ S:      'c'+  'd'+
 %%
 
 sub _Error {
-        exists $_[0]->YYData->{ERRMSG}
-    and do {
-        print $_[0]->YYData->{ERRMSG};
-        delete $_[0]->YYData->{ERRMSG};
-        return;
-    };
-    print "Syntax error.\n";
+  print "Syntax error.\n";
 }
 
 sub _Lexer {
     my($parser)=shift;
 
-        $parser->YYData->{INPUT}
-    or  $parser->YYData->{INPUT} = <STDIN>
-    or  return('',undef);
+        ${$parser->input()}
+    or  $parser->input(scalar(<STDIN>));
 
-    $parser->YYData->{INPUT}=~s/^[ \t\n]//;
-
-    for ($parser->YYData->{INPUT}) {
+    for (${$parser->input}) {
+        s/^[ \t\n]+//;
         s/^(.)//s and return($1,$1);
+        return('',undef);
     }
 }
 

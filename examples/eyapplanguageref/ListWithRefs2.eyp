@@ -1,4 +1,3 @@
-# ListWithRefs2.eyp
 %semantic token 'c' 
 %{
 use Data::Dumper;
@@ -28,11 +27,7 @@ D: 'd'.d
 
 %%
 
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
-
 sub Run {
   my ($self) = shift;
   return $self->YYParse( yybuildingtree => 1 );
 }
-

@@ -6,13 +6,14 @@ This grammar has an unsolved shift-reduce conflict.
 Be sure C<DebugTail.pm> is reachable.
 Compile it with 
 
-      eyapp -b '' Debug.eyp
+      eyapp -C Debug.eyp
 
 See the C<Debug.output> file generated.
 Execute the generated modulino with:
 
       ./Debug.pm -d  # to activate debugging
       ./Debug.pm -h  # for help
+      ./Debug.pm -d -c  'D; S' 
 
 The generated parser will not recognize any input, since its shifts forever.
 Try input C<'D; D; S'>.
@@ -25,12 +26,14 @@ Try input C<'D; D; S'>.
 
 =cut
 
-our $VERSION = '0.01';
-use base q{DebugTail}; 
-
 %}
 
 %token D S
+
+%lexer {
+    /\G(\s+)/gc;
+    return ($1,$1) if /\G(.)/gc;
+}
 
 %%
 p:
@@ -50,4 +53,3 @@ ss:
 
 %%
 
-__PACKAGE__->main('Provide a statement like "D; D; S" and press <CR><CTRL-D>: ') unless caller;

@@ -48,8 +48,8 @@ my(%known_options)= (
         1       =>  "Create a standalone parser"
     },
     buildingtree   =>  {
-        0       =>  "Not building AST",
-        1       =>  "Building AST"
+        0       =>  "Not building AST (for lists)",
+        1       =>  "Building AST (for lists)"
     },
     input       =>  {
         ''      =>  "Input text of grammar"
@@ -59,6 +59,17 @@ my(%known_options)= (
     },
     prefixname   =>  {
         ''      =>  "Prefix for the Tree Classes"
+    },
+    modulino   =>  {
+        ''      =>  "Produce modulino code at the end of the generated module"
+    },
+    tree  =>  {
+        0       =>  "don't build AST",
+        1       =>  "build AST"
+    },
+    nocompact  =>  {
+        0       =>  "Do not compact action tables. No DEFAULT field for 'STATES'",
+        1       =>  "Compact action tables"
     },
 );
 
@@ -74,6 +85,9 @@ my(%default_options)= (
     template => undef,
     shebang => undef,
     prefixname => '',
+    modulino => undef,
+    tree => undef,
+    nocompact => 0,
 );
 
 my(%actions)= (
@@ -119,7 +133,7 @@ sub _SetOption {
     or  croak "Unknown option: '$key'";
 
     if(exists($known_options{$key}{lc($value)})) {
-        $value=lc($value);
+        $value=lc($value) if defined($value);
     }
     elsif(not exists($known_options{$key}{''})) {
         croak "Invalid value '$value' for option '$key'";

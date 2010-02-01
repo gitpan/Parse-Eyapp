@@ -10,13 +10,13 @@ http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut)
 Be sure C<DebugTail.pm> is reachable
 compile it with 
 
-      eyapp -b '' DebugDynamicResolution.eyp
+      eyapp -C DebugDynamicResolution.eyp
 
 Execute the generated modulino with:
 
-      ./DebugDynamicResolution.pm -t -nos -info ''
+       ./DebugDynamicResolution.pm -t -i -c 'D;D;S;S'
 
-Try input "D;D;D; S;S;S".
+It will output s.t. like C<PROG(D(TERMINAL[D],D[D]),SS(TERMINAL[S],S[S]))>
 
 =head1 See also
 
@@ -24,22 +24,18 @@ Try input "D;D;D; S;S;S".
 
 =cut
 
-our $VERSION = '0.01';
-use base q{DebugTail}; 
 %}
 
 %token D S
 
-%conflict LAST_OR_MORE {
-        my $self = shift;
+%lexer {
+    /\G(\s+)/gc;
+    return ($1,$1) if /\G(.)/gc;
+}
 
-        if (${$self->input()} =~ m{^\s*;\s*S}) {
-          $self->YYSetReduce(';', 'D:LAST' )
-        }
-        else {
-          $self->YYSetShift(';')
-        }
-      }
+%conflict LAST_OR_MORE {
+  /(?=\G\s*;\s*S)/ ?  $self->YYSetReduce(';', 'D:LAST' ) :  $self->YYSetShift(';') 
+}
 
 %tree bypass
 
@@ -67,8 +63,3 @@ ss:
 ;
 
 %%
-
-__PACKAGE__->lexer( \&DebugTail::lex); 
-
-my $prompt = 'Provide a statement like "D;D; S;S" and press <CR><CTRL-D>: ';
-__PACKAGE__->main($prompt) unless caller;

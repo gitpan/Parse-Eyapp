@@ -578,85 +578,65 @@ the semantic action with it:
 Middle production actions can refer to the attributes on its left. They count
 as one of the components of the production. Thus the program:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n intermediateaction2.yp
-     1  %%
-     2  S:  'a' { $_[1]x4 }.mid 'a' { print "$_[2], $mid, $_[3]\n"; }
-     3  ;
-     4  %%
-     5
-     6  use base q{Parse::Eyapp::TailSupport};
-     7
-     8  __PACKAGE__->lexer(sub {
-     9      my($parser)=shift;
-    10
-    11      for (${$parser->input}) {
-    12          s/^[ \t\n]//;
-    13          s/^(.)//s and return($1,$1);
-    14          return ('', undef);
-    15      }
-    16    }
-    17  );
+  ~/LEyapp/examples/eyapplanguageref$ cat intermediateaction2.yp 
+  %%
+  S:  'a' { $_[1]x4 }.mid 'a' { print "\n<<$_[2], $mid, $_[3]>>\n"; }
+  ;
+  %%
+
 
 
 The auxiliar syntactic variables are named C<@#position-#order> where C<#position>
 is the position of the action in the rhs and C<order> is an ordinal number. See
 the C<.output> file for the former example:
 
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ eyapp -v intermediateaction2.yp
- pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '1,5p' intermediateaction2.output
- Rules:
- ------
- 0:      $start -> S $end
- 1:      S -> 'a' @1-1 'a'
- 2:      @1-1 -> /* empty */
+  ~/LEyapp/examples/eyapplanguageref$ eyapp -v intermediateaction2.yp
+  ~/LEyapp/examples/eyapplanguageref$ sed -ne '1,5p' intermediateaction2.output
+  Rules:
+  ------
+  0:  $start -> S $end
+  1:  S -> 'a' @1-1 'a'
+  2:  @1-1 -> /* empty */
 
-The program C<useintermediateaction2.pl> makes use of the generated parser:
+We can build an executable C<ia.pl> from the former grammar using C<eyapp> option C<-C>:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n useintermediateaction2.pl                                                      
-     1  #!/usr/bin/env perl                                                                                                          
-     2  use warnings;                                                                                                                
-     3  use strict;
-     4  use intermediateaction2;
-     5
-     6  unshift @ARGV, '--noslurp';
-     7  my $parser = intermediateaction2->new;
-     8  $parser->main("try input 'aa': ");
+  ~/LEyapp/examples/eyapplanguageref$ eyapp -C -o ia.pl intermediateaction2.yp 
 
-The C<main> method is provided by C<Parse::Eyapp::TailSupport>.
+The C<main>, error and lexer methods are provided by C<Parse::Eyapp>.
 When given input C<aa> the execution will produce as output C<aaaa, aaaa, a>. The option
-C<-d> used in the following execution activates the debug mode:
+C<-d> activates the debug mode, the option C<-c> tells the program to get the input from the command line::
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ./useintermediateaction2.pl -d
-  try input 'aa': aa
+  ~/LEyapp/examples/eyapplanguageref$ ./ia.pl -d -c 'aa'
   ----------------------------------------
   In state 0:
-  Stack:[0]
+  Stack: 0
   Need token. Got >a<
   Shift and go to state 2.
   ----------------------------------------
   In state 2:
-  Stack:[0,2]
+  Stack: 0->'a'->2
   Don't need token.
   Reduce using rule 2 (@1-1 --> /* empty */): Back to state 2, then go to state 4.
   ----------------------------------------
   In state 4:
-  Stack:[0,2,4]
+  Stack: 0->'a'->2->'@1-1'->4
   Need token. Got >a<
   Shift and go to state 5.
   ----------------------------------------
   In state 5:
-  Stack:[0,2,4,5]
+  Stack: 0->'a'->2->'@1-1'->4->'a'->5
   Don't need token.
-  Reduce using rule 1 (S --> a @1-1 a): aaaa, aaaa, a
+  Reduce using rule 1 (S --> a @1-1 a): 
+  <<aaaa, aaaa, a>>
   Back to state 0, then go to state 1.
   ----------------------------------------
   In state 1:
-  Stack:[0,1]
+  Stack: 0->'S'->1
   Need token. Got ><
   Shift and go to state 3.
   ----------------------------------------
   In state 3:
-  Stack:[0,1,3]
+  Stack: 0->'S'->1->''->3
   Don't need token.
   Accept.
 
@@ -887,15 +867,21 @@ confuse the driver with the I<error> token. Use a symbolic token instead.
 
 =head1 THE TAIL
 
-The tail section contains Perl code. Usually the lexical analyzer and the
-Error management subroutines go there. A better practice however is to isolate
-both subroutines in a module and use them in the grammar. An example of this is in
-files C<examples/eyapplanguageref/CalcUsingTail.eyp> (the grammar), 
-C<examples/eyapplanguageref/usecalcusingtail.pl> (the client program),
-and C<examples/eyapplanguageref/Tail.pm> (the module containing the lexical analyzer
-plus error handling and auxiliary subroutines).
+The tail section contains Perl code. Usually it is empty, but you
+can if you want put here your own lexical analyzer and 
+error management subroutines.
+An example of this is in
+files C<examples/eyapplanguageref/List3_tree_d_sem.yp> (the grammar)
+and C<use_list3_tree_d_dem.pl> (the client).
 
 =head2 The Lexical Analyzer
+
+By default a lexical analyzer is built from your 
+token definitions
+
+    %token NUM = /([0-9]+(?:\.[0-9]+)?)/
+
+you can, however write it explicitly.
 
 The Lexical Analyzer 
 is called each time the parser needs a new token.
@@ -903,53 +889,18 @@ It is called with only one argument (the parser object)
 and returns a pair 
 containing the next token and its associated attribute.
 
-The fact that is a method of the parser object means that 
-the parser
+The fact that is a method of the parser object means that the parser
 methods are accessible inside the lexical analyzer.
-Specially interesting is the C<$_[0]-E<gt>YYData> 
-method which provides access to the user data area.
 
 I<When the lexical analyzer reaches the end of input, it must return the
 pair> C<('', undef)>
 
-See below how to write a lexical analyzer (file C<examples/eyapplanguageref/Calc.eyp>):
-
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ sed -ne '48,$p' Calc.eyp | cat -n
-     1  %%
-     2  use base q{Parse::Eyapp::TailSupport};
-     3
-     4  __PACKAGE__->lexer( sub {
-     5      my $parser = shift;
-     6
-     7      for (${$parser->input}) {
-     8        m{\G[ \t]*(?:#.*)?}gc;
-     9        m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM',$1);
-    10        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR',$1);
-    11        m{\G\n}gc                      and do {
-    12                                          $parser->tokenline(1);
-    13                                          return ("\n", "\n")
-    14                                       };
-    15        m{\G(.)}gc                     and return ($1,$1);
-    16
-    17        return('',undef);
-    18      }
-    19    }
-    20  );
-    21
-    22  # In case is compiled with eyapp option -b
-    23  __PACKAGE__->main unless caller;
-
-
-The subroutine C<lexer> in C<Parse::Eyapp::TailSupport> sets the lexical analyzer 
-for the parser to the anonymous sub provided as argument.
-a closure. 
 
 =head2 The Error Report Subroutine
 
 The Error Report subroutine is also a parser attribute, 
-and must be defined. The module C<Parse::Eyapp::TailSupport>
-provides a convenient error handler that is used
-in the example in C<examples/Calc.eyp>:
+and must be defined. By default C<Parse::Eyapp>
+provides a convenient error handler. 
 
 See the L<Parse::Yapp> pages and elsewhere documentation
 on C<yacc> and C<bison> for more information.
@@ -1050,35 +1001,32 @@ a C<rhs> expression as in:
 
 The grammar:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat List3.yp
-  %semantic token 'c'
+  ~/LEyapp/examples/eyapplanguageref$ cat List3.yp 
+  %semantic token 'c' 
   %{
   use Data::Dumper;
+  $Data::Dumper::Indent = 1;
   %}
   %%
-  S:      'c'+  'd'+
-             {
+  S:      'c'+  'd'+ 
+             { 
                 print Dumper($_[1]);
                 print Dumper($_[2]);
-             }
+             } 
   ;
-
   %%
-  use base 'Tail';
-  __PACKAGE__->lexer(\&Tail::lex);
-
 
 Is equivalent to:
 
-  examples/eyapplanguageref$ eyapp -v List3.yp | head -9 List3.output
+  ~/LEyapp/examples/eyapplanguageref$ eyapp -v List3.yp; head -9 List3.output
   Rules:
   ------
-    0:      $start -> S $end
-    1:      PLUS-1 -> PLUS-1 'c'
-    2:      PLUS-1 -> 'c'
-    3:      PLUS-2 -> PLUS-2 'd'
-    4:      PLUS-2 -> 'd'
-    5:      S -> PLUS-1 PLUS-2
+  0:  $start -> S $end
+  1:  PLUS-1 -> PLUS-1 'c'
+  2:  PLUS-1 -> 'c'
+  3:  PLUS-2 -> PLUS-2 'd'
+  4:  PLUS-2 -> 'd'
+  5:  S -> PLUS-1 PLUS-2
 
 
 By default, the semantic action associated with a C<+> returns the lists of attributes
@@ -1113,24 +1061,19 @@ In such case the associated semantic action creates a node labelled
 
                      _PLUS_LIST
 
-whose children are the attributes associated with the items in the 
-plus list. 
-As it happens when using the C<%tree> directive, I<syntactic tokens> 
-are skipped.
+whose children are the attributes associated with the items in the plus list. 
+As it happens when using the C<%tree> directive, I<syntactic tokens> are skipped.
 
 When executing the example above but under the C<%tree> directive
-the output changes:
+the output changes. The C<-T> option tells the C<eyapp> compiler
+to introduce an implicit C<%tree> directive>:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ diff List3.yp List3_tree.yp
-  1a2
-  > %tree
-  14a16
-  >
+  ~/LEyapp/examples/eyapplanguageref$ eyapp -T List3.yp 
 
 If we now run the client program with input C<ccdd> we get
 a couple of syntax trees:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ./use_list3_tree.pl
+  ~/LEyapp/examples/eyapplanguageref$ ./use_list3.pl
   Try input 'ccdd': ccdd
   $VAR1 = bless( {
     'children' => [
@@ -1138,7 +1081,7 @@ a couple of syntax trees:
       bless( { 'children' => [], 'attr' => 'c', 'token' => 'c' }, 'TERMINAL' )
     ]
   }, '_PLUS_LIST' );
-  $VAR1 = bless( { 'children' => [] }, '_PLUS_LIST' ); 
+  $VAR1 = bless( { 'children' => [] }, '_PLUS_LIST' );
 
 The node associated with the list of C<d>s is empty since
 terminal C<d> wasn't declared semantic.
@@ -1161,35 +1104,31 @@ to assure the presence of the value in the lists of children of the node.
 Certainly you can use this property to prune parts of the tree.
 Consider the following example:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n ListWithRefs1.eyp
-     1  %semantic token 'c' 'd'
-     2  %{
-     3  use Data::Dumper;
-     4  $Data::Dumper::Indent = 1;
-     5  %}
-     6  %%
-     7  S:      'c'+  D+
-     8             {
-     9                print Dumper($_[1]);
-    10                print $_[1]->str."\n";
-    11                print Dumper($_[2]);
-    12                print $_[2]->str."\n";
-    13             }
-    14  ;
-    15
-    16  D: 'd'
-    17  ;
-    18
-    19  %%
-    20
-    21  use base 'Tail';
-    22  __PACKAGE__->lexer(\&Tail::lex);
-    23
-    24  sub Run {
-    25    my ($self) = shift;
-    26    return $self->YYParse( yybuildingtree => 1 );
-    27  }
+  ~/LEyapp/examples/eyapplanguageref$ cat ListWithRefs1.eyp 
+  %semantic token 'c' 'd'
+  %{
+  use Data::Dumper;
+  $Data::Dumper::Indent = 1;
+  %}
+  %%
+  S:      'c'+  D+ 
+             { 
+                print Dumper($_[1]);
+                print $_[1]->str."\n";
+                print Dumper($_[2]);
+                print $_[2]->str."\n";
+             } 
+  ;
 
+  D: 'd'
+  ;
+
+  %%
+
+  sub Run {
+    my ($self) = shift;
+    return $self->YYParse( yybuildingtree => 1 );
+  }
 
 
 To activate the I<tree semantic> for lists we use the C<yybuildingtree>
@@ -1219,42 +1158,38 @@ C<_PLUS_LIST>.
 
 The solution is to be sure that the attribute is a reference:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n ListWithRefs.eyp
-     1  %semantic token 'c'
+  ~/LEyapp/examples/eyapplanguageref$ cat -n ListWithRefs.eyp
+     1  %semantic token 'c' 
      2  %{
      3  use Data::Dumper;
      4  $Data::Dumper::Indent = 1;
      5  %}
      6  %%
-     7  S:  'c'+  D+
-     8        {
+     7  S:  'c'+  D+ 
+     8        { 
      9           print Dumper($_[1]);
     10           print Dumper($_[2]);
-    11        }
+    11        } 
     12  ;
-    13
+    13  
     14  D: 'd'
     15       {
     16         bless { attr => $_[1], children =>[]}, 'DES';
     17       }
     18  ;
-    19
+    19  
     20  %%
-    21
-    22  use base 'Tail';
-    23  __PACKAGE__->lexer(\&Tail::lex);
-    24
-    25  sub Run {
-    26    my ($self) = shift;
-    27    return $self->YYParse( yybuildingtree => 1 );
-    28  }
-
+    21  
+    22  sub Run {
+    23    my ($self) = shift;
+    24    return $self->YYParse( yybuildingtree => 1 );
+    25  }
 
 
 Now the attribute associated with C<D> is a reference 
 and appears in the list of children of C<_PLUS_LIST>:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ eyapp ListWithRefs.eyp; ./use_listwithrefs.pl
+  ~/LEyapp/examples/eyapplanguageref$ eyapp ListWithRefs.eyp; ./use_listwithrefs.pl
   Try input 'ccdd': ccdd
   $VAR1 = bless( {
     'children' => [
@@ -1345,7 +1280,7 @@ C<Parse::Eyapp::Node-E<gt>new> returns a list of references
 to the just created nodes. In a scalar context returns a reference to the first of such trees.
 See an example:
 
-  pl@nereida:~/LEyapp/examples$ perl -MParse::Eyapp -MData::Dumper -wde 0
+  ~/LEyapp/examples$ perl -MParse::Eyapp -MData::Dumper -wde 0
   main::(-e:1):   0
     DB<1> @t = Parse::Eyapp::Node->new('A(C,D) E(F)', sub { my $i = 0; $_->{n} = $i++ for @_ })
     DB<2> $Data::Dumper::Indent = 0
@@ -1362,35 +1297,41 @@ See an example:
 See the following example in which the nodes associated with C<'d'> are
 explicitly constructed:
 
-  pl@nereida:~/LEyapp/examples$ head -28 ListWithRefs2.eyp| cat -n
-   1  # ListWithRefs2.eyp
-   2  %semantic token 'c'
-   3  %{
-   4  use Data::Dumper;
-   5  %}
-   6  %%
-   7  S:  'c'+  D+
-   8        {
-   9           print Dumper($_[1]);
-  10           print $_[1]->str."\n";
-  11           print Dumper($_[2]);
-  12           print $_[2]->str."\n";
-  13        }
-  14  ;
-  15
-  16  D: 'd'.d
-  17       {
-  18         Parse::Eyapp::Node->new(
-  19           'DES(TERMINAL)',
-  20            sub {
-  21              my ($DES, $TERMINAL) = @_;
-  22              $TERMINAL->{attr} = $d;
-  23            }
-  24         );
-  25       }
-  26  ;
-  27
-  28  %%
+  ~/LEyapp/examples/eyapplanguageref$ cat -n ListWithRefs2.eyp 
+     1  %semantic token 'c' 
+     2  %{
+     3  use Data::Dumper;
+     4  $Data::Dumper::Indent = 1;
+     5  %}
+     6  %%
+     7  S:      'c'+  D+ 
+     8             { 
+     9                print Dumper($_[1]);
+    10                print $_[1]->str."\n";
+    11                print Dumper($_[2]);
+    12                print $_[2]->str."\n";
+    13             } 
+    14  ;
+    15  
+    16  D: 'd'.d
+    17       {
+    18         Parse::Eyapp::Node->new(
+    19           'DES(TERMINAL)', 
+    20            sub { 
+    21              my ($DES, $TERMINAL) = @_;
+    22              $TERMINAL->{attr} = $d;
+    23            }
+    24         );
+    25       }
+    26  ;
+    27  
+    28  %%
+    29  
+    30  sub Run {
+    31    my ($self) = shift;
+    32    return $self->YYParse( yybuildingtree => 1 );
+    33  }
+
 
 To know more about C<Parse::Eyapp::Node-E<gt>new>
 see the section for C<Parse::Eyapp::Node-E<gt>new>
@@ -1398,7 +1339,7 @@ see the section for C<Parse::Eyapp::Node-E<gt>new>
 When the former eyapp program is executed produces the following
 output:
 
-  pl@nereida:~/LEyapp/examples$ eyapp ListWithRefs2.eyp; use_listwithrefs2.pl
+  $ eyapp ListWithRefs2.eyp; use_listwithrefs2.pl
   ccdd
   $VAR1 = bless( {
     'children' => [

@@ -1,5 +1,52 @@
 Revision history for Perl extension Eyapp.
-1.152
+1.155
+  * A default lexer is built that can be used when no lexer is provided
+  * eyapp -v option implies -N option
+
+  * YYSymbolStack(0,-k) string with symbols from 0 to last-k
+    YYSymbolStack(-k-2,-k) string with symbols from last-k-2 to last-k
+    YYSymbolStack(-k-2,-k, filter) string with symbols from last-k-2 to last-k
+                                   where filter can be code, regexp or string
+    YYSymbolStack('SYMBOL',-k, filter) string with symbols from the last occurrence of SYMBOL to last-k
+                                   where filter can be code, regexp or string
+
+  *  - Now YYSymbol(-k) provides the symbol associated with the k-th state
+       from the top of the parsing stack 
+     - The debug format (yydebug activated) shows the transition symbols in the stack
+     - The parsing stack stores the transition symbols
+     - See file code/reducereduceconflictPPCR.eyp for a way to use it when solving conflicts
+
+  * There was a bug in the tree directive when there was a token 
+    with name 'something' and a syntax variable with the same name 
+    something. Seems fixed. See t/75tokenandvariablewiththesamename.t
+
+  * Added option -N (nocompact) to eyapp.
+    The compacted output info about conflicts in the .output file isn't
+    detailed enough. It does not describes in full detail which tokens
+    and productions are involved
+
+  * Labels only after %name accepted
+
+  * -B prompt eyapp option added
+
+  *  -yml option in Parse::Eyapp::Driver::main to dump YAML 
+
+  * -C option == -B '' and -b ''
+
+  *  While %lexer provides $self, %conflict did not. Now consistent. $self is 
+     $_[0] (but the arg isn't shifted)
+
+  * option -T for eyapp
+
+  *  #line in dynamic conflict handlers
+
+  * Ambiguous calc example: exp: exp '-' exp with precedences dynamically changed by the user (LEFT, RIGHT).
+    See file: examples/debuggintut/dynamicgrammar.eyp
+
+
+1.154
+  * option to define the info function (for array and plain scalars)
+1.153
   * %expect-rr
   * labels and names %name in recycle fixed. See example examples/recycle/rewritepostfixwithactions.pl
 

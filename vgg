@@ -1,4 +1,5 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl 
+use warnings;
 use strict;
 use Getopt::Long;
 eval {
@@ -110,8 +111,13 @@ sub error {
 }
 
 sub usage {
-  print "Usage:\n$0 [-f format ] [-t tree] file\n";
-  print "Format is one of:\n".<<"EOL";
+  print << "HELP";
+Usage: 
+            $0 [-f format ] filename
+or
+            $0 -t 'node1(ch1, ch2(ch3, ch4))
+
+Format is one of:
   png
   ps
   text
@@ -136,7 +142,7 @@ sub usage {
   mif
   pic
   gd
-EOL
+HELP
   exit(1);
 }
 
@@ -195,7 +201,7 @@ Here is an example of use:
 =head1 ACKNOWLEDGMENTS
 
 This work has been supported by CEE (FEDER) and the Spanish Ministry of
-I<Educación y Ciencia> through I<Plan Nacional I+D+I> number TIN2005-08818-C04-04
+I<Educacion y Ciencia> through I<Plan Nacional I+D+I> number TIN2005-08818-C04-04
 (ULL::OPLINK project L<http://www.oplink.ull.es/>). 
 Support from Gobierno de Canarias was through GC02210601
 (I<Grupos Consolidados>).

@@ -330,6 +330,7 @@ t/71dynamicconflictresolution.t
 t/72mixedstandaloneanddynamicload.t
 t/73dynamicshiftreduceconflictresolution.t
 t/74lalrdependanttest.t
+t/75tokenandvariablewiththesamename.t
 #t/97podcoverage.t
 t/98nopm.t
 t/99Cplusplusgrammar.t
