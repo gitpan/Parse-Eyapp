@@ -55,11 +55,11 @@ our (@all, $uminus);
 Parse::Eyapp->new_grammar( # Create the parser package/class
   input=>$grammar,    
   classname=>'Calc', # The name of the package containing the parser
-  firstline=>7,       # String $grammar starts at line 7 (for error diagnostics)
-  outputfile => 'main',
+  #firstline=>10,    # String $grammar starts at line 10 (for error diagnostics)
+  #outputfile => 'main',
 ); 
 my $parser = Calc->new();                # Create a parser
-$parser->input(\"2*-3+b*0;--2\n");       # Set the input
+$parser->input("2*-3+b*0;--2\n");       # Set the input
 my $t = $parser->Run;                    # Parse it!
 local $Parse::Eyapp::Node::INDENT=2;
 print "Syntax Tree:",$t->str;

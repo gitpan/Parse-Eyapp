@@ -35,6 +35,7 @@ sub new {
                              $self->Option('inputfile'),  # The file or program containing the grammar
                              $self->Option('tree'),       # %tree activated
                              $self->Option('nocompact'),  # %nocompact
+                             $self->Option('lexerisdefined'),    # lexer is defined
                              #$self->Option('prefixname'),  # yyprefix
                              #$self->Option('buildingtree')  # If building AST
                             );

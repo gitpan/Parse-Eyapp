@@ -11,166 +11,185 @@ The grammar extends L<yacc> and L<yapp> grammars.  Semicolons have been omitted
 to save space.  Between C-like comments you can find an (informal) explanation
 of the language associated with each token.
 
-  Parse-Eyapp/lib/Parse/Eyapp$ eyapp -c Parse.yp | cat -n
-     1  %token ASSOC /* is %(left|right|nonassoc) */
-     2  %token BEGINCODE /* is %begin { Perl code ... } */
-     3  %token CODE /* is { Perl code ... } */
-     4  %token DEFAULTACTION /* is %defaultaction */
-     5  %token EXPECT /* is %expect */
-     6  %token HEADCODE /* is %{ Perl code ... %} */
-     7  %token IDENT /* is [A-Za-z_][A-Za-z0-9_]* */
-     8  %token LITERAL /* is a string literal like 'hello' */
-     9  %token METATREE /* is %metatree */
-    10  %token NAME /* is %name */
-    11  %token NAMINGSCHEME /* is %namingscheme */
-    12  %token NOCOMPACT /* is %nocompact */
-    13  %token NUMBER /* is \d+ */
-    14  %token OPTION /* is (%name\s*([A-Za-z_]\w*)\s*)?\? */
-    15  %token PLUS /* is (%name\s*([A-Za-z_]\w*)\s*)?\+ */
-    16  %token PREC /* is %prec */
-    17  %token PREFIX /* is %prefix\s+([A-Za-z_][A-Za-z0-9_:]*::) */
-    18  %token SEMANTIC /* is %semantic\s+token */
-    19  %token STAR /* is (%name\s*([A-Za-z_]\w*)\s*)?\* */
-    20  %token START /* is %start */
-    21  %token STRICT /* is %strict */
-    22  %token SYNTACTIC /* is %syntactic\s+token */
-    23  %token TAILCODE /* is { Perl code ... } */
-    24  %token TOKEN /* is %token */
-    25  %token TREE /* is %tree */
-    26  %token TYPE /* is %type */
-    27  %token UNION /* is %union */
-    28  %start eyapp
-    29
-    30  %%
-    31
-    32  # Main rule
-    33  eyapp:
-    34        head body tail
-    35  ;
-    36  #Common rules:
-    37  symbol:
-    38        LITERAL
-    39      | ident #default action
-    40  ;
-    41  ident:
-    42        IDENT
-    43  ;
-    44  # Head section:
-    45  head:
-    46        headsec '%%'
-    47  ;
-    48  headsec:
-    49        #empty  #default action
-    50      | decls #default action
-    51  ;
-    52  decls:
-    53        decls decl #default action
-    54      | decl #default action
-    55  ;
-    56  decl:
-    57        '\n' #default action
-    58      | SEMANTIC typedecl symlist '\n'
-    59      | SYNTACTIC typedecl symlist '\n'
-    60      | TOKEN typedecl symlist '\n'
-    61      | ASSOC typedecl symlist '\n'
-    62      | START ident '\n'
-    63      | PREFIX '\n'
-    64      | NAMINGSCHEME CODE '\n'
-    65      | HEADCODE '\n'
-    66      | UNION CODE '\n'  #ignore
-    67      | DEFAULTACTION CODE '\n'
-    68      | TREE '\n'
-    69      | METATREE '\n'
-    70      | STRICT '\n'
-    71      | NOCOMPACT '\n'
-    72      | TYPE typedecl identlist '\n'
-    73      | EXPECT NUMBER '\n'
-    74      | EXPECT NUMBER NUMBER '\n'
-    75      | error '\n'
-    76  ;
-    77  typedecl:
-    78        #empty
-    79      | '<' IDENT '>'
-    80  ;
-    81  symlist:
-    82        symlist symbol
-    83      | symbol
-    84  ;
-    85  identlist:
-    86        identlist ident
-    87      | ident
-    88  ;
-    89  # Rule section
-    90  body:
-    91        rulesec '%%'
-    92      | '%%'
-    93  ;
-    94  rulesec:
-    95        rulesec rules #default action
-    96      | startrules #default action
-    97  ;
-    98  startrules:
-    99        IDENT ':'  rhss ';'
-   100      | error ';'
-   101  ;
-   102  rules:
-   103        IDENT ':' rhss ';'
-   104      | error ';'
-   105  ;
-   106  rhss:
-   107        rhss '|' rule
-   108      | rule
-   109  ;
-   110  rule:
-   111        optname rhs prec epscode
-   112      | optname rhs
-   113  ;
-   114  rhs:
-   115        #empty      #default action (will return undef)
-   116      | rhselts #default action
-   117  ;
-   118  rhselts:
-   119        rhselts rhseltwithid
-   120      | rhseltwithid
-   121  ;
-   122  rhseltwithid:
-   123        rhselt '.' IDENT
-   124      | '$' rhselt
-   125      | '$' error
-   126      | rhselt
-   127  ;
-   128  rhselt:
-   129        symbol
-   130      | code
-   131      | '(' optname rhs ')'
-   132      | rhselt STAR
-   133      | rhselt '<' STAR symbol '>'
-   134      | rhselt OPTION
-   135      | rhselt '<' PLUS symbol '>'
-   136      | rhselt PLUS
-   137  ;
-   138  optname:
-   139        /* empty */
-   140      | NAME IDENT
-   141  ;
-   142  prec:
-   143        PREC symbol
-   144  ;
-   145  epscode:
-   146      | code
-   147  ;
-   148  code:
-   149        CODE
-   150      | BEGINCODE
-   151  ;
-   152  # Tail section:
-   153  tail:
-   154        /*empty*/
-   155      | TAILCODE
-   156  ;
-   157
-   158  %%
+  %token ASSOC /* is %(left|right|nonassoc) */                                                                                                          
+  %token BEGINCODE /* is %begin { Perl code ... } */                                                                                                    
+  %token CODE /* is { Perl code ... } */                                                                                                                
+  %token CONFLICT /* is %conflict */                                                                                                                    
+  %token DEFAULTACTION /* is %defaultaction */                                                                                                          
+  %token EXPECT /* is %expect */                                                                                                                        
+  %token HEADCODE /* is %{ Perl code ... %} */                                                                                                          
+  %token IDENT /* is [A-Za-z_][A-Za-z0-9_]* */                                                                                                          
+  %token LABEL /* is :[A-Za-z0-9_]+ */                                                                                                                  
+  %token LITERAL /* is a string literal like 'hello' */                                                                                                 
+  %token METATREE /* is %metatree */                                                                                                                    
+  %token NAME /* is %name */                                                                                                                            
+  %token NAMINGSCHEME /* is %namingscheme */                                                                                                            
+  %token NOCOMPACT /* is %nocompact */                                                                                                                  
+  %token NUMBER /* is \d+ */                                                                                                                            
+  %token OPTION /* is (%name\s*([A-Za-z_]\w*)\s*)?\? */                                                                                                 
+  %token PLUS /* is (%name\s*([A-Za-z_]\w*)\s*)?\+ */                                                                                                   
+  %token PREC /* is %prec */                                                                                                                            
+  %token PREFIX /* is %prefix\s+([A-Za-z_][A-Za-z0-9_:]*::) */                                                                                          
+  %token SEMANTIC /* is %semantic\s+token */                                                                                                            
+  %token STAR /* is (%name\s*([A-Za-z_]\w*)\s*)?\* */                                                                                                   
+  %token START /* is %start */                                                                                                                          
+  %token STRICT /* is %strict */                                                                                                                        
+  %token SYNTACTIC /* is %syntactic\s+token */                                                                                                          
+  %token TAILCODE /* is { Perl code ... } */                                                                                                            
+  %token TOKEN /* is %token */                                                                                                                          
+  %token TREE /* is %tree */                                                                                                                            
+  %token TYPE /* is %type */                                                                                                                            
+  %token UNION /* is %union */                                                                                                                          
+  %start eyapp                                                                                                                                          
 
+  %%
+
+  # Main rule
+  eyapp:     
+        head body tail 
+  ;                    
+  #Common rules:       
+  symbol:              
+        LITERAL        
+      | ident #default action
+  ;                          
+  ident:                     
+        IDENT                
+  ;                          
+  # Head section:            
+  head:                      
+        headsec '%%'         
+  ;                          
+  headsec:                   
+        #empty  #default action
+      | decls #default action  
+  ;                            
+  decls:                       
+        decls decl #default action
+      | decl #default action      
+  ;                               
+  decl:                           
+        '\n' #default action      
+      | SEMANTIC typedecl symlist '\n'
+      | SYNTACTIC typedecl symlist '\n'
+      | TOKEN typedecl toklist '\n'    
+      | ASSOC typedecl symlist '\n'    
+      | START ident '\n'               
+      | PREFIX '\n'                    
+      | WHITES CODE '\n'               
+      | WHITES REGEXP '\n'             
+      | WHITES '=' CODE '\n'           
+      | WHITES '=' REGEXP '\n'         
+      | NAMINGSCHEME CODE '\n'         
+      | HEADCODE '\n'                  
+      | UNION CODE '\n'  #ignore       
+      | DEFAULTACTION CODE '\n'        
+      | LEXER CODE '\n'                
+      | TREE '\n'                      
+      | METATREE '\n'                  
+      | STRICT '\n'                    
+      | NOCOMPACT '\n'                 
+      | TYPE typedecl identlist '\n'   
+      | CONFLICT ident CODE '\n'       
+      | EXPECT NUMBER '\n'             
+      | EXPECT NUMBER NUMBER '\n'      
+      | EXPECTRR NUMBER '\n'           
+      | error '\n'                     
+  ;                                    
+  typedecl:                            
+        #empty                         
+      | '<' IDENT '>'                  
+  ;                                    
+  symlist:                             
+        symlist symbol                 
+      | symbol                         
+  ;                                    
+  toklist:                             
+        toklist tokendef               
+      | tokendef                       
+  ;                                    
+  tokendef:                            
+        symbol '=' REGEXP              
+      | symbol '=' CODE                
+      | symbol                         
+  ;                                    
+  identlist:                           
+        identlist ident                
+      | ident                          
+  ;                                    
+  # Rule section                       
+  body:                                
+        rulesec '%%'                   
+      | '%%'                           
+  ;                                    
+  rulesec:                             
+        rulesec rules #default action  
+      | startrules #default action     
+  ;                                    
+  startrules:                          
+        IDENT ':'  rhss ';'            
+      | error ';'                      
+  ;                                    
+  rules:                               
+        IDENT ':' rhss ';'             
+      | error ';'                      
+  ;                                    
+  rhss:                                
+        rhss '|' rule                  
+      | rule                           
+  ;                                    
+  rule:                                
+        optname rhs prec epscode       
+      | optname rhs                    
+  ;                                    
+  rhs:                                 
+        #empty      #default action (will return undef)
+      | rhselts #default action                        
+  ;                                                    
+  rhselts:                                             
+        rhselts rhseltwithid                           
+      | rhseltwithid                                   
+  ;                                                    
+  rhseltwithid:                                        
+        rhselt '.' IDENT
+      | '$' rhselt
+      | '$' error
+      | rhselt
+  ;
+  rhselt:
+        symbol
+      | code
+      | DPREC ident
+      | '(' optname rhs ')'
+      | rhselt STAR
+      | rhselt '<' STAR symbol '>'
+      | rhselt OPTION
+      | rhselt '<' PLUS symbol '>'
+      | rhselt PLUS
+  ;
+  optname:
+        /* empty */
+      | NAME IDENT
+      | NAME IDENT LABEL
+      | NAME LABEL
+  ;
+  prec:
+        PREC symbol
+  ;
+  epscode:
+      | code
+  ;
+  code:
+        CODE
+      | BEGINCODE
+  ;
+  # Tail section:
+  tail:
+        /*empty*/
+      | TAILCODE
+  ;
+
+  %%
 
 The semantic of C<Eyapp> agrees with the semantic of C<yacc> and C<yapp> for
 all the common constructions. 
@@ -875,8 +894,8 @@ containing the next token and its associated attribute.
 The fact that is a method of the parser object means that the parser
 methods are accessible inside the lexical analyzer.
 
-I<When the lexical analyzer reaches the end of input, it must return the
-pair> C<('', undef)>
+When the lexical analyzer reaches the end of input, it must return the
+pair C<('', undef)>
 
 
 =head2 The Error Report Subroutine

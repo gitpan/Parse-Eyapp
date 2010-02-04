@@ -81,7 +81,6 @@ sub _Lexer {
     }
 }
 
-use base 'Parse::Eyapp::TailSupport';
 sub Run {
     my($self)=shift;
 

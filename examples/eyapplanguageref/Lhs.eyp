@@ -1,4 +1,4 @@
-# examples/eyapplanguageref/Lhs.eyp
+# examples/Eyapplanguageref/Lhs.eyp
 
 %right  '='
 %left   '-' '+'
@@ -47,7 +47,6 @@ exp:
 %%
 
 use Data::Dumper;
-use base q{Parse::Eyapp::TailSupport};
 
 __PACKAGE__->lexer(sub {
     my $parser = shift;

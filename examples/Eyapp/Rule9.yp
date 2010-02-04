@@ -10,7 +10,6 @@ to execute, run C<foldand0rule9_4.pl>
 
 =cut
 
-use base q{Parse::Eyapp::TailSupport};
 %}
 
 %semantic token '=' '-' '+' '*' '/' 

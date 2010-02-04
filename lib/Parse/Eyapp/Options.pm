@@ -71,6 +71,10 @@ my(%known_options)= (
         0       =>  "Do not compact action tables. No DEFAULT field for 'STATES'",
         1       =>  "Compact action tables"
     },
+    lexerisdefined  =>  {
+        0       =>  "Built a lexer",
+        1       =>  "don't build a lexer"
+    },
 );
 
 my(%default_options)= (
@@ -88,6 +92,7 @@ my(%default_options)= (
     modulino => undef,
     tree => undef,
     nocompact => 0,
+    lexerisdefined => 0,
 );
 
 my(%actions)= (

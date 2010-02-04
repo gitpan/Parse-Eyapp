@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.155.
+#    This file was generated using Parse::Eyapp version 1.156.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -24,26 +24,6 @@ BEGIN {
 }
   
 
-# Default lexical analyzer
-our $LEX = sub {
-    my $self = shift;
-
-    for (${$self->input}) {
-      m{\G(\s+)}gc and $self->tokenline($1 =~ tr{\n}{});;
-
-      m{\G(SCALAR|REGEXP|IDENT|ARRAY|CODE|and|\=\>|\:|\;|\,|\*|\)|\=|\(|\.)}gc and return ($1, $1);
-
-
-
-      return ('', undef) if ($_ eq '') || (defined(pos($_)) && (pos($_) >= length($_)));
-      /\G\s*(\S+)/;
-      my $near = substr($1,0,10); 
-      die( "Error inside the lexical analyzer near '". $near
-          ."'. Line: ".$self->line()
-          .". File: '".$self->YYFilename()."'. No match found.\n");
-    }
-  }
-;
 
 
 sub unexpendedInput { substr($_, pos $_) }
@@ -260,7 +240,7 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.155',
+    yyversion => '1.156',
     yyGRAMMAR  =>
 [
   [ '_SUPERSTART' => '$start', [ 'treeregexplist', '$end' ], 0 ],
@@ -353,11 +333,11 @@ sub new {
 	},
 	{#State 1
 		ACTIONS => {
-			'' => -3,
 			'REGEXP' => 3,
 			'IDENT' => 6,
 			'CODE' => 5
 		},
+		DEFAULT => -3,
 		GOTOS => {
 			'treeregexp' => 4
 		}
@@ -408,17 +388,10 @@ sub new {
 	},
 	{#State 10
 		ACTIONS => {
-			'' => -33,
 			":" => 19,
-			'CODE' => -33,
-			"," => -33,
-			'IDENT' => -33,
-			'REGEXP' => -33,
-			"(" => -18,
-			"=>" => -33,
-			"and" => -33,
-			")" => -33
+			"(" => -18
 		},
+		DEFAULT => -33,
 		GOTOS => {
 			'OPTIONAL-18' => 21,
 			'PAREN-17' => 20,
@@ -431,16 +404,10 @@ sub new {
 	},
 	{#State 12
 		ACTIONS => {
-			'' => -30,
-			'CODE' => -30,
-			"," => -30,
-			'IDENT' => -30,
-			'REGEXP' => -30,
 			"(" => 25,
-			"=>" => -30,
-			"and" => 26,
-			")" => -30
+			"and" => 26
 		},
+		DEFAULT => -30,
 		GOTOS => {
 			'PAREN-15' => 24,
 			'OPTIONAL-16' => 27
@@ -451,16 +418,10 @@ sub new {
 	},
 	{#State 14
 		ACTIONS => {
-			'' => -42,
-			'CODE' => -42,
-			"," => -42,
-			'IDENT' => -42,
-			'REGEXP' => -42,
 			"(" => 28,
-			"=>" => -42,
-			"and" => 29,
-			")" => -42
+			"and" => 29
 		},
+		DEFAULT => -42,
 		GOTOS => {
 			'OPTIONAL-24' => 30,
 			'PAREN-23' => 31
@@ -468,16 +429,10 @@ sub new {
 	},
 	{#State 15
 		ACTIONS => {
-			'' => -39,
-			'CODE' => -39,
-			"," => -39,
-			'IDENT' => -39,
-			'REGEXP' => -39,
 			"(" => 33,
-			"=>" => -39,
-			"and" => 35,
-			")" => -39
+			"and" => 35
 		},
+		DEFAULT => -39,
 		GOTOS => {
 			'OPTIONAL-22' => 32,
 			'PAREN-21' => 34
@@ -485,12 +440,9 @@ sub new {
 	},
 	{#State 16
 		ACTIONS => {
-			'REGEXP' => -6,
-			'' => -6,
-			"=>" => 36,
-			'CODE' => -6,
-			'IDENT' => -6
+			"=>" => 36
 		},
+		DEFAULT => -6,
 		GOTOS => {
 			'OPTIONAL-3' => 38,
 			'PAREN-2' => 37
@@ -515,15 +467,9 @@ sub new {
 	},
 	{#State 21
 		ACTIONS => {
-			'' => -36,
-			'CODE' => -36,
-			"," => -36,
-			'IDENT' => -36,
-			'REGEXP' => -36,
-			"=>" => -36,
-			"and" => 44,
-			")" => -36
+			"and" => 44
 		},
+		DEFAULT => -36,
 		GOTOS => {
 			'PAREN-19' => 42,
 			'OPTIONAL-20' => 43
@@ -547,9 +493,9 @@ sub new {
 			'REGEXP' => 10,
 			"*" => 11,
 			"." => 14,
-			")" => -56,
 			'SCALAR' => 15
 		},
+		DEFAULT => -56,
 		GOTOS => {
 			'STAR-26' => 46,
 			'STAR-25' => 48,
@@ -572,9 +518,9 @@ sub new {
 			'REGEXP' => 10,
 			"*" => 11,
 			"." => 14,
-			")" => -56,
 			'SCALAR' => 15
 		},
+		DEFAULT => -56,
 		GOTOS => {
 			'STAR-26' => 46,
 			'STAR-25' => 48,
@@ -603,9 +549,9 @@ sub new {
 			'REGEXP' => 10,
 			"*" => 11,
 			"." => 14,
-			")" => -56,
 			'SCALAR' => 15
 		},
+		DEFAULT => -56,
 		GOTOS => {
 			'STAR-26' => 46,
 			'STAR-25' => 48,
@@ -640,16 +586,9 @@ sub new {
 	},
 	{#State 41
 		ACTIONS => {
-			'' => -31,
-			'CODE' => -31,
-			"," => -31,
-			'IDENT' => -31,
-			'REGEXP' => -31,
-			"(" => -16,
-			"=>" => -31,
-			"and" => -31,
-			")" => -31
-		}
+			"(" => -16
+		},
+		DEFAULT => -31
 	},
 	{#State 42
 		DEFAULT => -35
@@ -669,9 +608,9 @@ sub new {
 			'REGEXP' => 10,
 			"*" => 11,
 			"." => 14,
-			")" => -56,
 			'SCALAR' => 15
 		},
+		DEFAULT => -56,
 		GOTOS => {
 			'STAR-26' => 46,
 			'STAR-25' => 48,
@@ -689,9 +628,9 @@ sub new {
 	},
 	{#State 48
 		ACTIONS => {
-			"," => 59,
-			")" => -55
-		}
+			"," => 59
+		},
+		DEFAULT => -55
 	},
 	{#State 49
 		DEFAULT => -54
@@ -728,15 +667,9 @@ sub new {
 	},
 	{#State 58
 		ACTIONS => {
-			'' => -15,
-			'CODE' => -15,
-			"," => -15,
-			'IDENT' => -15,
-			'REGEXP' => -15,
-			"=>" => -15,
-			"and" => 65,
-			")" => -15
+			"and" => 65
 		},
+		DEFAULT => -15,
 		GOTOS => {
 			'PAREN-5' => 63,
 			'OPTIONAL-6' => 64
@@ -757,15 +690,9 @@ sub new {
 	},
 	{#State 60
 		ACTIONS => {
-			'' => -27,
-			'CODE' => -27,
-			"," => -27,
-			'IDENT' => -27,
-			'REGEXP' => -27,
-			"=>" => -27,
-			"and" => 69,
-			")" => -27
+			"and" => 69
 		},
+		DEFAULT => -27,
 		GOTOS => {
 			'PAREN-13' => 67,
 			'OPTIONAL-14' => 68
@@ -773,15 +700,9 @@ sub new {
 	},
 	{#State 61
 		ACTIONS => {
-			'' => -24,
-			'CODE' => -24,
-			"," => -24,
-			'IDENT' => -24,
-			'REGEXP' => -24,
-			"=>" => -24,
-			"and" => 71,
-			")" => -24
+			"and" => 71
 		},
+		DEFAULT => -24,
 		GOTOS => {
 			'OPTIONAL-12' => 70,
 			'PAREN-11' => 72
@@ -789,15 +710,9 @@ sub new {
 	},
 	{#State 62
 		ACTIONS => {
-			'' => -21,
-			'CODE' => -21,
-			"," => -21,
-			'IDENT' => -21,
-			'REGEXP' => -21,
-			"=>" => -21,
-			"and" => 75,
-			")" => -21
+			"and" => 75
 		},
+		DEFAULT => -21,
 		GOTOS => {
 			'OPTIONAL-10' => 73,
 			'PAREN-9' => 74

@@ -115,8 +115,8 @@ publicdist: docclean release forcepods publichtml publicpdf dist
 
 release: lib/Parse/Eyapp/Parse.yp
 	   yapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
-	   PERL5LIB=lib; eyapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
-	   PERL5LIB=lib; $(PERL) -I./lib eyapp -v -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
+	   PERL5LIB=lib; eyapp -ln -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
+	   PERL5LIB=lib; $(PERL) -I./lib eyapp -l -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
 	   rm -fR Parse-Eyapp-*.tar.gz
 
        # as release but line numbers info. No -n option

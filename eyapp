@@ -31,6 +31,9 @@ eyapp - A Perl front-end to the Parse::Eyapp module
 
   eyapp  -T grammar.eyp         #  Equivalent to %tree
 
+  eyapp  -l                     # Do not generate default lexical analyzer. Be sure you 
+                                  provide one
+
   eyapp  -N grammar.eyp         # Equivalent to %nocompact. Do not compact action tables. 
                                   Use to have more accurate information when there are conflicts
 
@@ -130,6 +133,11 @@ Equivalent to C<%tree>.
 Equivalent to %nocompact. Do not compact action tables. 
 Use to have more accurate information when there are conflicts
 
+=item I<-l>         
+
+Do not provide a default lexical analyzer. By default C<eyapp>
+builds a lexical analyzer from your C<%token = /regexp/> definitions
+
 =item I<grammar>
 
 The input grammar file. If no suffix is given, and the file does not exists,
@@ -206,6 +214,7 @@ use Parse::Eyapp;
 use strict;
 
 our ( $opt_n, $opt_m, $opt_V, $opt_v, $opt_o, $opt_h, $opt_s, $opt_t, $opt_b, $opt_c, $opt_B, $opt_C);
+our $opt_l = 0;
 our $opt_T; # build AST
 our $opt_N; # Do not compact action tables. No DEFAULT field for "STATES"
 
@@ -235,6 +244,7 @@ Usage:	$prog [options] grammar[.eyp]
     -C          An abbreviation for the combined use of -b ''  -B ''
     -T          Equivalent to %tree
     -N          Equivalent to %nocompact. Do not compact action tables. Use when conflicts
+    -l          Do not generate the lexical analyzer. One must be explictly provided
     -c grammar  Displays the "clean" grammar without actions     
     -vc grammar Displays the "clean" grammar without actions. Strip comments also
     -V          Display current version of Parse::Eyapp and gracefully exits
@@ -248,7 +258,7 @@ EOF
 
 my($nbargs)=@ARGV;
 
-	getopts('CTVNhvsnc:b:B:m:t:o:')
+	getopts('CTVNhlvsnc:b:B:m:t:o:')
 or	Usage;
 
    (  ($opt_V and $nbargs > 1)
@@ -362,6 +372,7 @@ my $text = $parser->Output(
                           linenumbers => $opt_n,
                           template    => $opt_t,
                           modulino    => $opt_B,
+                          lexerisdefined => $opt_l,
                           #prefixname => 'R::',
                          );
 compute_lines(\$text, $outfile, $Parse::Eyapp::Output::pattern) if $opt_n;

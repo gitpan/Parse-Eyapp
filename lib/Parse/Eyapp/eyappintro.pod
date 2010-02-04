@@ -4,135 +4,88 @@ Parse::Eyapp::eyappintro - An introduction to Parse::Eyapp
  
 =head1 SYNOPSIS
  
-  use Parse::Eyapp;
-  use Parse::Eyapp::Treeregexp;
 
-  sub TERMINAL::info {
-    $_[0]{attr}
-  }
+  # Compile it with:  eyapp -o calc.pl -C Postfix.eyp
+  # Execution:        ./calc.pl -c 'a = 2*3+b'
+  %token NUM = /([0-9]+(?:\.[0-9]+)?)/
+  %token VAR = /([A-Za-z][A-Za-z0-9_]*)/
 
-  my $grammar = q{
-    %right  '='     # Lowest precedence
-    %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
-    %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
-    %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
-    %tree           # Let us build an abstract syntax tree ...
+  %right  '='
+  %left   '-' '+'
+  %left   '*' '/'
+  %left   NEG
 
-    %%
-    line:
-        exp <%name EXPRESSION_LIST + ';'>
-          { $_[1] } /* list of expressions separated by ';' */
-    ;
+  %defaultaction { "$left $right $op"; }
 
-    /* The %name directive defines the name of the class to 
-       which the node being built belongs */
-    exp:
-        %name NUM
-        NUM
-      | %name VAR
-        VAR
-      | %name ASSIGN
-        VAR '=' exp
-      | %name PLUS
-        exp '+' exp
-      | %name MINUS
-        exp '-' exp
-      | %name TIMES
-        exp '*' exp
-      | %name DIV
-        exp '/' exp
-      | %name UMINUS
-        '-' exp %prec NEG
-      | '(' exp ')'
-          { $_[2] }  /* Let us simplify a bit the tree */
-    ;
+  %%
+  line: $exp  { print "$exp\n" }
+  ;
 
-    %%
-    sub _Error { die "Syntax error near ".($_[0]->YYCurval?$_[0]->YYCurval:"end of file")."\n" }
+  exp:        $NUM  { $NUM }            
+          |   $VAR  { $VAR }            
+          |   VAR.left '='.op exp.right         
+          |   exp.left '+'.op exp.right         
+          |   exp.left '-'.op exp.right        
+          |   exp.left '*'.op exp.right       
+          |   exp.left '/'.op exp.right      
+          |   '-' $exp %prec NEG { "$exp NEG" }
+          |   '(' $exp ')' { $exp }      
+  ;
 
-    sub _Lexer {
-      my($parser)=shift; # The parser object
-
-      for ($parser->YYData->{INPUT}) { # Topicalize
-        m{\G\s+}gc;
-        $_ eq '' and return('',undef);
-        m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
-        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
-        m{\G(.)}gcs and return($1,$1);
-      }
-      return('',undef);
-    }
-
-    sub Run {
-        my($self)=shift;
-        $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, );
-    }
-  }; # end grammar
-
-  our (@all, $uminus);
-
-  Parse::Eyapp->new_grammar( # Create the parser package/class
-    input=>$grammar,
-    classname=>'Calc', # The name of the package containing the parser
-    firstline=>7       # String $grammar starts at line 7 (for error diagnostics)
-  );
-  my $parser = Calc->new();                # Create a parser
-  $parser->YYData->{INPUT} = "2*-3+b*0;--2\n"; # Set the input
-  my $t = $parser->Run;                    # Parse it!
-  local $Parse::Eyapp::Node::INDENT=2;
-  print "Syntax Tree:",$t->str;
-
-  # Let us transform the tree. Define the tree-regular expressions ..
-  my $p = Parse::Eyapp::Treeregexp->new( STRING => q{
-      { #  Example of support code
-        my %Op = (PLUS=>'+', MINUS => '-', TIMES=>'*', DIV => '/');
-      }
-      constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y))
-        => {
-          my $op = $Op{ref($bin)};
-          $x->{attr} = eval  "$x->{attr} $op $y->{attr}";
-          $_[0] = $NUM[0];
-        }
-      uminus: UMINUS(NUM($x)) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
-      zero_times_whatever: TIMES(NUM($x), .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-      whatever_times_zero: TIMES(., NUM($x)) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-    },
-    OUTPUTFILE=> 'main.pm'
-  );
-  $p->generate(); # Create the tranformations
-
-  $t->s($uminus); # Transform UMINUS nodes
-  $t->s(@all);    # constant folding and mult. by zero
-
-  local $Parse::Eyapp::Node::INDENT=0;
-  print "\nSyntax Tree after transformations:\n",$t->str,"\n";
+  %%
 
 
 
 =head1 INTRODUCTION TO PARSING WITH Parse::Eyapp
 
+=head2 Introduction
+
 Parsing is the activity of producing a syntax tree
 from an input stream. The program example in the synopsis 
-section shows an example of parsing. The variable C<$grammar>
-contains a context free eyapp grammar defining the language 
-of lists of arithmetic expressions. A context free grammar
-is a mathematical device to define languages. The grammar
-for the example in the synopsis section is:
+section shows an example of a translation scheme. 
+It translates infix arithmetic expressions like 
 
-   line: exp <+ ';'>  
-   ;
+   a = 2 * 3 + 4 * b
 
-   exp:
-       NUM            
-     | VAR         
-     | VAR '=' exp
-     | exp '+' exp    
-     | exp '-' exp 
-     | exp '*' exp
-     | exp '/' exp 
-     | '-'  exp 
-     |   '(' exp ')' 
-   ;
+into postfix expressions like 
+
+   a 2 3 * 4 b * + =
+
+The program contains a context free eyapp grammar defining the language 
+of arithmetic infix expressions. A context free grammar
+is a mathematical device to define languages. To better see the grammar
+for the example above we have to eliminate the semantic 
+actions (We call semantic actions to the sections delimited by curly brackets
+containing Perl code).
+This can be done calling C<eyapp> with options C<-vc>:
+
+  $ eyapp -vc Postfix.eyp 
+  %token NUM =/([0-9]+(?:\.[0-9]+)?)/ 
+  %token VAR =/([A-Za-z][A-Za-z0-9_]*)/ 
+  %right '=' 
+  %left '-' '+' 
+  %left '*' '/' 
+  %left NEG 
+
+  %%
+
+  line:
+        exp 
+  ;
+  exp:
+        NUM
+      | VAR
+      | VAR '=' exp
+      | exp '+' exp
+      | exp '-' exp
+      | exp '*' exp
+      | exp '/' exp
+      | '-' exp %prec NEG
+      | '(' exp ')'  
+  ;
+
+  %%
+
 
 A grammar generates a language. A grammar is defined by a set of production rules. A production rule
 has two components: a left hand side which is a I<syntactic variable> or I<non terminal> and a right hand side
@@ -141,7 +94,7 @@ hand side (I<rhs>) are usually separated by an arrow like in:
 
                                     exp -> VAR = exp
 
-A note: the production rule
+A note: when you see a production rule like:
 
                         line: exp <+ ';'>
 
@@ -153,6 +106,9 @@ is not really a production rule but an abbreviation for two productions. It stan
 
 
 A I<terminal> or I<token> never appears on the left hand side of a production rule.
+
+=head2 Ambiguity
+
 The phrases of the language are those obtained 
 successively applying the production rules of the grammar until no more rules can be applied.
 The successive substitutions must start from the C<start> symbol of the grammar (C<line> in
@@ -163,52 +119,75 @@ legal derivation (the big arrow C<=E<gt>> is read I<derives>):
   line => exp => VAR = exp => VAR = exp + exp => VAR = exp + NUM => VAR = VAR + NUM
 
 thus the phrase C<VAR = VAR + NUM> belongs to the language generated by the former grammar.
-A derivation like can be seen as a tree. For instance, the former derivation is equivalent (has 
-the same information) than the tree:
+A derivation like this can be seen as a tree. For instance, the former derivation is equivalent (has 
+the same information) than the following tree:
+
+                             +----+
+                             |line|
+                             +----+
+                                |
+                              +---+
+                              |exp|
+                              +---+
+                    .-----.-----^-----.
+                  +---+ +---+        +---+
+                  |VAR| | = |        |exp|
+                  +---+ +---+        +---+
+                                 .-----+-----.
+                               +---+ +---+ +---+
+                               |exp| | + | |exp|
+                               +---+ +---+ +---+
+                                 |           |
+                               +---+       +---+
+                               |VAR|       |NUM|
+                               +---+       +---+
+
+which can be written more succinctly:
 
                         line(exp(VAR, '=', exp(exp(VAR), '+',  exp(NUM))))
+
+or even more briefly:
+
+                                      VAR = (VAR + NUM)
 
 Such a tree is called a I<syntax tree> for the input C<VAR = VAR + NUM>.
 A grammar is said to be I<ambiguous> if there are phrases in the generated language that have
 more than one syntax tree. The grammar in the synopsis example is ambiguous. Here is an alternative
 tree for the same phrase C<VAR = VAR + NUM>:
 
+                                    +----+
+                                    |line|
+                                    +----+
+                                       |
+                                     +---+
+                                     |exp|
+                                     +---+
+                            .----------^-----.-----.
+                          +---+            +---+  +---+
+                          |exp|            | + |  |exp|
+                          +---+            +---+  +---+
+                      .-----+-----.                 |
+                    +---+ +---+ +---+             +---+
+                    |VAR| | = | |exp|             |NUM|
+                    +---+ +---+ +---+             +---+
+                                  |
+                                +---+
+                                |VAR|
+                                +---+
+
+or
+
                         line(exp(exp(VAR, '=', exp(VAR)), '+', exp(NUM)))
 
-Parsers created by C<eyapp> do not deal directly with the input. Instead they expect the input
-to be processed by a I<lexical analyzer>. The lexical analyzer parses the input and produces
-the next token. A I<token> is a pair. The first component is the name of the token (like C<NUM>
-or C<VAR>) and the second is its attribute (i.e. the information associated with the token, like 
-that the value is C<4> for a C<NUM> or the identifier is C<temperature> for a
-C<VAR>). Tokens are usually defined using regular expressions. Thus the token 
-C<NUM> is characterized by C</[0-9]+(?:\.[0-9]+)?/> and the token
-C<VAR> by C</[A-Za-z][A-Za-z0-9_]*/>. The subroutine C<_Lexer> in the tail section
-is a typical example of a typical lexical analyzer:
+or
 
-    sub _Lexer {
-      my($parser)=shift; # The parser object
+                                     (VAR = VAR) + NUM
 
-      for ($parser->YYData->{INPUT}) { # Topicalize
-        m{\G\s+}gc;     # skip whites
-        $_ eq '' and return('',undef);
-        m{\G([0-9]+(?:\.[0-9]+)?)}gc and return('NUM',$1);
-        m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return('VAR',$1);
-        m{\G(.)}gcs and return($1,$1);
-      }
-      return('',undef);
-    }
+=head2 Semantic Actions and Attributes
 
-The input was saved in the C<YYData-E<gt>{INPUT}> section of the C<$parser>
-object. The C<for> loop is a false C<for>: its goal is to make C<$_> an alias
-of C<$parser-E<gt>YYData-E<gt>{INPUT}>. To catch the next pattern we use the anchor C<\G>.
-The C<\G> anchor matches at the point where the previous C</g> match left off. 
-Normally, when a scalar C<m{}g> match fails, the match position is reset and
-C<\G> will start matching at the beginning of the string.
-The C<c> option causes the match position to be retained following an unsuccessful match.
-The couple C<('',undef)> signals the end of the input.
-
-C<Parse::Eyapp> can analyze your grammar and produce a parser from your grammar.
-Actually C<Parse::Eyapp> is a I<translation scheme> analyzer. A I<translation scheme> 
+C<Parse::Eyapp> analyzes your grammar and produce a LALR parser.
+Actually the SYNOPSIS example is more than a context free grammar: 
+is a I<translation scheme>. A I<translation scheme> 
 scheme is a context free grammar where the right hand sides of the productions 
 have been augmented with semantic actions (i.e. with chunks of Perl code):
 
@@ -218,52 +197,20 @@ The analyzer generated by Eyapp executes C<{ action(@_) }> after all the semanti
 associated with C<alpha> have been executed and before the execution of any of the semantic 
 actions associated with C<beta>. 
 
-Notice that ambiguous grammars produce ambiguous translation schemes: 
-since a phrase may have two syntactic
-trees it will be more than one tree-traversing and consequently more than one 
-way to execute the embedded semantic actions. Certainly different execution
-orders will usually produce different results. Thus, syntactic ambiguities translate
-onto semantic ambiguities. That is why it is important to resolve all the 
-ambiguities and conflicts that may arise in our grammar. This is the function 
-of the C<%left> and C<%right> declarations on the header section:
+In a translation scheme each symbol occurrence has an I<associated attribute>.
+The embedded actions modify the attributes associated with the symbols of the grammar:
 
-  my $grammar = q{
-    # header section
-    %right  '='     # Lowest precedence
-	    %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
-	    %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
-	    %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
-	    %tree           # Let us build an abstract syntax tree ...
-
-	    %%
-	    .... # body section
-	    %%
-	    .... # tail section
-  };
-
-Priority can be assigned to tokens by using the C<%left> and C<%right> declarations. Tokens in
-lines below have more precedence than tokens in line above. By giving token C<'+'> more precedence
-than token C<'='> we solve the ambiguity for phrases like C<VAR = VAR + NUM>. The tree
-
-line(exp(VAR, '=', exp(exp(VAR), '+',  exp(NUM))))
-
-will be built, discarding the other tree. Since priority means earlier evaluation
-and the evaluation of semantic actions is bottom up, the deeper the associated subtree the higher
-the priority.
-
-In a translation scheme the embedded actions modify the attributes
-associated with the symbols of the grammar.
-
-A -> alpha { action(@_) } beta
+                        A -> alpha { action(@_) } beta
 
 I<Each symbol on the right hand side
-of a production rule has an associated scalar attribute>. In C<eyapp> the attributes of the symbol
+of a production rule has an associated scalar attribute>. 
+In C<eyapp> the attributes of the symbols
 to the left of C<action> are passed as arguments to C<action> (in the example, those of C<alpha>). 
 These arguments are preceded by a reference to the syntax analyzer object.
 There is no way inside an ordinary C<eyapp> program for an intermediate C<action> to 
 access the attributes of the symbols
 on its right, i.e. those associated with the symbols of C<beta>. This restriction is lifted 
-if you  use the C<%metatree> directive to build a full translation scheme. 
+if you  use the C<%metatree> directive to build a I<full translation scheme>. 
 See 
 L<Parse::Eyapp::translationschemestut>
 to know more about full translation schemes.
@@ -279,292 +226,249 @@ the returned value constitutes the attribute of the left hand side of the rule (
 attribute of C<A> in this case). The action at the end of the right hand side is 
 called the I<action associated with the production rule>. When no explicit action
 has been associated with a production rule the I<default action> applies. In C<Parse::Eyapp>
-the programmer can define what is the default action. 
-
-A very special
-action is "I<build the node associated with this production rule>" which
-is performed by the C<YYBuildAST> method of the parser object:
-
-                %default action { goto &Parse::Eyapp::Driver::YYBuildAST }
-
-The C<%tree> directive used in the L</SYNOPSIS> example
-is an abbreviation for this and has the effect of building an abstract syntax tree
-for the input.
-
-The call to 
-
-       Parse::Eyapp->new_grammar( # Create the parser package/class
-          input=>$grammar,
-          classname=>"Calc", # The name of the package containing the parser
-        );
-
-compiles C<$grammar> and 
-produces a new class C<Calc> containing
-a LALR parser for such grammar. The call
-
-                          $parser = Calc->new()
-
-creates a parser object for the language generated by C<$grammar>.
-Using the  C<YYParse> of the parser object:
-
-        $self->YYParse( yylex => \&_Lexer, yyerror => \&_Error, )
-
-C<YYParse> is called with arguments a reference to the lexical analyzer and 
-a reference to the error diagnostic subroutine C<_Error>. Such subroutine
-will be called by C<YYParse> when an error occurs. Is therefore convenient
-to give a meaningful diagnostic:
-
-    sub _Error { 
-      die "Syntax error near "
-      .($_[0]->YYCurval?$_[0]->YYCurval:"end of file")."\n" 
-    }
-
-The parser method C<YYCurval> returns the value of the current token.
-A more accurate error diagnostic subroutine can be obtained if  
-the lexical analyzer is modified so that
-tokens keep the line number where they start (i.e. the token 
-is a pair C<(TOKENNAME, [ ATTRIBUTE, LINENUMBER])>. In such case 
-the C<_Error> subroutine can be rewritten as:
-
-  sub _Error {
-    my($token)=$_[0]->YYCurval;
-    my($what)= $token ? "input: '$token->[0]' in line $token->[1]" : "end of input";
-    my @expected = $_[0]->YYExpect();
-    my $expected = @expected? "Expected one of these tokens: '@expected'":"";
-
-    croak "Syntax error near $what. $expected\n";
-  }
-
-The C<YYExpect> method returns the set of tokens that were expected when
-the error occurred.
-
-The input in 
-
-                $parser->YYData->{INPUT} 
-
-is then analyzed by C<YYParse> and 
-an abstract syntax tree is built. The tree rooted on a C<Parse::Eyapp::Node>
-can be displayed using the method C<str>:
-
-                    local $Parse::Eyapp::Node::INDENT=2;
-                    print "Syntax Tree:",$t->str;
-
-The following is the description of the syntax tree produced by the call C<$t-E<gt>str> for the 
-list of expressions C<"2*-3+b*0;--2\n";>:
-
-  pl@nereida:~/LEyapp/examples$ synopsis.pl
-  Syntax Tree:
-  EXPRESSION_LIST(
-    PLUS(
-      TIMES(
-        NUM(
-          TERMINAL[2]
-        ),
-        UMINUS(
-          NUM(
-            TERMINAL[3]
-          )
-        ) # UMINUS
-      ) # TIMES,
-      TIMES(
-        VAR(
-          TERMINAL[b]
-        ),
-        NUM(
-          TERMINAL[0]
-        )
-      ) # TIMES
-    ) # PLUS,
-    UMINUS(
-      UMINUS(
-        NUM(
-          TERMINAL[2]
-        )
-      ) # UMINUS
-    ) # UMINUS
-  ) # EXPRESSION_LIST
-
-Did you notice that the C<TERMINAL> nodes appear I<decorated> with its attribute?
-This is because each time the C<Parse::Eyapp::Node> method C<str>
-visits a node checks if the node has a method C<info> (i.e. C<$node-E<gt>can(info)>).
-If so, the C<info> method is called and the string returned is concatenated
-in the description string. This is the reason for these three lines at the beginning of the
-L</SYNOPSIS> example:
-
-                    sub TERMINAL::info {
-                      $_[0]{attr}
-                    }
-
-C<Parse::Eyapp> not only gives support to parsing
-but to later phases of the translation process: 
-tree transformations and
-scope analysis (scope analysis is the task to find which definition
-applies to an use of an object in the source). The program in the synopsis 
-section shows an example of a tree transformation
-specification. Tree transformations are specified using
-a language called I<Tree regular expressions>.
-The transformation object is created by the 
-constructor C<Parse::Eyapp::Treeregexp-E<gt>new>.
-
-  my $p = Parse::Eyapp::Treeregexp->new( STRING => q{
-      { #  Example of support code
-        my %Op = (PLUS=>'+', MINUS => '-', TIMES=>'*', DIV => '/');
-      }
-      constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y))
-        => {
-          my $op = $Op{ref($bin)};
-          $x->{attr} = eval  "$x->{attr} $op $y->{attr}";
-          $_[0] = $NUM[0];
-        }
-      uminus: UMINUS(NUM($x)) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
-      zero_times_whatever: TIMES(NUM($x), .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-      whatever_times_zero: TIMES(., NUM($x)) and { $x->{attr} == 0 } => { $_[0] = $NUM }
-    },
-  );
-
-The set of transformations specified in the example
-are
-
-=over 2 
-
-=item * 
-
-The transformation C<constantfold> produces
-I<constant folding> i.e. trees of expressions
-like C<3*2+4> are reduced to the tree for C<10> 
-
-      { #  Example of support code
-        my %Op = (PLUS=>'+', MINUS => '-', TIMES=>'*', DIV => '/');
-      }
-      constantfold: /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y))
-        => {
-          my $op = $Op{ref($bin)};
-          $x->{attr} = eval  "$x->{attr} $op $y->{attr}";
-          $_[0] = $NUM[0];
-        }
-
-Here C<constantfold> is the name of the transformation. 
-The treeregexp compiler will produce an object C<$constantfold>
-implementing the transformation. After the name
-comes the tree pattern: 
-
-          /TIMES|PLUS|DIV|MINUS/:bin(NUM($x), NUM($y))
-
-It matches any subtree rooted in any node belonging to one of 
-these classes: C<TIMES> or C<PLUS> or C<DIV> or C<MINUS> that has
-two children belonging to the C<NUM> class. The Perl code after the big arrow
-is executed on any matching subtree. We can refer to the root of the subtree
-using the variable C<$bin>. We can also refer to the child of the first C<NUM> node
-using C<$x>. In the same way C<$y> refers to the child of the second C<NUM>
-node. Since there are two C<NUM> nodes in the pattern, we refer to them inside
-the transformation part using the array C<@NUM>:
-
-                         $_[0] = $NUM[0];
-
-The action uses and C<eval> and the hash C<%Op> to compute the 
-corresponding reduction of the two nodes. The hash C<%Op> was defined in a previous
-section containing support code. You can insert in any place of a treeregexp 
-program such support code by surrounding it with curly brackets.
-The subtree that matched (that is in C<$_[0]>) is substituted
-by its left child:
-
-                         $_[0] = $NUM[0];
+the programmer can define what is the default action through the C<%defaultaction> directive: 
 
 
-=item * 
+                              %defaultaction { "$left $right $op"; }
 
-The transformations C<zero_times_whatever>
-and C<whatever_times_zero> produce
-the simplification of trees corresponding
-to multiplications by zero. 
-Trees for expressions like C<(a+b)*0>
-or C<0*(b-4)>  are reduced 
-to the tree for 0.
+=head2 Solving Ambiguities via Precedence and Associativity Declarations
 
-  zero_times_whatever: TIMES(NUM($x), .) and { $x->{attr} == 0 } => { $_[0] = $NUM }
+Notice that ambiguous grammars produce ambiguous translation schemes: 
+since a phrase may have two syntactic
+trees it will be more than one tree-traversing and consequently more than one 
+way to execute the embedded semantic actions. Certainly different execution
+orders will usually produce different results. Thus, syntactic ambiguities translate
+onto semantic ambiguities. That is why it is so important to resolve all the 
+ambiguities and conflicts that may arise in our grammars. This is the function 
+of the C<%left> and C<%right> declarations on the header section:
 
-Here C<zero_times_whatever> is the name of the transformation.
-The pattern C<TIMES(NUM($x), .)> matches any C<TIMES> node 
-with two children and whose first child belongs to the C<NUM>
-class. The dot matches any subtree, indicating that we don't care what
-sort of tree the right child is. The third component
+      %right  '='     # Lowest precedence
+      %left   '-' '+' # + and - have more precedence than = Disambiguate a-b-c as (a-b)-c
+      %left   '*' '/' # * and / have more precedence than + Disambiguate a/b/c as (a/b)/c
+      %left   NEG     # Disambiguate -a-b as (-a)-b and not as -(a-b)
 
-                   { $x->{attr} == 0 }
+Priority can be assigned to tokens by using the C<%left> and C<%right> declarations. I<Tokens in
+lines below have more precedence than tokens in line above>. 
+The idea  behind this notation is this: 
+I<Any ambiguity can be seen as a parenthesizing problem>. You can parenthesize left (in the jargon this
+is called I<reduce>) or parenthesize right (in the jargon, I<shift>).
+Recall the main points of yacc-like parsers related to priorities:
 
-is the semantic pattern. If both the shape pattern and the semantic pattern
-apply the action after the arrow is applied. The subtrees
-is substituted by its left child.
+=over 2
 
-=item *
+=item * The directives
 
-The transformation C<uminus> simplifies
-the tree for unary minus of constant expressions.
+            %left
+            %right
+            %nonassoc
 
-      uminus: UMINUS(NUM($x)) => { $x->{attr} = -$x->{attr}; $_[0] = $NUM }
+can be used in the head section to declare the priority of a token
 
-It matches trees rooted in a C<UMINUS> node whose only child is a C<NUM> node.
-In such case the sign of the number that is the attribute of the C<TERMINAL> node 
-is changed and the tree is substituted by its single child.
+=item * The later the declaration line the higher the priority
+
+=item * Tokens in the same line have the same priority. Ties will be solved
+using the token associativity (whether they were declared C<%left> or C<%right>)
+
+
+=item * The I<precedence of a production rule (right hand side) is the precedence
+of the last token in the right hand side>
+
+=item * If the parser emits a warning announcing a shift-reduce conflict or a reduce-reduce
+conflict in your grammar, it likely means that your grammar is ambiguous or not LALR.
+In such case, recompile the grammar with C<eyapp -v> and carefully study the C<.output> file generated.
+I<Detect which token and which rules are involved in the conflict>.
+
+=item * In a shift-reduce conflict the default action is to shift (i.e. associate right). This action can be changed
+if the production and the token involved have explicit priorities
+
+=item * Most of the time the presence of a reduce-reduce conflict 
+means that your grammar is ambiguous. Rewrite your grammar. Alternatively, use the C<%conflict> and C<%PREC> directives
+(see example C<debuggintut/pascalenumeratedvsrangesolvedviadyn.eyp>). 
+The default action is to reduce by the first production.
+
+=item * If the precedence of the production rule is higher the shift-reduce conflict is solved 
+in favor of the reduction (i.e. associate left)
+
+=item * If the precedence of the token is higher the shift-reduce conflict is solved 
+in favor of the shift (i.e. associate right).
+
+=item * If the precedence of the token is the same than the precedence of the rule, and is left 
+the shift-reduce conflict is solved in favor of the reduction (i.e. associate left)
+
+=item * If the precedence of the token is the same than the precedence of the rule, and is right 
+the shift-reduce conflict is solved in favor of the shift
+
+=item * If the precedence of the token is the same than the precedence of the rule, and is nonassoc 
+the presence of a shift-reduce conflict means an error.
+This is used to describe operators, like the operator C<.LT.> in FORTRAN, 
+that may not associate with themselves. That is, because
+
+                             A .LT. B .LT. C
+
+is invalid in FORTRAN, C<.LT.> would be described with the keyword C<%nonassoc> in eyapp. 
+
+=item * The default precedence of a production can be changed using the C<%prec TOKEN> directive.
+Now the rule has the precedence and I<associativity> of the specified C<TOKEN>.
 
 =back
 
-The call
+=head2 Examples
 
-                  $p->generate(); 
+=over 2
 
-compiles the transformation specification producing
-a set of transformations C<$constantfold>, 
-C<$zero_times_whatever>, C<whatever_times_zero> and  C<$uminus>.
-Transformations are C<Parse::Eyapp::YATW> objects. The list variable
-C<@all> refer to the whole set of C<Parse::Eyapp::YATW> 
-transformations.
+=item 
 
-The nodes of the abstract syntax tree are objects. The class
-(C<NUM>, C<TIMES>, C<UMINUS>, etc.) defines the type of node.
-All node classes inherit from the class C<Parse::Eyapp::Node>.
-C<Parse::Eyapp::Node> provides a set of methods to manipulate nodes.
-Among these methods are C<str>, C<m> and C<s>. The C<m> and C<s> methods 
-resemble the matching and substitution operators for regular
-expressions. But instead of regular expressions they work 
-with tree transformations or C<treeregexp>s or, more
-precisely with C<Parse::Eyapp::YATW> objects.
-By calling:
+By giving token C<'+'> more precedence than token C<'='> we solve the ambiguity in
+C<VAR = VAR + NUM> in favor of C< VAR = (VAR + NUM)>. The conflict occurs between the productions
 
-                          $t->s($uminus);
+                            exp -> exp . '+' exp 
+                            exp -> VAR '=' exp .
 
-subtrees like 
+Where the dot means: 
 
-                  UMINUS(UMINUS(NUM(TERMINAL[2])))
+I<If I have seen> C<VAR '=' exp> 
+I<and I am in the presence of a token> C<'+'> I<I can associate left, i.e. reduce> 
+C<VAR '=' exp> I<to> C<exp> 
+I<or to associate right,> 
+I<that is, to shift to the right to reduce> C<exp '+' exp> I<to> C<exp> I<later>.
 
-are simplified to
+=item 
 
-                                   NUM(TERMINAL[2])
+How it works when two tokens are declared in the same line?
+Consider the phrase C<NUM - NUM - NUM>. It will be interpreted
+as C<(NUM - NUM) - NUM> if the token C<'-'> is declared C<%left '-'> and 
+will be interpreted as C<NUM - (NUM - NUM)>  if the token C<'-'> is declared C<%right '-'>.
+By saying C<'-'> is left
+we are saying we  prefer between the two trees in dispute the one
+that deepens to the left:
 
-The call to
+                                       +---+
+                                       |exp|
+                                       +---+
+                                .--------^--.-----.
+                              +---+       +---+ +---+
+                              |exp|       | - | |exp|
+                              +---+       +---+ +---+
+                          .-----+-----.           |
+                        +---+ +---+ +---+       +---+
+                        |exp| | - | |exp|       |NUM|
+                        +---+ +---+ +---+       +---+
+                          |           |
+                        +---+       +---+
+                        |NUM|       |NUM|
+                        +---+       +---+
 
-                           $t->s(@all);
+By saying C<'-'> is right we are saying we  prefer between the two trees in dispute the one
+that deepens to the right:
 
-applies the whole set of transformations. The transformations in C<@all> 
-are iteratively
-applied to the tree C<$t> until no transformation succeeds: Yes, that means that
-a inappropriate set of transformations my hang your program.
+                                        +---+
+                                        |exp|
+                                        +---+
+                              .-----.-----^-----.
+                            +---+ +---+       +---+
+                            |exp| |MIN|       |exp|
+                            +---+ +---+       +---+
+                              |           .-----+-----.
+                            +---+       +---+ +---+ +---+
+                            |NUM|       |exp| |MIN| |exp|
+                            +---+       +---+ +---+ +---+
+                                           |           |
+                                         +---+       +---+
+                                         |NUM|       |NUM|
+                                         +---+       +---+
 
-Thus, the former syntax tree for C<"2*-3+b*0;--2\n";> 
-becomes:
 
-  EXPRESSION_LIST(NUM(TERMINAL[-6]),NUM(TERMINAL[2]))
+Since I<priority means earlier evaluation>
+and the evaluation by L<eyapp> of semantic actions is bottom up, I<the deeper the associated subtree the higher
+the priority>.
 
-The analyzer has been able to optimize - at compile time -
-the computation of these two expressions
+=item 
 
-                    2*-3+b*0;
-                    --2
+Consider now the phrase C<-NUM-NUM>. There are two interpretations:
+one as C<-(NUM-NUM)> and the other as C<(-NUM)-NUM>. The conflict occurs between the productions
 
-reducing them to the computation of:
+                            exp -> exp . '-' exp 
+                            exp -> '-' exp.
 
-                     -6;
-                      2
+Both productions have the precedence of the token C<'-'>. But we prefer the interpretation
+C<(-NUM)-NUM> to win. We do that by explicitly changing the precedence associated with
+the unary minus production via the C<%prec> directive.
+                      
+=back
 
+=head2 Lexical Analysis
+
+Parsers created by C<eyapp> do not deal directly with the input. Instead they expect the input
+to be processed by a I<lexical analyzer>. The lexical analyzer parses the input and produces
+the next token. A I<token> is a pair. The first component is the name of the token (like C<NUM>
+or C<VAR>) and the second is its attribute (i.e. the information associated with the token, like 
+that the value is C<4> for a C<NUM> or the identifier is C<temperature> for a
+C<VAR>). Tokens are usually defined using regular expressions. Thus the token 
+C<NUM> is characterized by C</[0-9]+(?:\.[0-9]+)?/> and the token
+C<VAR> by C</[A-Za-z][A-Za-z0-9_]*/>. The L<eyapp> compiler 
+automatically generates a lexical analyzer from
+your token definitions. The tokens C<NUM> and C<VAR> were defined using the C<%token> directives:
+
+  %token NUM = /([0-9]+(?:\.[0-9]+)?)/
+  %token VAR = /([A-Za-z][A-Za-z0-9_]*)/
+
+The order in which the tokens are defined is important. The input will be matched 
+against the regular expression for C<NUM> before the regular expression for C<VAR>
+is tried, and all the literal tokens that appear between quotes inside the body of the grammar,
+like C<'+'> or C<'->, are tried before any explicitly defined token.
+
+You can, alternatively, define the lexical analyzer explicitly. There are many ways to do it.
+Here is an example of a 
+definition of a lexical analyzer using the C<%lexer> directive:
+
+  %lexer  {
+    m{\G[ \t]*}gc;
+    m{\G(\n)+}gc                    and $self->tokenline($1 =~ tr/\n//);
+    m{\G([0-9]+(?:\.[0-9]+)?)}gc    and return ('NUM',   $1);
+    m{\G([A-Za-z_][A-Za-z0-9_]*)}gc and return ('VAR',   $1);
+    m{\G(.)}gc                      and return ($1,      $1);
+  }
+
+The C<%lexer> directive is followed by the code defining the lexical analyzer.
+When called, the variable C<$_> is an alias of the input. 
+The input can also be set and accessed via the C<input> method of the C<$parser> object. 
+
+To catch the next pattern we use the anchor C<\G>.
+The C<\G> anchor matches at the point where the previous C</g> match left off. 
+Normally, when a scalar C<m{}g> match fails, the match position is reset and
+C<\G> will start matching at the beginning of the string.
+The C<c> option causes the match position to be retained following an unsuccessful match.
+The couple C<('',undef)> which signals the end of the input is automatically inserted by 
+C<eyapp>.
+
+=head2 The C<main> and C<error> subroutines
+
+If you compile your grammar with option C<-C>, C<eyapp> will insert 
+a line like this as the first line of the generated C<.pm> file:
+
+                #!/usr/bin/perl
+
+It will also append a line like this as the last line of the C<.pm> file:
+
+          unless (caller) { exit !__PACKAGE__->main(''); }
+
+This allows the alternative use of the module as a script.
+Unless a C<main> subroutine was defined, the one provided
+by L<Parse::Eyapp::Driver> will be called. It also provides
+a default subroutine for the handling of error messages.
+
+The default main accepts a few arguments from the command line.
+Here are some:
+
+=over 2
+
+=item * C<-f filename> input from C<filename>
+
+=item * C<-c 'string'> input from C<'string'>
+
+=item * C<-noslurp> when input is from C<STDIN> don't wait for end of file
+
+=back
 
 
 =head1 SEE ALSO

@@ -12,34 +12,28 @@ This grammar fixes the conflicts an bugs in Debug.eyp and Debug1.eyp
 Be sure C<DebugTail.pm> is reachable
 compile it with 
 
-      eyapp -b '' DebugLookForward.eyp
+      eyapp -C DebugLookForward.eyp
 
 execute the generated modulino with:
 
-      ./DebugLookForward.pm -t
+      ./DebugLookForward.pm -t -i -c 'D;D;S'
 
 =head1 See also
 
-    Debug.eyp Debug1.eyp Debug2.eyp 
+    Debug.eyp Debug1.eyp Debug2.eyp DebugLookForward2.eyp
 
 =cut
 
 our $VERSION = '0.01';
 
 %}
+%strict
 
-%lexer {
-       s{^(\s+)}{} and $self->tokenline($1 =~ tr{\n}{});
-       return ('',undef) unless $_;
+%token SEMICOLONS = /(;)(?=\s*S)/
+%token ';'
 
-       return ($1,$1) if s/^([sSDd])//;
-       return ('SEMICOLOND', 'SEMICOLOND') if s/^;\s*D/D/;
-       return ('SEMICOLONS', 'SEMICOLONS') if s/^;\s*S/S/;
-       die "Syntax error at line num ${$self->tokenline()}: ${substr($_,0,10)}\n";
-    }
-
-%token D S
-%syntactic token SEMICOLONS SEMICOLOND
+%syntactic token SEMICOLONS 
+%semantic token 'D' 'S'
 
 %tree
 
@@ -53,19 +47,17 @@ p:
 
 ds:
     %name D2
-      D SEMICOLOND ds   
+      'D' ';' ds   
   | %name D1
-      D       
+      'D'       
 ;
 
 ss:
     %name S2
-      S SEMICOLONS ss     
+      'S' SEMICOLONS ss     
   | %name S1
-      S       
+      'S'       
 ;
 
 %%
-
-__PACKAGE__->main('Provide a statement like "D; D; S" and press <CR><CTRL-D>: ') unless caller;
 

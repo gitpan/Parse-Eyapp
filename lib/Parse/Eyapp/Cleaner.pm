@@ -89,7 +89,7 @@ sub controller {
        $attr->[0] =~ s/\s*:\s*$/:/; # remove blanks before and after colon
        _generate $g.$attr->[0]."\n      ";
      }
-     elsif ($token =~ /\b(IDENT|LITERAL|NUMBER)\b/) {
+     elsif ($token =~ /\b(IDENT|LITERAL|NUMBER|REGEXP)\b/) {
        _generate $attr->[0]." ";
      }
      elsif ($token =~ /(PREC|STAR\b|PLUS|OPTION|[)(])/) {
@@ -220,6 +220,17 @@ sub _Lexer {
 
         $$input=~/\G([A-Za-z_][A-Za-z0-9_]*)/gc
     and return('IDENT',[ $1, $lineno[0] ]);
+
+        $$input =~ m{\G(
+           /             # opening slash
+             (?:[^/\\]|    # an ordinary character
+                  \\\\|    # escaped \ i.e. \\
+                   \\/|    # escaped slash i.e. \/
+                    \\     # escape i.e. \
+             )*?           # non greedy repetitions
+           /               # closing slash
+          )
+        }xgc and return('REGEXP',[ $1, $lineno[0] ]);
 
 
         $$input=~/\G( '                # opening apostrophe

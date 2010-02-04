@@ -2,6 +2,7 @@
 package Parse::Eyapp::Node;
 use strict;
 use Carp;
+no warnings 'recursion';
 
 use Parse::Eyapp::YATW;
 use List::Util qw(first);

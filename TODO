@@ -15,6 +15,48 @@
   *  Debugging: set breakpoints in the code from yydebug=> 1
 
   * Lexical Analyzer generation:
+      * given explicit precedence to tokens
+           %token LASTSEMICOLON /(;)(?=S)/
+           %token ';' 
+        use the place where the token is placed for the lexical analyzer. This is compatible with 
+        explicit scanners.
+      * support streams: see lexer in examples/Eyapp/Lhs1.yp
+        - Parse::Eyapp::Driver::input called as a setter receives an open file handler 
+        - if the input string is finished it reads from the file handler (controled by $/)
+        - otherwise returns the current string
+                    our $INPUT = \undef;
+                    sub input {
+                      my $self = shift;
+
+                      if (ref $self) { # instance/object method
+                        if (@_) { # used as setter
+                          $self->line(1);
+                          if (ref $_[0]) {
+                            if (reftype $_[0] eq 'GLOB') { #  an opened file handle
+                                my $f = $_[0];
+                                $self->{INPUTFILE} = $f;
+                                $self->{INPUT} = <f>;
+                                
+                            }
+                            else { # a string
+                              $self->{INPUT} = shift;
+                            }
+                          }
+                          else { # a string
+                            my $input = shift;
+                            $self->{INPUT} = \$input;
+                          }
+                        }
+
+                        return $self->static_attribute('INPUT', @_,) unless defined($self->{INPUT}); # class/static method 
+                        return $self->{INPUT};
+                      }
+                      else { # class/static method
+                        $self->line(1) if @_; # used as setter
+                        return $self->static_attribute('INPUT', @_,); # class/static method 
+                      }
+                    }
+
       * error line numbers-> source code
       * lexer must support a sub name
          %lexer mylexer

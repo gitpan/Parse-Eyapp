@@ -364,38 +364,38 @@ decls:  decls decl  #default action
 ;
 
 decl:  '\n'                 #default action
-    |   SEMANTIC typedecl toklist '\n'
+    |   SEMANTIC typedecl symlist '\n'
             {
                 for (@{$_[3]}) {
-                    my($symbol,$lineno, $def)=@$_;
+                    my($symbol,$lineno)=@$_;
 
-                        exists($$token{$symbol})
-                    and do {
-                        _SyntaxError(0,
-                                "Token $symbol redefined: ".
-                                "Previously defined line $$syms{$symbol}",
-                                $lineno);
-                        next;
-                    };
+                    #    exists($$token{$symbol})
+                    #and do {
+                    #    _SyntaxError(0,
+                    #            "Token $symbol redefined: ".
+                    #            "Previously defined line $$syms{$symbol}",
+                    #            $lineno);
+                    #    next;
+                    #};
                     $$token{$symbol}=$lineno;
                     $$term{$symbol} = [ ];
                     $$semantic{$symbol} = 1;
                 }
                 undef
             }
-    |   SYNTACTIC typedecl toklist '\n'
+    |   SYNTACTIC typedecl symlist '\n'
             {
                 for (@{$_[3]}) {
                     my($symbol,$lineno)=@$_;
 
-                        exists($$token{$symbol})
-                    and do {
-                        _SyntaxError(0,
-                                "Token $symbol redefined: ".
-                                "Previously defined line $$syms{$symbol}",
-                                $lineno);
-                        next;
-                    };
+                    #    exists($$token{$symbol})
+                    #and do {
+                    #    _SyntaxError(0,
+                    #            "Token $symbol redefined: ".
+                    #            "Previously defined line $$syms{$symbol}",
+                    #            $lineno);
+                    #    next;
+                    #};
                     $$token{$symbol}=$lineno;
                     $$term{$symbol} = [ ];
                     $$semantic{$symbol} = 0;
@@ -586,7 +586,10 @@ tokendef:   symbol '=' REGEXP    {
                                     push @{$_[1]}, $_[3]; 
                                     $_[1] 
                                  } 
-    |       symbol               
+    |       symbol               {
+                                   push @{$_[1]}, [ @{$_[1]}, 'LITERAL'];
+                                   $_[1];
+                                 }
 ;
 
 identlist:  identlist ident { push(@{$_[1]},$_[2]); $_[1] }

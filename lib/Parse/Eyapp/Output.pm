@@ -40,7 +40,7 @@ sub deleteNotUsedTokens {
   }
 
   # Emit a warning if exists a non '' token in %usedSymbols that is not in %termdef
-  if ($self->{GRAMMAR}{STRICT}) {
+  if ($self->{GRAMMAR}{STRICT} && %$termDef) {
     my @undefined = grep { ! exists $termDef->{$_} } grep { m{^[^']} } keys %$term;
     if (@undefined) {
       @undefined = map { "Warning: may be you forgot to define token '$_'?: %token $_ = /someRegExp/" } @undefined;
@@ -84,6 +84,7 @@ sub makeLexer {
 
   @term = sort { length($b) <=> length($a) } @term;
   @term = map { quotemeta } @term;
+
   # Keep escape characters as \n \r, etc.
   @term = map { s/\\\\(.)/\\$1/g; $_ } @term;
 
@@ -103,7 +104,15 @@ sub makeLexer {
       ${reg}gc and return ('$t', \$1);
 EORT
     }
-    else { # token definition is code
+    elsif ($termdef{$t}[2] eq 'LITERAL') { # %token without regexp or code definition
+      my $reg = $termdef{$t}[0];
+      $reg =~ s{^'?}{/\\G(};
+      $reg =~ s{'?$}{)/};
+      $DEFINEDTOKENS .= << "EORT";
+      ${reg}gc and return (\$1, \$1);
+EORT
+    }
+    elsif ($termdef{$t}[2] eq 'CODE') { # token definition is code
       $DEFINEDTOKENS .= $termdef{$t}[0];
     }
   }
@@ -202,7 +211,8 @@ MODULINO
     $modulino = '';
   }
 
-  my $defaultLexer = $self->{GRAMMAR}{LEXERISDEFINED} ? q{} : $self->makeLexer();
+  my $lexerisdefined = $self->Option('lexerisdefined') || $self->{GRAMMAR}{LEXERISDEFINED}; 
+  my $defaultLexer = $lexerisdefined ? q{} : $self->makeLexer();
 
   my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree, $prefix, $conflict_handlers);
   my($version)=$Parse::Eyapp::Driver::VERSION;

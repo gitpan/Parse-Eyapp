@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.155";
+$VERSION = "1.156";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -1105,6 +1105,13 @@ sub YYLexer {
   }
 }
 
+sub YYEndOfInput {
+   my $self = shift;
+
+   for (${$self->input}) {
+     return !defined($_) || ($_ eq '') || (defined(pos($_)) && (pos($_) >= length($_)));
+   }
+}
 
 #################
 # Private stuff #
