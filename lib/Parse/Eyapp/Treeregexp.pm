@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.156.
+#    This file was generated using Parse::Eyapp version 1.157.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -15,6 +15,8 @@ use strict;
 push @Parse::Eyapp::Treeregparser::ISA, 'Parse::Eyapp::Driver';
 
 
+
+
 BEGIN {
   # This strange way to load the modules is to guarantee compatibility when
   # using several standalone and non-standalone Eyapp parsers
@@ -26,7 +28,7 @@ BEGIN {
 
 
 
-sub unexpendedInput { substr($_, pos $_) }
+sub unexpendedInput { defined($_) ? substr($_, (defined(pos $_) ? pos $_ : 0)) : '' }
 
 
 use Carp;
@@ -240,7 +242,7 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.156',
+    yyversion => '1.157',
     yyGRAMMAR  =>
 [
   [ '_SUPERSTART' => '$start', [ 'treeregexplist', '$end' ], 0 ],

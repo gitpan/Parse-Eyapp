@@ -25,7 +25,9 @@ sub R::TERMINAL::info { $_[0]{attr} }
 
 my $parser = new Calc(yyprefix => "R::");
                    # stdin, prompt              , read one line at time
-$parser->slurp_file('','Arithmetic expression: ', "\n");
+
+$parser->YYPrompt("Arithmetic expression: ");
+$parser->slurp_file('', "\n");
 
 my $t = $parser->YYParse;
 

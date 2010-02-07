@@ -1,8 +1,4 @@
-%lexer {
-    s/^[ \t\n]*//;
-    s/^(.)//s and return($1,$1);
-}
-
+%incremental lexer 'Try aaabbb: '
 %%
 S:      /* empty */ 
     |   'a' S 'b'  

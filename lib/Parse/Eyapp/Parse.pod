@@ -4116,6 +4116,10 @@ Use a subversion client to anonymously check out the latest project source code:
 
    svn checkout http://parse-eyapp.googlecode.com/svn/trunk/ parse-eyapp-read-only
 
+=item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
+(An Introduction to Compiler Construction in seven pages) in
+L<http://nereida.deioc.ull.es/~pl/eyapsimple/> 
+
 =item * 
 L<Parse::Eyapp>, 
 L<Parse::Eyapp::eyapplanguageref>, 
@@ -4150,10 +4154,6 @@ L<Parse::Eyapp::datagenerationtut>
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/translationschemestut.pdf> 
 
 =item * The pdf file in L<http://nereida.deioc.ull.es/~pl/perlexamples/treematchingtut.pdf> 
-
-=item * The tutorial I<Parsing Strings and Trees with> C<Parse::Eyapp>
-(An Introduction to Compiler Construction in seven pages) in
-L<http://nereida.deioc.ull.es/~pl/eyapsimple/> 
 
 =item *
 perldoc L<eyapp>, 

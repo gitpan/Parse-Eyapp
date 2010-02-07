@@ -1,17 +1,13 @@
 #!/usr/bin/perl -w
+# Test YATW s
 use strict;
-use  Parse::Eyapp;
-use  Parse::Eyapp::Treeregexp;
+use Parse::Eyapp;
+use Parse::Eyapp::Treeregexp;
 
 sub TERMINAL::info { $_[0]{attr} }
 my $translationscheme = q{
-  %lexer {
-      s/^\s*//;
-
-      s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
-      s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-      s/^(.)// and return($1,$1);
-  }
+  %token NUM = /([0-9]+(?:\.[0-9]+)?)/
+  %token VAR = /([A-Za-z][A-Za-z0-9_]*)/
 
   %metatree
 
@@ -65,7 +61,8 @@ Parse::Eyapp->new_grammar(
 my $parser = Calc->new();                # Create the parser
 
 
-$parser->slurp_file('', "Give an expression (like -2*3): ","\n");
+$parser->YYPrompt("Give an expression (like -2*3): ");
+$parser->slurp_file('', "\n");
 print ${$parser->input}; # Set the input
 
 my $t = $parser->YYParse;                    # Parse it

@@ -26,7 +26,8 @@ sub SHIFTLEFT::info { $_[0]{shift} }
 insert_function('TERMINAL::info', \&TERMINAL::attr);
 
 my $parser = new Rule5();
-$parser->slurp_file('','Arithmetic expression: ', "\n");
+$parser->YYPrompt('Arithmetic expression: ');
+$parser->slurp_file('', "\n");
 my $t = $parser->Run;
 unless ($parser->YYNberr) {
   print "***********\n",$t->str,"\n";

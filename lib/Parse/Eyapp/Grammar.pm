@@ -298,6 +298,12 @@ sub Buildingtree {
   return  $$self{GRAMMAR}{BUILDINGTREE}
 }
 
+sub Prompt {
+  my $self = shift;
+
+  return  "our \$PROMPT = $$self{GRAMMAR}{INCREMENTAL};\n" if defined($$self{GRAMMAR}{INCREMENTAL});
+  return '';
+}
 
 sub is_token {
   my($self)=shift;
@@ -594,6 +600,7 @@ sub _ReduceGrammar {
                    TERMDEF           => $values->{TERMDEF},           # token => associated regular expression (for lexical analyzer)
                    WHITES            => $values->{WHITES},            # string with the code to skip whites (for lexical analyzer)
                    LEXERISDEFINED    => $values->{LEXERISDEFINED},    # true if %lexer was used
+                   INCREMENTAL       => $values->{INCREMENTAL},       # true if '%incremental lexer' was used
                    MODULINO          => $values->{MODULINO},          # hash perlpath => path, prompt => question
                    STRICT            => $values->{STRICT},            # true if %stric
                    TOKENNAMES     => {},                              # for naming schemes

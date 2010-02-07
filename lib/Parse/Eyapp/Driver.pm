@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.156";
+$VERSION = "1.157";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -623,6 +623,8 @@ sub YYAccessors {
   $self->{ACCESSORS}
 }
 
+# name of the file containing
+# the source grammar
 sub YYFilename {
   my $self = shift;
 
@@ -1198,10 +1200,11 @@ sub slurp_file {
   }
   else {
     $f = \*STDIN;
-    my $msg = shift;
+    my $msg = $self->YYPrompt();
     $mode = shift;
     print($msg) if $msg;
   }
+  $self->YYInputFile($f);
 
   local $/ = $mode;
   my $input = <$f>;
@@ -1238,27 +1241,46 @@ sub input {
     return $self->static_attribute('INPUT', @_,); # class/static method 
   }
 }
+*YYInput = \&input;  # alias
+
+# Opened file used to get the input
+# static and instance method
+our $INPUTFILE = \*STDIN;
+sub YYInputFile {
+  my $self = shift;
+
+  if (ref($self)) { # object method
+     my $file = shift;
+     if ($file) { # setter
+       $self->{INPUTFILE} = $file;
+     }
+    
+    return $self->static_attribute('INPUTFILE', @_,) unless defined($self->{INPUTFILE}); # class/static method 
+    return $self->{INPUTFILE};
+  }
+  else { # static
+    return $self->static_attribute('INPUTFILE', @_,); # class/static method 
+  }
+}
 
 
-#sub input {
-#  my $self = shift;
-#
-#  no strict 'refs';
-#  if (@_) { # used as setter. Passing ref
-#    $self->line(1);
-#    if (ref($self)) { # object method
-#      $self->{input} = shift;
-#
-#      return $self->{input};
-#    }
-#    # Static method passing string
-#    ${$self.'::input'} = shift();
-#
-#    return ${$self.'::input'};
-#  }
-#  return $self->{input} if ref $self;
-#  return ${$self.'::input'};
-#}
+our $PROMPT;
+sub YYPrompt {
+  my $self = shift;
+
+  if (ref($self)) { # object method
+     my $prompt = shift;
+     if ($prompt) { # setter
+       $self->{PROMPT} = $prompt;
+     }
+    
+    return $self->static_attribute('PROMPT', @_,) unless defined($self->{PROMPT}); # class/static method 
+    return $self->{PROMPT};
+  }
+  else { # static
+    return $self->static_attribute('PROMPT', @_,); # class/static method 
+  }
+}
 
 # args: parser, debug and optionally the input or a reference to the input
 sub Run {
@@ -1319,12 +1341,13 @@ sub main {
   $slurp = "\n" if defined($slurp);
 
   my $parser = $package->new();
+  $parser->YYPrompt($prompt) if defined($prompt);
 
   if ($commandinput) {
     $parser->input(\$commandinput);
   }
   elsif ($inputfromfile) {
-    $parser->slurp_file( $file, $prompt, $slurp);
+    $parser->slurp_file( $file, $slurp);
   }
   else { # input must be a string argument
     croak "No input provided for parsing! " unless defined($_[0]);
@@ -1349,7 +1372,9 @@ sub main {
 
         if (defined($TERMINALinfo)) {
           $showtree = 1;
-          *TERMINAL::info = sub {  (ref($_[0]->attr) eq 'ARRAY')? $_[0]->attr->[0] : $_[0]->attr };
+          my $prefix = ($parser->YYPrefix || '');
+          no strict 'refs';
+          *{$prefix.'TERMINAL::info'} = sub {  (ref($_[0]->attr) eq 'ARRAY')? $_[0]->attr->[0] : $_[0]->attr };
         }
 
           print $tree->str()."\n";

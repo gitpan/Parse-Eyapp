@@ -25,8 +25,11 @@ my $tail;
 my $token;
 my $term;    # hash ref. key: token, value: an array describing the assoc and priority { '-' => [ 'LEFT' 1 ], '*' => [ 'LEFT' 2 ], }
 my $termdef; # token definitions. key is token, value is regexp
-my $whites;  # string with the code for white spaces (when automatic generated lexer)
-my $lexer;   # boolean: true if %lexer was used
+
+my $whites;      # string with the code for white spaces (when automatic generated lexer)
+my $lexer;       # boolean: true if %lexer was used
+my $incremental; # build an incremental lexer: one that reads in chunks from $self->YYInputFile
+
 my $nterm;
 my $rules;
 my $precterm; # hash ref. key token used in %prec. value: priority
@@ -479,6 +482,14 @@ decl:  '\n'                 #default action
     |   HEADCODE '\n'                   { push(@$head,$_[1]); undef }
     |   UNION CODE '\n'                 { undef } #ignore
     |   DEFAULTACTION CODE '\n'         { $defaultaction = $_[2]; undef } 
+    |   INCREMENTAL '\n'                { 
+                                           $incremental = ''; 
+                                           undef 
+                                        }
+    |   INCREMENTAL LITERAL '\n'        { 
+                                           $incremental = $_[2][0]; 
+                                           undef 
+                                        }
     |   LEXER CODE '\n'                 { 
                                            my ($code, $line) = @{$_[2]};
                                            push @$head, [ make_lexer($code, $line), $line]; 
@@ -1078,7 +1089,9 @@ sub _Lexer {
           return('TREE',[ $treeoptions, $lineno[0] ])
         };
 
-        $$input=~/\G%(?:(semantic|syntactic)\s+token)\b/gc and return(uc($1),[ undef, $lineno[0] ]);
+        $$input=~/\G%(?:(semantic|syntactic)(?:\s+token)?)\b/gc and return(uc($1),[ undef, $lineno[0] ]);
+
+        $$input=~/\G%(?:(incremental)(?:\s+lexer)?)\b/gc and return(uc($1),[ undef, $lineno[0] ]);
 
         $$input=~/\G%(lexer|defaultaction|union)\b\s*/gc   and return(uc($1),[ undef, $lineno[0] ]);
 
@@ -1308,6 +1321,7 @@ sub Parse {
               'TERMDEF',
               'WHITES',
               'LEXERISDEFINED',
+              'INCREMENTAL',
               'STRICT',
             }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
@@ -1320,6 +1334,7 @@ sub Parse {
                $termdef,
                $whites,
                $lexer,
+               $incremental,
                $strict,
             );
 
@@ -1329,6 +1344,7 @@ sub Parse {
     undef($nberr);
     undef($prec);
     undef($labelno);
+    undef($incremental);
 
     undef($head);
     undef($tail);

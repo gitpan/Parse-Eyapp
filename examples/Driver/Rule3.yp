@@ -33,17 +33,16 @@ sub build_node {
   bless { children => \@children, info => "$var -> @right" }, __PACKAGE__."::${var}_$rule" 
 }
 %}
+
+%incremental lexer 'Try a valid expression like "a = b*2": '
+%whites /([ \t]+)/
+%token NUM = /([0-9]+(?:\.[0-9]+)?)/
+%token VAR = /([A-Za-z][A-Za-z0-9_]*)/
+
 %right  '='
 %left   '-' '+'
 %left   '*' '/'
 %left   NEG
-
-%lexer {
-        s/^[ \t]+//;
-        s/^([0-9]+(?:\.[0-9]+)?)// and return('NUM',$1);
-        s/^([A-Za-z][A-Za-z0-9_]*)// and return('VAR',$1);
-        s/^(.)//s and return($1,$1);
-}
 
 %defaultaction { build_node(@_) }
 
