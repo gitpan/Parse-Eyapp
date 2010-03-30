@@ -4225,6 +4225,8 @@ Pete Jinks
 
 =item * Thomas L. Shinnick L<http://search.cpan.org/~tshinnic/>
 
+=item * Frank Leray
+
 =back
 
 =head1 AUTHOR

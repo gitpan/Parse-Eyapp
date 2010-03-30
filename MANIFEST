@@ -71,7 +71,6 @@ examples/Driver/Postfix.eyp
 examples/Driver/Rule3.yp
 examples/Driver/use_aSb.pl
 examples/Driver/userule3.pl
-examples/Eyapp/foldand0rule9_4.pl
 examples/eyappintro/Postfix.eyp
 examples/eyappintro/InputFromStream.eyp
 examples/eyapplanguageref/15treewithsyntactictoken.pl
@@ -127,8 +126,10 @@ examples/eyapplanguageref/usepostfix.pl
 examples/eyapplanguageref/usereturnnonode.pl
 examples/eyapplanguageref/useyynamedynamic.pl
 examples/eyapplanguageref/YYNameDynamic.eyp
+examples/Eyapp/foldand0rule9_4.pl
 examples/Eyapp/Lhs1.yp
 examples/Eyapp/Postfix.eyp
+examples/Eyapp/PostfixWithSeparatedLexer.eyp
 examples/Eyapp/README
 examples/Eyapp/Rule3.yp
 examples/Eyapp/Rule5.yp
@@ -136,12 +137,12 @@ examples/Eyapp/Rule9.yp
 examples/Eyapp/Shift.trg
 examples/Eyapp/synopsis.pl
 examples/Eyapp/Tail2.pm
-examples/Eyapp/T.pm
 examples/Eyapp/Transform4.trg
 examples/Eyapp/uselhs1.pl
 examples/Eyapp/usepostfix.pl
 examples/Eyapp/userule3.pl
 examples/Eyapp/useruleandshift.pl
+examples/Eyapp/TailModule.pm
 examples/generator/Generator.eyp
 examples/generator/GenSupport.pm
 examples/languages/C/ansic.eyp

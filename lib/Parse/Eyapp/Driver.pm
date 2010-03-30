@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.157";
+$VERSION = "1.158";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -1009,11 +1009,15 @@ sub YYCurval {
     while (@reduce) {
       my $index = shift @reduce;
       my ($lhs, $length) = @{$self->{RULES}[-$index]};
-      splice @STACK, -$length;
-      my $state = $STACK[-1]->[0];
-      my $nextstate = $self->{STATES}[$state]{GOTOS}{$lhs};
-      push @STACK, [$nextstate, undef];
-      @expected = $self->YYExpected;
+      if (@STACK > length) {
+        splice @STACK, -$length;
+
+        my $state = $STACK[-1]->[0];
+        my $nextstate = $self->{STATES}[$state]{GOTOS}{$lhs};
+        push @STACK, [$nextstate, undef];
+        @expected = $self->YYExpected;
+      }
+      # else something went wrong!!! See Frank Leray report
     }
 
     return map { $_ => 1 } @expected;

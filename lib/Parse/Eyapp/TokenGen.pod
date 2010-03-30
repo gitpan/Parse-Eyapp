@@ -145,6 +145,8 @@ L<http://www.perlmonks.org/index.pl?node_id=396759>.
 
 =item * Thomas L. Shinnick L<http://search.cpan.org/~tshinnic/>
 
+=item * Frank Leray
+
 =back
 
 =head1 AUTHOR
