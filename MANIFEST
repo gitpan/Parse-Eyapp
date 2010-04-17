@@ -129,7 +129,6 @@ examples/eyapplanguageref/YYNameDynamic.eyp
 examples/Eyapp/foldand0rule9_4.pl
 examples/Eyapp/Lhs1.yp
 examples/Eyapp/Postfix.eyp
-examples/Eyapp/PostfixWithSeparatedLexer.eyp
 examples/Eyapp/README
 examples/Eyapp/Rule3.yp
 examples/Eyapp/Rule5.yp
@@ -333,6 +332,7 @@ t/72mixedstandaloneanddynamicload.t
 t/73dynamicshiftreduceconflictresolution.t
 t/74lalrdependanttest.t
 t/75tokenandvariablewiththesamename.t
+t/76minusvoption.t
 #t/97podcoverage.t
 t/98nopm.t
 t/99Cplusplusgrammar.t
