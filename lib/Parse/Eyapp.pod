@@ -5,6 +5,7 @@ Parse::Eyapp - Bottom up parser generator
 =head1 SYNOPSIS
  
 
+  # File 'calc.eyp': translates infix expressions to postfix
   # Compile it with:  eyapp -o calc.pl -C Postfix.eyp
   # Execution:        ./calc.pl -c 'a = 2*3+b'
   %token NUM = /([0-9]+(?:\.[0-9]+)?)/

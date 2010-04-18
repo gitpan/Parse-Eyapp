@@ -11,31 +11,12 @@ eyapp - A Perl front-end to the Parse::Eyapp module
 
 =head1 SYNOPSYS
 
-  eyapp [options] grammar[.eyp]
+    eyapp [options] grammar[.eyp]
+    eyapp -V
+    eyapp -h
 
-  eyapp [options] grammar[.yp]
-
-  eyapp -V                      # Produce .output file
-
-  eyapp -h                      # help
-
-  eyapp -c grammar.eyp          # Strip semantic actions
-
-  eyapp -vc grammar.eyp         # Strip comments also
-
-  eyapp  -b shebang grammar.eyp #  Adds '#!<shebang>' as the very first line of the output file
-
-  eyapp  -B prompt grammar.eyp  #  Adds a modulino call at the end
-
-  eyapp  -C grammar.eyp         # An abbreviation for the combined use of -b ''  -B ''
-
-  eyapp  -T grammar.eyp         #  Equivalent to %tree
-
-  eyapp  -l                     # Do not generate default lexical analyzer. Be sure you 
-                                  provide one
-
-  eyapp  -N grammar.eyp         # Equivalent to %nocompact. Do not compact action tables. 
-                                  Use to have more accurate information when there are conflicts
+        grammar     The grammar file. If no suffix is given, and the file
+                    does not exists, .eyp is added
 
 =head1 DESCRIPTION
 
@@ -43,7 +24,7 @@ The eyapp compiler is a front-end to the L<Parse::Eyapp> module, which lets you 
 Parse::Eyapp grammar input files into Perl LALR(1) Object Oriented parser modules.
 
 
-=head1 OPTIONS
+=head1 OPTIONS IN DETAIL
 
 =over 4
 
@@ -53,8 +34,11 @@ Creates a file F<grammar>.output describing your parser. It will
 show you a summary of conflicts, rules, the DFA (Deterministic
 Finite Automaton) states and overall usage of the parser.
 
-This file F<grammar>.output will be also automatically generated 
-if warnings are issued.
+Implies option C<-N>. To produce a more detailed description of the states,
+the LALR tables aren't compacted.
+Use the combination C<-vN> to produce an  C<.output> file 
+corresponding to the compacted tables.
+
 
 =item I<-s>
 
@@ -130,8 +114,9 @@ Equivalent to C<%tree>.
 
 =item I<-N grammar.eyp>         
 
-Equivalent to %nocompact. Do not compact action tables. 
-Use to have more accurate information when there are conflicts
+Equivalent to the directive C<%nocompact>. Do not compact LALR 
+action tables. 
+
 
 =item I<-l>         
 
@@ -152,6 +137,58 @@ Display current version of Parse::Eyapp and gracefully exits.
 Display the usage screen.
 
 =back
+
+=head1 EXAMPLE
+
+The following C<eyapp> program translates an infix expression
+like C<2+3*4> to postfix: C<2 3 4 * +>
+
+    %token NUM = /([0-9]+(?:\.[0-9]+)?)/
+    %token VAR = /([A-Za-z][A-Za-z0-9_]*)/
+
+    %right  '='
+    %left   '-' '+'
+    %left   '*' '/'
+    %left   NEG
+
+    %defaultaction { "$left $right $op"; }
+
+    %%
+    line: $exp  { print "$exp\n" }
+    ;
+
+    exp:        $NUM  { $NUM }            
+            |   $VAR  { $VAR }            
+            |   VAR.left '='.op exp.right         
+            |   exp.left '+'.op exp.right         
+            |   exp.left '-'.op exp.right        
+            |   exp.left '*'.op exp.right       
+            |   exp.left '/'.op exp.right      
+            |   '-' $exp %prec NEG { "$exp NEG" }
+            |   '(' $exp ')' { $exp }      
+    ;
+
+    %%
+
+Notice that there is no need to write lexer and error report subroutines.
+First, we compile the grammar:
+
+    pl@nereida:~/LEyapp/examples/eyappintro$ eyapp -o postfix.pl -C Postfix.eyp 
+
+If we use the C<-C> option and no C<main()> was written one default C<main> sub is provided.
+We can now execute the resulting program:
+
+    pl@nereida:~/LEyapp/examples/eyappintro$ ./postfix.pl -c 'a = 2*3 +b'
+    a 2 3 * b + =
+
+When a non conformant input is given, it produces an accurate error message:
+
+    pl@nereida:~/LEyapp/examples/eyappintro$ ./postfix.pl -c 'a = 2**3 +b'
+
+    Syntax error near '*'. 
+    Expected one of these terminals: '-' 'NUM' 'VAR' '('
+    There were 1 errors during parsing
+
 
 =head1 AUTHOR
 
@@ -219,17 +256,19 @@ our $opt_T; # build AST
 our $opt_N; # Do not compact action tables. No DEFAULT field for "STATES"
 
 sub Usage {
-	my($prog)=(fileparse($0,'\..*'))[0];
-	die <<EOF;
+    my($prog)=(fileparse($0,'\..*'))[0];
+    die <<EOF;
 
-Usage:	$prog [options] grammar[.eyp]
-  or	$prog -V
-  or	$prog -h
+Usage:  $prog [options] grammar[.eyp]
+  or    $prog -V
+  or    $prog -h
 
     -m module   Give your parser module the name <module>
                 default is <grammar>
     -v          Create a file <grammar>.output describing your parser
-                Implies option -N
+                The LALR tables aren't compacted
+    -vN         Create a file <grammar>.output describing your parser
+                LALR tables are compacted.
     -s          Create a standalone module in which the driver is included
     -n          Disable source file line numbering embedded in your parser
     -o outfile  Create the file <outfile> for your parser module
@@ -243,7 +282,7 @@ Usage:	$prog [options] grammar[.eyp]
                 as the very last line of the output file
     -C          An abbreviation for the combined use of -b ''  -B ''
     -T          Equivalent to %tree
-    -N          Equivalent to %nocompact. Do not compact action tables. Use when conflicts
+    -N          Equivalent to %nocompact. Do not compact action tables. 
     -l          Do not generate the lexical analyzer. One must be explictly provided
     -c grammar  Displays the "clean" grammar without actions     
     -vc grammar Displays the "clean" grammar without actions. Strip comments also
@@ -258,14 +297,14 @@ EOF
 
 my($nbargs)=@ARGV;
 
-	getopts('CTVNhlvsnc:b:B:m:t:o:')
-or	Usage;
+    getopts('CTVNhlvsnc:b:B:m:t:o:')
+or  Usage;
 
    (  ($opt_V and $nbargs > 1)
     or $opt_h)
 and Usage;
 
-	$opt_V
+    $opt_V
 and do {
 
     @ARGV == 0 or  Usage;
@@ -275,7 +314,7 @@ and do {
 
 };
 
-	$opt_c and do {
+    $opt_c and do {
      my $file;
 
      local $/ = undef;
@@ -295,12 +334,12 @@ and do {
 # contains a 'template' to be used when generating the parser; 
 # if defined, we open and read the file.   
 
-	$opt_t
+    $opt_t
 and do {
     local $/ = undef;
     local *TFILE;
     open(TFILE, $opt_t)
-	or die "Cannot open template file $opt_t: $!\n";
+    or die "Cannot open template file $opt_t: $!\n";
     $opt_t = <TFILE>;
     close(TFILE);
 };
@@ -311,20 +350,20 @@ or  Usage;
 my($filename)=$ARGV[0];
 my($base,$path,$sfx)=fileparse($filename,'\..*');
 
-	-r "$filename"
-or	do {
-		($sfx eq '.yp' or $sfx eq '.eyp')
-	or (-r "$filename.yp" and $filename.='.yp')
-	or (-r "$filename.eyp" and $filename.='.eyp');
+    -r "$filename"
+or  do {
+        ($sfx eq '.yp' or $sfx eq '.eyp')
+    or (-r "$filename.yp" and $filename.='.yp')
+    or (-r "$filename.eyp" and $filename.='.eyp');
 
-		-r "$filename"
-	or	die "Cannot open $filename for reading.\n";
+        -r "$filename"
+    or  die "Cannot open $filename for reading.\n";
 };
 
 my @args = (inputfile => $filename, );
 
 push @args, (tree => 1) if $opt_T;
-push @args, (nocompact => 1) if ($opt_N or $opt_v);
+push @args, (nocompact => 1) if (($opt_N or $opt_v) and not($opt_N and $opt_v));
 
 my ($parser) = Parse::Eyapp->new(@args);
 
@@ -337,22 +376,22 @@ $parser->outputtables($path, $base) if $opt_v;
 my($outfile)="$path$base.pm";
 my($package)="$base";
 
-	$opt_m
-and	do {
+    $opt_m
+and do {
     $package=$opt_m;
     $package=~/^(?:(?:[^:]|:(?!:))*::)*(.*)$/;
     $outfile="$1.pm";
 };
 
-	$opt_o
-and	$outfile=$opt_o;
+    $opt_o
+and $outfile=$opt_o;
 
 $opt_s = $opt_s ? 1 : 0;
 
 $opt_n = $opt_n ? 0 : 1;
 
-	open(OUT,">$outfile")
-or	die "Cannot open $outfile for writing.\n";
+    open(OUT,">$outfile")
+or  die "Cannot open $outfile for writing.\n";
 
     defined($opt_C) and do {
       $opt_b = '' unless defined $opt_b;
