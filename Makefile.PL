@@ -1,3 +1,4 @@
+## checking google-code
 use warnings;
 use strict;
 use ExtUtils::MakeMaker;
@@ -115,8 +116,8 @@ publicdist: docclean release forcepods publichtml publicpdf dist
 
 release: lib/Parse/Eyapp/Parse.yp
 	   yapp -n -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
-	   PERL5LIB=lib; eyapp -ln -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
-	   PERL5LIB=lib; $(PERL) -I./lib eyapp -l -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
+	   eyapp -ln -m 'Parse::Eyapp::Parse' -o 'lib/Parse/Eyapp/Parse.pm' lib/Parse/Eyapp/Parse.yp
+	   $(PERL) -I./lib eyapp -l -n -m Parse::Eyapp::Treeregparser -o lib/Parse/Eyapp/Treeregexp.pm lib/Parse/Eyapp/Treeregexp.yp
 	   rm -fR Parse-Eyapp-*.tar.gz
 
        # as release but line numbers info. No -n option
@@ -192,6 +193,9 @@ publichtml: htmls
 	cp ${HTMLS} eyapp.html treereg.html vgg.html <<PUBLIC_PLACE>>
 	chmod a+r <<PUBLIC_PLACE>>/*.html
 	
+commit:
+	svn commit -mm --username casiano.rodriguez.leon
+
 .PHONY: tags
 tags: 
 	${PLTAGS} eyapp treereg vgg lib/Parse/Eyapp/*.pm lib/Parse/Eyapp/*.yp lib/Parse/Eyapp.pm 

@@ -893,14 +893,7 @@ An example of this is in
 files C<examples/eyapplanguageref/List3_tree_d_sem.yp> (the grammar)
 and C<use_list3_tree_d_dem.pl> (the client).
 
-=head2 The Lexical Analyzer
-
-By default a lexical analyzer is built from your 
-token definitions
-
-    %token NUM = /([0-9]+(?:\.[0-9]+)?)/
-
-you can, however write it explicitly.
+=head1 THE LEXICAL ANALYZER
 
 The Lexical Analyzer 
 is called each time the parser needs a new token.
@@ -914,8 +907,270 @@ methods are accessible inside the lexical analyzer.
 When the lexical analyzer reaches the end of input, it must return the
 pair C<('', undef)>
 
+=head2 AUTOMATIC GENERATION OF LEXICAL ANALYZERS
 
-=head2 The Error Report Subroutine
+By default a lexical analyzer is built.
+The C<eyapp> option C<-l>
+can be used to inhibit the generation of 
+the default lexical analyzer. In such case,
+one must be explictly provided.
+
+
+=head3 No token Definitions
+
+When no token definitions are given in the head section, 
+the default lexical analyzer simply assumes
+that the token is the string literal. See this example in 
+file C<examples/lexergeneration/simple.yp>:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat simple.yp
+  %%
+  A:    a
+      | A d
+  ;
+  %%
+
+
+The grammar does not describes the lexical analyzer nor the error default subroutine.
+Eyapp will generate default lexical and error subroutines:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ eyapp -o simple.pl -TC simple.yp
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ls -ltr | tail -2
+  -rw-r--r-- 1 pl pl   27 2010-06-29 10:28 simple.yp
+  -rwxr-xr-x 1 pl pl 3245 2010-06-29 10:35 simple.pl
+
+The option C<-T> is equivalent to insert the C<%tree> directive in the head section.
+Since no names were explicitly given to the productions, the names of the productions are built using
+the pattern C<Lhs_is_RHS>.
+
+Option C<-C> instructs the C<eyapp> compiler to produce an executable by setting the execution permits
+(see C<simple.pl> permits above), inserting the appropriate she bang directive:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ head simple.pl | head -1
+  #!/usr/bin/perl
+
+and inserting a call to the package C<main> subroutine at the end of the generated parser:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ tail -6 simple.pl
+  unless (caller) {
+    exit !__PACKAGE__->main('');
+  }
+
+
+If no C<main> was provided, C<eyapp> will provide one.
+
+Tokens C<a> and C<d> are assumed to represent strings C<'a'>
+and C<'d'> respectively.
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./simple.pl -i -t -c 'a d d'
+  A_is_A_d(A_is_A_d(A_is_a(TERMINAL[a]),TERMINAL[d]),TERMINAL[d])
+
+The C<main> method provided by C<eyapp> accepts several options in the command line:
+
+=over 2
+
+=item * C<-t> Prints the abstract syntax tree 
+
+=item * C<-i> Shows the semantic value associated with each terminal
+
+=item * C<-c string> Indicates that the input is given by the C<string> that follows the option
+
+=back
+
+You can get the set of available options using C<--help>:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./simple.pl -h
+  Available options:
+    --debug                    sets yydebug on
+    --nodebug                  sets yydebug off
+    --file filepath            read input from filepath
+    --commandinput string      read input from string
+    --tree                     prints $tree->str
+    --notree                   does not print $tree->str
+    --info                     When printing $tree->str shows the value of TERMINALs
+    --help                     shows this help
+    --slurp                    read until EOF reached
+    --noslurp                  read until CR is reached
+    --argfile                  main() will take the input string from its @_
+    --noargfile                main() will not take the input string from its @_
+    --yaml                     dumps YAML for $tree: YAML module must be installed
+    --margin=i                 controls the indentation of $tree->str (i.e. $Parse::Eyapp::Node::INDENT)
+
+If we try to feed it with an illegal input, an error message is emitted:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./simple.pl -i -t -c 'a e d'
+  Error inside the lexical analyzer near 'e'. Line: 1. File: 'simple.yp'. No match found.
+
+In the example above we have taken advantage of the C<main> method provided by Eyapp.
+If we want to keep in control of the parsing process, we can write a client program that 
+makes use of the generated modulino:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -n usesimple.pl
+     1  #!/usr/bin/env perl
+     2  use warnings;
+     3  use strict;
+     4
+     5  use simple;
+     6
+     7  # build a parser object
+     8  my $parser = simple->new();
+     9
+    10  # take the input from the command line arguments
+    11  # or from STDIN
+    12  my $input = join ' ',@ARGV;
+    13  $input = <> unless $input;
+    14
+    15  # set the input
+    16  $parser->input($input);
+    17
+    18  # parse the input and get the AST
+    19  my $tree = $parser->YYParse();
+    20
+    21  print $tree->str()."\n";
+
+Here is an example of execution:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ eyapp -T simple.yp
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./usesimple.pl a d d
+  A_is_A_d(A_is_A_d(A_is_a(TERMINAL),TERMINAL),TERMINAL)
+
+
+=head3 Token Definitions: Regular Expressions
+
+Eyapp extends the C<%token> directive with the syntax:
+
+     %token TOKENID = /regexp/
+
+If such definition is used, an entry with the shape: 
+
+   /\G$regexp/gc and return ('TOKENID', $1);
+
+will be added to the generated lexical analyzer.
+Therefore the string associated with the first parenthesis in C</regexp/>
+will be used as semantic value for C<TOKENID>. If C</regexp/> has no
+parenthesis C<undef> will be the semantic value.
+See this example:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -n numlist.eyp
+     1  %token NUM = /(\d+)/
+     2  %token ID  = /(\w+)/
+     3
+     4  %%
+     5  A:
+     6        B
+     7      | A B
+     8  ;
+     9
+    10  B:
+    11        ID
+    12      | a
+    13      | NUM
+    14  ;
+    15  %%
+
+
+The order of the C<%token> declarations is important. 
+In the example the token C<NUM> is a subset of the token C<ID>.
+Since it appears first, it will be tried first:
+
+     /\G(\d+)/gc and return ('NUM', $1);
+     /\G(\w+)/gc and return ('ID', $1);
+
+Also observe that token C<'a'> (line 12) is contained
+in token C<ID>. However, any implicit token like this that appears in the
+body section and was not 
+declared using an explicit C<%token> directive in the
+head section takes priority over the ones declared.
+See the behavior of the former program:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ eyapp -TC numlist
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./numlist.pm -t -i -c '4 a b'
+  A_is_A_B(A_is_A_B(A_is_B(B_is_NUM(TERMINAL[4])),B_is_a(TERMINAL[a])),B_is_ID(TERMINAL[b]))
+
+The lexical analyzer returned C<NUM> and not C<ID> when C<4> was processed,
+also it returned C<a> and not C<ID> when C<'a'> was 
+processed.
+
+=head3 Token Definitions via Code
+
+An alternative way to define a token is via Perl code:
+
+      %token TOKENID = { ... }
+
+in such case the code defining C<TOKENID> will be inserted
+verbatim in the corresponding place of the generated lexical 
+analyzer. When the code C<{ ... }>
+is executed, the variable C<$_> 
+contains the input being parsed and
+the special variable C<$self> refers to the parser object.
+The following example is equivalent to the one used in the previous
+section:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -n tokensemdef.eyp
+     1  %token NUM = /(\d+)/
+     2  %token ID  = { /\G(\w+)/gc and return ('ID', $1); }
+     3
+     4  %%
+     5  A:
+     6        B
+     7      | A B
+     8  ;
+     9
+    10  B:
+    11        ID
+    12      | a
+    13      | NUM
+    14  ;
+    15  %%
+
+Follows an example of compilation and execution:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ eyapp -TC tokensemdef.eyp
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./tokensemdef.pm -t -i -nos
+  4 a b
+  A_is_A_B(A_is_A_B(A_is_B(B_is_NUM(TERMINAL[4])),B_is_a(TERMINAL[a])),B_is_ID(TERMINAL[b]))
+
+
+=head3 Token Definitions: Controling whites
+
+By default, the generated lexical analyzer skips 
+white spaces, defined as C</\s*/>. The programmer
+can change this behavior using the C<%whites> directive.
+The following example permits Perl-like comments 
+in the input:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -n simplewithwhites.eyp
+     1  %whites  /(\s*(?:#.*)?\s*)/
+     2  %%
+     3  A:    a
+     4      | A d
+     5  ;
+     6  %%
+
+Follows an example of execution:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -nA input
+       1  a # 1$
+       2  $
+       3  d ^I#2$
+  pl@nereida:~/LEyapp/examples/lexergeneration$ eyapp -TC simplewithwhites.eyp
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./simplewithwhites.pm -t -i -f input
+  A_is_A_d(A_is_a(TERMINAL[a]),TERMINAL[d])
+
+The C<%white> directive can be followed by some Perl
+code defining the white spaces:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -n simplewithwhitescode.eyp
+     1  %whites  { /\G(\s*(?:#.*)?\s*)/gc and $self->tokenline($1 =~ tr{\n}{}) }
+     2  %%
+     3  A:    a
+     4      | A d
+     5  ;
+     6  %%
+
+
+=head1 THE ERROR REPORT SUBROUTINE
 
 The Error Report subroutine is also a parser attribute, 
 and must be defined. By default C<Parse::Eyapp>
