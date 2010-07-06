@@ -997,7 +997,7 @@ methods are accessible inside the lexical analyzer.
 When the lexical analyzer reaches the end of input, it must return the
 pair C<('', undef)>
 
-=head2 AUTOMATIC GENERATION OF LEXICAL ANALYZERS
+=head2 Automatic Generation of Lexical Analyzers
 
 By default a lexical analyzer is built.
 The C<eyapp> option C<-l>
@@ -1259,6 +1259,162 @@ code defining the white spaces:
      5  ;
      6  %%
 
+=head2 Reading Input from File
+
+You can use the method C<YYSlurpFile> to read the input from a file
+and set the input for the parser to its contents.
+Yo can also use the C<YYInput> method to set the input.
+
+See the example below:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -n usesimplefromfile.pl
+     1  #!/usr/bin/env perl
+     2  use warnings;
+     3  use strict;
+     4
+     5  use simplewithwhites;
+     6
+     7  my $parser = simplewithwhites->new();
+     8
+     9  # take the input from the specified file
+    10  my $fn = shift;
+    11
+    12  $parser->YYSlurpFile($fn);
+    13
+    14  # parse the input and get the AST
+    15  my $tree = $parser->YYParse();
+    16
+    17  print $tree->str()."\n";
+
+First, compile the grammar C<simplewithwhites.eyp> presented above:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ eyapp -T simplewithwhites
+
+And then run it:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -n  input
+     1  a # 1
+     2
+     3  d       #2
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./usesimplefromfile.pl input
+  A_is_A_d(A_is_a(TERMINAL),TERMINAL)
+
+
+=head2 Huge input and Incremental Lexical Analyzers
+
+If your input is huge, try to make use of an incremental
+lexical analyzer. In an incremental lexer the input
+is read and parsed in chunks. Read up to a 
+point where  it is safe to parse.
+In the example below, the lexer reads a new line
+each time we reach the end of the input string C<${$parser-E<gt>YYInput}>.
+In the case of the arithmetic expressions grammar below,
+by reading up to C<'\n'>, we are sure that the input is not
+broken in the middle of a token.
+Instead of having the whole huge input in memory,
+we only keep a small substring.
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat -n Incremental.eyp                    
+     1  %right  '='                                                                     
+     2  %left   '-' '+'                                                                 
+     3  %left   '*' '/'                                                                 
+     4  %left   NEG                                                                     
+     5                                                                                  
+     6  %tree                                                                           
+     7                                                                                  
+     8  %%                                                                              
+     9  input:                                                                          
+    10          |   input $line  { print $line->str."\n" }                              
+    11  ;                                                                               
+    12                                                                                  
+    13  line:     '\n'                                                                  
+    14          | exp '\n'
+    15          | error '\n'
+    16  ;
+    17
+    18  exp:        NUM
+    19          |   VAR
+    20          |   VAR '=' exp
+    21          |   exp '+' exp
+    22          |   exp '-' exp
+    23          |   exp '*' exp
+    24          |   exp '/' exp
+    25          |   '-' exp %prec NEG
+    26          |   '(' exp ')'
+    27  ;
+    28
+    29  %%
+    30
+    31  sub _Lexer {
+    32      my($parser)=shift;
+    33
+    34      if ($parser->YYEndOfInput) {
+    35        my $input = <STDIN>;
+    36        return('', undef) unless $input;
+    37        $parser->input($input);
+    38      };
+    39
+    40      for (${$parser->YYInput}) {
+    41          m/\G[ \t]*/gc;
+    42          m/\G([0-9]+(?:\.[0-9]+)?)/gc and return('NUM',$1);
+    43          m/\G([A-Za-z][A-Za-z0-9_]*)/gc and return('VAR',$1);
+    44          m/\G(.)/gcs and return($1,$1);
+    45          return('', undef);
+    46      }
+    47  }
+    48
+    49  __PACKAGE__->lexer(\&_Lexer);
+
+This approach has limitations. The code will get more tangled if some token
+can take more than one line. For example, if we extend this language to accept 
+C-like comments C</* ... */> which expands over several lines.
+
+Here follows an example of execution. 
+This is the client program:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat useincremental.pl
+  #!/usr/bin/perl -w
+  use Incremental;
+
+  Incremental->new->YYParse;
+
+This is a small test input file:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ cat inputforincremental
+  a = 2
+  a+3
+  b=4
+  b*2+a
+
+Finally, see the results of the execution:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ ./useincremental.pl < inputforincremental
+  line_4(exp_8(TERMINAL,exp_6(TERMINAL)))
+  line_4(exp_9(exp_7(TERMINAL),exp_6(TERMINAL)))
+  line_4(exp_8(TERMINAL,exp_6(TERMINAL)))
+  line_4(exp_9(exp_11(exp_7(TERMINAL),exp_6(TERMINAL)),exp_7(TERMINAL)))
+
+The numbers in the output refer to the production number:
+
+  pl@nereida:~/LEyapp/examples/lexergeneration$ eyapp -v Incremental.eyp
+  pl@nereida:~/LEyapp/examples/lexergeneration$ sed -ne '/Rules:/,/^$/p' Incremental.output
+  Rules:
+  ------
+  0:      $start -> input $end
+  1:      input -> /* empty */
+  2:      input -> input line
+  3:      line -> '\n'
+  4:      line -> exp '\n'
+  5:      line -> error '\n'
+  6:      exp -> NUM
+  7:      exp -> VAR
+  8:      exp -> VAR '=' exp
+  9:      exp -> exp '+' exp
+  10:     exp -> exp '-' exp
+  11:     exp -> exp '*' exp
+  12:     exp -> exp '/' exp
+  13:     exp -> '-' exp
+  14:     exp -> '(' exp ')'
 
 =head1 THE ERROR REPORT SUBROUTINE
 

@@ -2,11 +2,12 @@
 %left   '-' '+'
 %left   '*' '/'
 %left   NEG
-%defaultaction { print $_[0]->YYLhs,"\n" }
+
+%tree
 
 %%
 input:                
-        |   input line 
+        |   input $line  { print $line->str."\n" }
 ;
 
 line:     '\n'      
@@ -37,7 +38,7 @@ sub _Lexer {
     };
 
     for (${$parser->YYInput}) {
-        m/\G[ \t]/gc;
+        m/\G[ \t]*/gc;
         m/\G([0-9]+(?:\.[0-9]+)?)/gc and return('NUM',$1);
         m/\G([A-Za-z][A-Za-z0-9_]*)/gc and return('VAR',$1);
         m/\G(.)/gcs and return($1,$1);

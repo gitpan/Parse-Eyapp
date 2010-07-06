@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.162";
+$VERSION = "1.163";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -1194,6 +1194,7 @@ sub error {
 # is a reference to the actual input
 # slurp_file. 
 # Parameters: object or class, filename, prompt messagge, mode (interactive or not: undef or "\n")
+*YYSlurpFile = \&slurp_file;
 sub slurp_file {
   my $self = shift;
   my $fn = shift;
@@ -1224,6 +1225,7 @@ sub slurp_file {
 }
 
 our $INPUT = \undef;
+*Parse::Eyapp::Driver::YYInput = \&input;
 sub input {
   my $self = shift;
 
@@ -1308,9 +1310,11 @@ sub Run {
     yydebug => $yydebug, # 0xF
   );
 }
+*Parse::Eyapp::Driver::YYRun = \&run;
 
 # args: class, prompt, file, optionally input (ref or not)
 # return the abstract syntax tree (or whatever was returned by the parser)
+*Parse::Eyapp::Driver::YYMain = \&main;
 sub main {
   my $package = shift;
   my $prompt = shift;
@@ -1342,7 +1346,7 @@ sub main {
   $package->_help() if $help;
 
   $debug = 0x1F if $debug;
-  $file = shift if !$file && @ARGV; # file is taken from the @ARGS unless already defined
+  $file = shift if !$file && @ARGV; # file is taken from the @ARGV unless already defined
   $slurp = "\n" if defined($slurp);
 
   my $parser = $package->new();
@@ -1625,8 +1629,9 @@ sub _Parse {
 
         defined($$token)
             or  do {
-        #($$token,$$value)=&$lex($self);
-        ($$token,$$value)=$self->$lex;
+        ($$token,$$value)=&$lex($self); # original line
+        #($$token,$$value)=$self->$lex;   # to make it a method call
+        #($$token,$$value) = $self->{LEX}->($self); # sensitive to the lexer changes
 #DBG>       $debug & 0x01
 #DBG>     and do { 
 #DBG>       print STDERR "Need token. Got ".&$ShowCurToken."\n";

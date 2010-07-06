@@ -396,6 +396,11 @@ and C<examples/recycle/icalcu_and_ipost.pl>
 in the Parse::Eyapp distribution
 
 =head2 
+          $parser->YYEndOfInput
+
+True if the C<pos()> of the input being scanned in C<${$parser-E<gt>input}> is at the end 
+
+=head2 
           $parser->YYErrok 
 
 Works as yacc/bison C<yyerrok>. 
@@ -580,6 +585,12 @@ We can specify a list of names:
   DB<3> x $parser->YYIndex(qw{exp_4})
   0  4
 
+=head2  $parser->YYInput
+
+Alias C<input>. If an argument is provided, sets the input for the parser object.
+The argument is a string or a reference to a string.
+It returns a reference to the input string or C<undef> if not set.
+
 
 =head2  $parser->YYIsterm
 
@@ -649,6 +660,45 @@ that is being used for reduction/reverse derivation. An example
 of use can be found in C<examples/Eyapp/Lhs1.yp>:
 
   %defaultaction { print $_[0]->YYLhs,"\n" }
+
+=head2  $parser->YYMain
+
+Alias is also C<main>.
+
+Other than the package, it has as optional arguments the C<prompt> 
+(shown each time it ask for input), the name of the input file
+(if it wasn't specified in the command line using C<--file filename>)
+and also the input string.
+
+This method provides a default C<main> for testing the generated parser.
+It parses the commandline searching for a number of options. See
+an example of use:
+
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat use_list2.pl
+  #!/usr/bin/env perl
+  use warnings;
+  use strict;
+  use List2;
+
+  unshift @ARGV, '--noslurp';
+  List2->new->main("Try input 'aacbb': ");
+  pl@nereida:~/LEyapp/examples/eyapplanguageref$ ./use_list2.pl --help
+  Available options:
+      --debug                    sets yydebug on
+      --nodebug                  sets yydebug off
+      --file filepath            read input from filepath
+      --commandinput string      read input from string
+      --tree                     prints $tree->str
+      --notree                   does not print $tree->str
+      --info                     When printing $tree->str shows the value of TERMINALs
+      --help                     shows this help
+      --slurp                    read until EOF reached
+      --noslurp                  read until CR is reached
+      --argfile                  main() will take the input string from its @_
+      --noargfile                main() will not take the input string from its @_
+      --yaml                     dumps YAML for $tree: YAML module must be installed
+      --margin=i                 controls the indentation of $tree->str (i.e. $Parse::Eyapp::Node::INDENT)
+
 
 =head2  $parser->YYName
 
@@ -877,7 +927,7 @@ See the examples in C<examples/debuggingtut/> in files
 
 =back
 
-=head1 $parser->YYSetShift($token)
+=head2 $parser->YYSetShift($token)
 
 Also:
 
@@ -899,6 +949,20 @@ See the examples in C<examples/debuggingtut/> in files
 =item * C<DynamicallyChangingTheParser.eyp>
 
 =back
+
+=head2 $parser->YYSlurpFile
+
+alias:
+
+ $parser->slurp_file($filename[,$prompt[,$mode]])
+
+Receives the name of the file, reads its contents
+and stores it in C<$parser-E<gt>input>.
+
+If the file does not exists, it proceeds to read from C<STDIN>.
+If a prompt was set with C<$parser-E<gt>YYPrompt>, it will be shown.
+The additional optional parameter C<$mode> is used in such case to set 
+C<$/>. It can also be used as a class method.
 
 =head2 $parser->YYState
 
@@ -936,6 +1000,7 @@ rule of C<type> we are in state 13).
 If C<$length> is zero or not provided 
 it returns the state on top of the stack.
 Otherwise, returns the state C<$length> units deep in the stack.
+
 
 
 =head1 CONTRIBUTORS

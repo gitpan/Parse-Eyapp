@@ -161,6 +161,17 @@ examples/languages/pascal/hello.p
 examples/languages/pascal/pascal.eyp
 examples/languages/pascal/proctest.p
 examples/languages/pascal/types.p
+examples/lexergeneration/Incremental.eyp
+examples/lexergeneration/input
+examples/lexergeneration/inputforincremental
+examples/lexergeneration/numlist.eyp
+examples/lexergeneration/simplewithwhitescode.eyp
+examples/lexergeneration/simplewithwhites.eyp
+examples/lexergeneration/simple.yp
+examples/lexergeneration/tokensemdef.eyp
+examples/lexergeneration/tokensemdefwithwhites.eyp
+examples/lexergeneration/useincremental.pl
+examples/lexergeneration/usesimple.pl
 examples/MatchingTrees/m2.pl
 examples/MatchingTrees/numchildren.pl
 examples/MatchingTrees/Rule6.yp
