@@ -170,6 +170,8 @@ examples/lexergeneration/simplewithwhites.eyp
 examples/lexergeneration/simple.yp
 examples/lexergeneration/tokensemdef.eyp
 examples/lexergeneration/tokensemdefwithwhites.eyp
+examples/lexergeneration/twolexers.eyp
+examples/lexergeneration/twolexers2.eyp
 examples/lexergeneration/useincremental.pl
 examples/lexergeneration/usesimple.pl
 examples/MatchingTrees/m2.pl
@@ -346,6 +348,7 @@ t/74lalrdependanttest.t
 t/75tokenandvariablewiththesamename.t
 t/76minusvoption.t
 t/77lexicalanalyzergeneration.t
+t/78twolexers.t
 t/numlist.eyp
 t/simplewithwhites.eyp
 t/inputfor77

@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.163";
+$VERSION = "1.164";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -1096,22 +1096,6 @@ sub static_attribute {
     return undef;
 }
 
-*Parse::Eyapp::Driver::lexer = \&Parse::Eyapp::Driver::YYLexer;
-sub YYLexer {
-  my $self = shift;
-
-  if (ref $self) { # instance method
-    # The class attribute isn't changed, only the instance
-    $self->{LEX} = shift if @_;
-
-    return $self->static_attribute('LEX', @_,) unless defined($self->{LEX}); # class/static method 
-    return $self->{LEX};
-  }
-  else {
-    return $self->static_attribute('LEX', @_,);
-  }
-}
-
 sub YYEndOfInput {
    my $self = shift;
 
@@ -1507,8 +1491,8 @@ ERRMSG
 
 sub _DBLoad {
 
-      __PACKAGE__->can('_DBParse')  #Already loaded ?
-    and return;
+  #Already loaded ?
+  __PACKAGE__->can('_DBParse') and return;
   
   my($fname)=__FILE__;
   my(@drv);
@@ -1516,15 +1500,15 @@ sub _DBLoad {
   if (open(DRV,"<$fname")) {
     local $_;
     while(<DRV>) {
-                    /^\s*sub\s+_Parse\s*{\s*$/ .. /^\s*}\s*#\s*_Parse\s*$/
-            and     do {
-                    s/^#DBG>//;
-                    push(@drv,$_);
-            }
+       #/^\s*sub\s+_Parse\s*{\s*$/ .. /^\s*}\s*#\s*_Parse\s*$/ and do {
+       /^my\s+\$lex;##!!##$/ .. /^\s*}\s*#\s*_Parse\s*$/ and do {
+          s/^#DBG>//;
+          push(@drv,$_);
+      }
     }
     close(DRV);
 
-    $drv[0]=~s/_P/_DBP/;
+    $drv[1]=~s/_P/_DBP/;
     eval join('',@drv);
   }
   else {
@@ -1582,11 +1566,14 @@ sub YYSymbolStack {
 #Note that for loading debugging version of the driver,
 #this file will be parsed from 'sub _Parse' up to '}#_Parse' inclusive.
 #So, DO NOT remove comment at end of sub !!!
+my $lex;##!!##
 sub _Parse {
     my($self)=shift;
 
-  my($rules,$states,$lex,$error)
-     = @$self{ 'RULES', 'STATES', 'LEX', 'ERROR' };
+  $lex = $self->{LEX};
+
+  my($rules,$states,$error)
+     = @$self{ 'RULES', 'STATES', 'ERROR' };
   my($errstatus,$nberror,$token,$value,$stack,$check,$dotpos)
      = @$self{ 'ERRST', 'NBERR', 'TOKEN', 'VALUE', 'STACK', 'CHECK', 'DOTPOS' };
 
@@ -1845,6 +1832,23 @@ sub _Parse {
 
 }#_Parse
 #DO NOT remove comment
+
+*Parse::Eyapp::Driver::lexer = \&Parse::Eyapp::Driver::YYLexer;
+sub YYLexer {
+  my $self = shift;
+
+  if (ref $self) { # instance method
+    # The class attribute isn't changed, only the instance
+    $lex = $self->{LEX} = shift if @_;
+
+    return $self->static_attribute('LEX', @_,) unless defined($self->{LEX}); # class/static method 
+    return $self->{LEX};
+  }
+  else {
+    return $self->static_attribute('LEX', @_,);
+  }
+}
+
 
 1;
 
