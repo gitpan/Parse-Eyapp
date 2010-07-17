@@ -349,6 +349,7 @@ t/75tokenandvariablewiththesamename.t
 t/76minusvoption.t
 t/77lexicalanalyzergeneration.t
 t/78twolexers.t
+t/79syntactictokenwithdef.t
 t/numlist.eyp
 t/simplewithwhites.eyp
 t/inputfor77
@@ -361,4 +362,7 @@ t/Calc.eyp
 t/Debug2.eyp
 t/Gift.yp
 t/pascal.yp
+t/SemanticInfoInTokens.eyp
+t/syntactictoken.eyp
+t/quotemeta.eyp
 META.yml                                 Module meta-data (added by MakeMaker)

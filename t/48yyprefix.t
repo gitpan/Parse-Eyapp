@@ -147,7 +147,7 @@ my $expected_tree = bless( {
     }, 'Rule9::TIMES' )
   ]
 }, 'Rule9::PLUS' );
-is_deeply($t, $expected_tree, "tarnsformations with yyprefix and PREFIX");
+is_deeply($t, $expected_tree, "transformations with yyprefix and PREFIX");
 
 
 my $p = Parse::Eyapp::Treeregexp->new( 

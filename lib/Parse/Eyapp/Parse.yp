@@ -367,10 +367,10 @@ decls:  decls decl  #default action
 ;
 
 decl:  '\n'                 #default action
-    |   SEMANTIC typedecl symlist '\n'
+    |   SEMANTIC typedecl toklist '\n'
             {
                 for (@{$_[3]}) {
-                    my($symbol,$lineno)=@$_;
+                    my($symbol,$lineno, $def)=@$_;
 
                     #    exists($$token{$symbol})
                     #and do {
@@ -383,13 +383,14 @@ decl:  '\n'                 #default action
                     $$token{$symbol}=$lineno;
                     $$term{$symbol} = [ ];
                     $$semantic{$symbol} = 1;
+                    $$termdef{$symbol} = $def if $def;
                 }
                 undef
             }
-    |   SYNTACTIC typedecl symlist '\n'
+    |   SYNTACTIC typedecl toklist '\n'
             {
                 for (@{$_[3]}) {
-                    my($symbol,$lineno)=@$_;
+                    my($symbol,$lineno, $def)=@$_;
 
                     #    exists($$token{$symbol})
                     #and do {
@@ -402,6 +403,7 @@ decl:  '\n'                 #default action
                     $$token{$symbol}=$lineno;
                     $$term{$symbol} = [ ];
                     $$semantic{$symbol} = 0;
+                    $$termdef{$symbol} = $def if $def;
                 }
                 undef
             }
@@ -587,12 +589,12 @@ toklist:    toklist tokendef        { push(@{$_[1]},$_[2]); $_[1] }
     |       tokendef                { [ $_[1] ] }
 ;
 
-tokendef:   symbol '=' REGEXP    { 
+tokendef:   ident '=' REGEXP    { 
                                     push @{$_[3]}, 'REGEXP';
                                     push @{$_[1]}, $_[3]; 
                                     $_[1] 
                                  } 
-    |       symbol '=' CODE      { 
+    |       ident '=' CODE      { 
                                     push @{$_[3]}, 'CODE';
                                     push @{$_[1]}, $_[3]; 
                                     $_[1] 

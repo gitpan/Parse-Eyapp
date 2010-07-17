@@ -3,7 +3,7 @@ use strict;
 my $nt;
 
 BEGIN { $nt = 5 }
-use Test::More tests=> 3*$nt;
+use Test::More tests=> 4*$nt;
 
 SKIP: {
   skip "t/numlist.eyp not found", $nt unless ($ENV{DEVELOPER} && -r "t/numlist.eyp" && -x "./eyapp");
@@ -119,5 +119,59 @@ A_is_A_B(A_is_A_B(A_is_B(B_is_NUM(TERMINAL[4])),B_is_a(TERMINAL[a])),B_is_ID(TER
   like($r, $expected,'AST for file "t/input2for77"');
 
   unlink 't/tokensemdef.pl';
+
+}
+
+SKIP: {
+  skip "t/quotemeta.eyp not found", $nt unless ($ENV{DEVELOPER} && -r "t/quotemeta.eyp" && -r "t/input2for77" && -x "./eyapp");
+
+  unlink 't/quotemeta.pl';
+
+  my $r = system(q{perl -I./lib/ eyapp -TC -s -o t/quotemeta.pl t/quotemeta.eyp});
+  
+  ok(!$r, "standalone option for quotemeta.eyp");
+
+  ok(-s "t/quotemeta.pl", "modulino standalone exists");
+
+  ok(-x "t/quotemeta.pl", "modulino standalone has execution permits");
+
+  local $ENV{PERL5LIB};
+  my $eyapppath = shift @INC; # Supress ~/LEyapp/lib from search path
+  eval {
+
+    $r = qx{t/quotemeta.pl -t -i -m 1 -c '43 + - * []'};
+
+  };
+
+  ok(!$@,'t/quotemeta.eyp executed as standalone modulino');
+
+  my $expected = q{
+
+s_is_s(
+  s_is_s(
+    s_is_s(
+      s_is_s(
+        s_is_NUM(
+          TERMINAL
+        ),
+        TERMINAL[+]
+      ),
+      TERMINAL[-]
+    ),
+    TERMINAL[*]
+  )
+)
+
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST for file "43 + - * []"');
+
+  unlink 't/quotemeta.pl';
 
 }

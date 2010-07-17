@@ -112,10 +112,11 @@ EORT
     }
     elsif ($termdef{$t}[2] eq 'LITERAL') { # %token without regexp or code definition
       my $reg = $termdef{$t}[0];
-      $reg =~ s{^'?}{/\\G(};
-      $reg =~ s{'?$}{)/};
+      $reg =~ s{^'?}{};   # $reg =~ s{^'?}{/\\G(};
+      $reg =~ s{'?$}{};   # $reg =~ s{'?$}{)/}; 
+      $reg = quotemeta($reg);
       $DEFINEDTOKENS .= << "EORT";
-      ${reg}gc and return (\$1, \$1);
+      /\\G(${reg})/gc and return (\$1, \$1);
 EORT
     }
     elsif ($termdef{$t}[2] eq 'CODE') { # token definition is code

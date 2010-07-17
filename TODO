@@ -1,8 +1,8 @@
   * Lexical Analyzer generation:
-      * sensitive to lexer changes? How to make it efficient?
+      * add quotemeta2.eyp to tests: test %token '+' = 
       * incremental lexer also influences the way the directive
-         %lexer 
-         must behave. because a lexer written by hand can be incremental
+                                 %lexer 
+         must behave. Because a lexer written by hand can be incremental
       * support streams: see lexer in examples/Eyapp/Lhs1.yp
         - Parse::Eyapp::Driver::input called as a setter receives an open file handler :
                   prompt!
@@ -45,7 +45,8 @@
       Change it to use an input stack
 
   * PPCR:
-     - The whole implementation approach seems wrong. Make actions an array. Associate the handler with the state.
+     - The whole implementation approach seems wrong. 
+       Make actions an array. Associate the handler with the state.
        That allows a syntax like:
                           %conflict handler {... } 
                           %shift-reduce prod1 [token1, token2, ...] prod2 [tokens] handler

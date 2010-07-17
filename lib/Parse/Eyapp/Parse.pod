@@ -1092,6 +1092,17 @@ The lexical analyzer returned C<NUM> and not C<ID> when C<4> was processed,
 also it returned C<a> and not C<ID> when C<'a'> was 
 processed.
 
+A C<%token> declaration without assignment like in:
+
+   %token A B 
+
+is equivalent to
+
+  %token A   = /(A)/
+  %token B   = /(B)/
+
+(in that order).
+
 =head3 Token Definitions via Code
 
 An alternative way to define a token is via Perl code:
