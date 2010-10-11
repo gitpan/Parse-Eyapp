@@ -40,6 +40,9 @@ my(%known_options)= (
     inputfile   =>  {
         ''      =>  "Input file name: will automagically fills input"
     },
+    prefix      =>  {
+        ''      =>  "Accept if a prefix of the input belongs to the language"
+    },
     classname   =>  {
         ''      =>  "Class name of parser object (Perl and C++)"
     },

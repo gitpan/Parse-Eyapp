@@ -1,5 +1,54 @@
+  * the two examples 
+       noPackratSolvedExpRGconcept.eyp
+    work because they run up to the end of the input!!
+    Make a test
+
+  * Lalr 
+      # substitute End Of Input by DEFAULT for each state
+      # Will it give a false acceptance? 
+      # I think I shall use an option in eyapp?
+      # make a test
+
+  * Merge PPCR branch with trunk
+  * Include %from directive. See examples/debuggingtut/Range2.eyp
+
+        %from pascalnestedeyapp2 import expr
+        # alternative syntax to include also semantic actions
+        #%from pascalnestedeyapp2 use expr
+        #%from pascalnestedeyapp2 use expr, TAIL 
+
+        %%
+        range: expr '..' expr ';'
+        ;
+
+        %%
+   * Syntax for conflicts must include an explorer (pre-parser/nested parsing)
+
+        T: %isInTheMiddle? S
+        ;
+
+        S:
+             x  %PREC isInTheMiddle S x  
+          |  %name :MIDx 
+             x  %PREC isInTheMiddle 
+        ;
+
+  * Change the API for YYSetReduce and YYSetshift to include the name of the conflict?
+
+  * Bug/limitation: When using -m and -o the output file still uses the original grammar name.
+    It seems more convenient to rename it to the output file suffixed with .output
+
+  * Generation of Several Parsers
+      - %PREC conflict does not check that a conflict handler has been previously declared
+      - The lexer must be the one of the main parser
+      - The accept state must change
+          A$ -> A
+          A$ -> A.b where b is in the follow of A, means acceptation
+          Where are the follows?. They have been computed somewhere
+      - Avoid warnings: rule not used, rule not used, etc. How?
+        Shall I use a subgrammar that is the closure of the syntactic variable
+
   * Lexical Analyzer generation:
-      * add quotemeta2.eyp to tests: test %token '+' = 
       * incremental lexer also influences the way the directive
                                  %lexer 
          must behave. Because a lexer written by hand can be incremental

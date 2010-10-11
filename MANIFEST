@@ -44,6 +44,12 @@ examples/debuggingtut/minimalrr2.eyp
 examples/debuggingtut/minimalrr.eyp
 examples/debuggingtut/pascalenumeratedvsrange.eyp
 examples/debuggingtut/pascalenumeratedvsrangesolvedvialex.eyp
+examples/debuggingtut/pascalenumeratedvsrangesolvedviadyn2.eyp
+examples/debuggingtut/pascalenumeratedvsrangesolvedviadyn3.eyp
+examples/debuggingtut/pascalenumeratedvsrangesolvedvialex.eyp
+examples/debuggingtut/pascalnestedeyapp.eyp
+examples/debuggingtut/pascalnestedeyapp2.eyp
+examples/debuggingtut/Range.eyp
 examples/debuggingtut/nolr_k_grammar.eyp
 examples/debuggingtut/nolr_k_grammarsolveddynamic.eyp
 examples/debuggingtut/nonslrgrammar.eyp
@@ -355,6 +361,10 @@ t/simplewithwhites.eyp
 t/inputfor77
 t/tokensemdef.eyp
 t/input2for77
+t/80ppcr.t
+t/pascalnestedeyapp2.eyp
+t/Range.eyp
+t/ExpList.eyp
 #t/97podcoverage.t
 t/98nopm.t
 t/99Cplusplusgrammar.t
@@ -365,4 +375,5 @@ t/pascal.yp
 t/SemanticInfoInTokens.eyp
 t/syntactictoken.eyp
 t/quotemeta.eyp
+t/quotemeta2.eyp
 META.yml                                 Module meta-data (added by MakeMaker)

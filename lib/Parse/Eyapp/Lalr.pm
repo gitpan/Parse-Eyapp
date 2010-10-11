@@ -64,6 +64,19 @@ sub new {
     $self->_Compile();
     $self->_DynamicConflicts(); # call it only if dynamic conflict handlers
 
+    if ($self->Option('prefix')) {
+      # weak accept for nested parsing !!!!!!!!!!!!
+      # substitute End Of Input by DEFAULT for each state
+      for (@{$self->{STATES}}) {
+        if (exists($_->{ACTIONS}{"\c@"})) {
+          # what if DEFAULT action already exists ?
+          # Shall I have to use an option in eyapp????
+          $_->{ACTIONS}{''} = $_->{ACTIONS}{"\c@"};
+          delete($_->{ACTIONS}{"\c@"});
+        }
+      }
+    }
+
     bless($self,$class);
 }
 ###########
@@ -752,6 +765,21 @@ sub _FirstSfx {
 #     (p,a) include (q,B) iff [ B -> alpha A . beta ] in KERNEL(GOTO(p,A),
 #                             epsilon in FIRST(beta) and
 #                             q in PRED(p,alpha)
+
+# >> x $firstset
+# 0  HASH(0x1f7af60)
+#    '$start' => "\cG"
+#    'a' => "\cB"
+#    'b' => "\cH"
+#    's' => "\cC"
+# >> x $firstset->{'a'} # firstset es una string compactada de 0 y 1 que es trratada como un conjunto
+# 0  "\cB"
+# >> x unpack ("b*", $firstset->{'a'})
+# 0  01000000
+# >> x unpack ("b*", $firstset->{'b'})
+# 0  00010000
+# >> x unpack ("b*", $firstset->{'s'})
+# 0  11000000
 
 sub _ComputeFollows {
 	my($grammar,$states,$termlst)=@_;

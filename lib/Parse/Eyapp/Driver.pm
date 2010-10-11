@@ -6,7 +6,7 @@
 #
 # This module is based on Francois Desarmenien Parse::Yapp module
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien, all rights reserved.
-# (c) Parse::Eyapp Copyright 2006-2009 Casiano Rodriguez-Leon, all rights reserved.
+# (c) Parse::Eyapp Copyright 2006-2010 Casiano Rodriguez-Leon, all rights reserved.
 
 our $SVNREVISION = '$Rev: 2399M $';
 our $SVNDATE     = '$Date: 2009-01-06 12:28:04 +0000 (mar, 06 ene 2009) $';
@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.165";
+$VERSION = "1.166";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -104,7 +104,7 @@ sub YYParse {
 
   unless($self->{LEX}) {
     $self->{LEX} = $self->YYLexer;
-    croak "Missing mandatory parameter 'yylex' " unless $self->{LEX} && reftype($self->{LEX}) eq 'CODE';
+    croak "Missing parameter 'yylex' " unless $self->{LEX} && reftype($self->{LEX}) eq 'CODE';
   }
 
   if($$self{DEBUG}) {
@@ -257,6 +257,7 @@ sub YYNextState {
     my $length = $self->YYRHSLength;
 
     my $state = $self->YYTopState($length);
+    #print "state = $$state[0]\n";
     $self->YYGoto($state, $lhs);
   }
   else { # shift: a token must be provided as argument
@@ -406,22 +407,47 @@ sub YYLookaheads {
   return @r;
 }
 
-sub YYLookBothWays {
-  my $self = shift;
-  my $stackFirst = shift;
-  my $inputLast  = shift;
 
-  my @stackTokens = $self->YYSymbolStack($stackFirst,-1);
-  my @inputTokens = $self->YYLookaheads($inputLast);
+sub YYPreParse {
+  my $self = shift; 
+  my $parser = shift;
 
-  if (wantarray) {
-    return (@stackTokens, @inputTokens);
-  }
-  else {
-    local $" = shift || '';
-    return "@stackTokens@inputTokens";
-  }
+  eval "require $parser";
+   
+  # optimize to state variable for 5.10
+  my $rp = $parser->new( yyerror => sub {});
+
+  my $pos = pos(${$self->input});
+  #print "pos = $pos\n";
+  $rp->input($self->input);
+
+  my $t = $rp->Run;
+  my $ne = $rp->YYNberr;
+
+  #print "After nested parsing\n";
+
+  pos(${$self->input}) = $pos;
+
+  return (wantarray ? ($t) : !$ne);
 }
+
+
+# sub YYLookBothWays {
+#   my $self = shift;
+#   my $stackFirst = shift;
+#   my $inputLast  = shift;
+# 
+#   my @stackTokens = $self->YYSymbolStack($stackFirst,-1);
+#   my @inputTokens = $self->YYLookaheads($inputLast);
+# 
+#   if (wantarray) {
+#     return (@stackTokens, @inputTokens);
+#   }
+#   else {
+#     local $" = shift || '';
+#     return "@stackTokens@inputTokens";
+#   }
+# }
 
 sub YYSetReduce {
   my ($self, $token, $action) = @_;
@@ -1526,42 +1552,42 @@ sub YYSymbol {
   return $self->{STACK}[$index][2];
 }
 
-# YYSymbolStack(0,-k) string with symbols from 0 to last-k
-# YYSymbolStack(-k-2,-k) string with symbols from last-k-2 to last-k
-# YYSymbolStack(-k-2,-k, filter) string with symbols from last-k-2 to last-k that match with filter
-# YYSymbolStack('SYMBOL',-k, filter) string with symbols from the last occurrence of SYMBOL to last-k
-#                                    where filter can be code, regexp or string
-sub YYSymbolStack {
-  my $self = shift;
-  my ($a, $b, $filter) = @_;
-  
-  # $b must be negative
-  croak "Error: Second index in YYSymbolStack must be negative\n" unless $b < 0;
-
-  my $stack = $self->{STACK};
-  my $bottom = -@{$stack};
-  unless (looks_like_number($a)) {
-    # $a is a string: search from the top to the bottom for $a. Return empty list if not found
-    # $b must be a negative number
-    # $b must be a negative number
-    my $p = $b;
-    while ($p >= $bottom) {
-      last if (defined($stack->[$p][2]) && ($stack->[$p][2] eq $a));
-      $p--;
-    }
-    return () if $p < $bottom;
-    $a = $p;
-  }
-  # If positive, $a is an offset from the bottom of the stack 
-  $a = $bottom+$a if $a >= 0;
-  
-  my @a = map { $self->YYSymbol($_) or '' } $a..$b;
-   
-  return @a                          unless defined $filter;          # no filter
-  return (grep { $filter->{$_} } @a) if reftype($filter) && (reftype($filter) eq 'CODE');   # sub
-  return (grep  /$filter/, @a)       if reftype($filter) && (reftype($filter) eq 'SCALAR'); # regexp
-  return (grep { $_ eq $filter } @a);                                  # string
-}
+# # YYSymbolStack(0,-k) string with symbols from 0 to last-k
+# # YYSymbolStack(-k-2,-k) string with symbols from last-k-2 to last-k
+# # YYSymbolStack(-k-2,-k, filter) string with symbols from last-k-2 to last-k that match with filter
+# # YYSymbolStack('SYMBOL',-k, filter) string with symbols from the last occurrence of SYMBOL to last-k
+# #                                    where filter can be code, regexp or string
+# sub YYSymbolStack {
+#   my $self = shift;
+#   my ($a, $b, $filter) = @_;
+#   
+#   # $b must be negative
+#   croak "Error: Second index in YYSymbolStack must be negative\n" unless $b < 0;
+# 
+#   my $stack = $self->{STACK};
+#   my $bottom = -@{$stack};
+#   unless (looks_like_number($a)) {
+#     # $a is a string: search from the top to the bottom for $a. Return empty list if not found
+#     # $b must be a negative number
+#     # $b must be a negative number
+#     my $p = $b;
+#     while ($p >= $bottom) {
+#       last if (defined($stack->[$p][2]) && ($stack->[$p][2] eq $a));
+#       $p--;
+#     }
+#     return () if $p < $bottom;
+#     $a = $p;
+#   }
+#   # If positive, $a is an offset from the bottom of the stack 
+#   $a = $bottom+$a if $a >= 0;
+#   
+#   my @a = map { $self->YYSymbol($_) or '' } $a..$b;
+#    
+#   return @a                          unless defined $filter;          # no filter
+#   return (grep { $filter->{$_} } @a) if reftype($filter) && (reftype($filter) eq 'CODE');   # sub
+#   return (grep  /$filter/, @a)       if reftype($filter) && (reftype($filter) eq 'SCALAR'); # regexp
+#   return (grep { $_ eq $filter } @a);                                  # string
+# }
 
 #Note that for loading debugging version of the driver,
 #this file will be parsed from 'sub _Parse' up to '}#_Parse' inclusive.
@@ -1570,7 +1596,7 @@ my $lex;##!!##
 sub _Parse {
     my($self)=shift;
 
-  $lex = $self->{LEX};
+  #my $lex = $self->{LEX};
 
   my($rules,$states,$error)
      = @$self{ 'RULES', 'STATES', 'ERROR' };
@@ -1594,7 +1620,9 @@ sub _Parse {
   $$errstatus=0;
   $$nberror=0;
   ($$token,$$value)=(undef,undef);
-  @$stack=( [ 0, undef, undef ] );
+  @$stack=( [ 0, undef, ] );
+#DBG>   push(@{$stack->[-1]}, undef);
+  #@$stack=( [ 0, undef, undef ] );
   $$check='';
 
     while(1) {
@@ -1616,7 +1644,7 @@ sub _Parse {
 
         defined($$token)
             or  do {
-        ($$token,$$value)=&$lex($self); # original line
+        ($$token,$$value)=$self->{LEX}->($self); # original line
         #($$token,$$value)=$self->$lex;   # to make it a method call
         #($$token,$$value) = $self->{LEX}->($self); # sensitive to the lexer changes
 #DBG>       $debug & 0x01
@@ -1660,7 +1688,8 @@ sub _Parse {
         };
 
 
-                push(@$stack,[ $act, $$value, $$token ]);
+        push(@$stack,[ $act, $$value ]);
+#DBG>   push(@{$stack->[-1]},$$token);
 
           $$token ne '' #Don't eat the eof
         and $$token=$$value=undef;
@@ -1742,7 +1771,9 @@ sub _Parse {
 #DBG>     };
 
           push(@$stack,
-                     [ $$states[$$stack[-1][0]]{GOTOS}{$lhs}, $semval, $lhs ]);
+                     [ $$states[$$stack[-1][0]]{GOTOS}{$lhs}, $semval, ]);
+                     #[ $$states[$$stack[-1][0]]{GOTOS}{$lhs}, $semval, $lhs ]);
+#DBG>     push(@{$stack->[-1]},$lhs);
                 $$check='';
                 $self->{CURRENT_LHS} = undef;
                 next;
@@ -1839,7 +1870,7 @@ sub YYLexer {
 
   if (ref $self) { # instance method
     # The class attribute isn't changed, only the instance
-    $lex = $self->{LEX} = shift if @_;
+    $self->{LEX} = shift if @_;
 
     return $self->static_attribute('LEX', @_,) unless defined($self->{LEX}); # class/static method 
     return $self->{LEX};

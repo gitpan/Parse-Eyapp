@@ -1,9 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 my $nt;
+my $skips;
 
-BEGIN { $nt = 5 }
-use Test::More tests=> 4*$nt;
+BEGIN { $nt = 5; $skips = 4; }
+use Test::More tests=> $skips*$nt+1;
 
 SKIP: {
   skip "t/numlist.eyp not found", $nt unless ($ENV{DEVELOPER} && -r "t/numlist.eyp" && -x "./eyapp");
@@ -123,7 +124,7 @@ A_is_A_B(A_is_A_B(A_is_B(B_is_NUM(TERMINAL[4])),B_is_a(TERMINAL[a])),B_is_ID(TER
 }
 
 SKIP: {
-  skip "t/quotemeta.eyp not found", $nt unless ($ENV{DEVELOPER} && -r "t/quotemeta.eyp" && -r "t/input2for77" && -x "./eyapp");
+  skip "t/quotemeta.eyp not found", $nt unless ($ENV{DEVELOPER} && -r "t/quotemeta.eyp" && -x "./eyapp");
 
   unlink 't/quotemeta.pl';
 
@@ -173,5 +174,30 @@ s_is_s(
   like($r, $expected,'AST for file "43 + - * []"');
 
   unlink 't/quotemeta.pl';
+
+}
+
+SKIP: {
+  skip "t/quotemeta2.eyp not found", 1 unless ($ENV{DEVELOPER} && -r "t/quotemeta2.eyp" && -r "t/input2for77" && -x "./eyapp");
+
+  unlink 't/quotemeta2.pl';
+
+  system(q{perl -I./lib/ eyapp -TC -s -o t/quotemeta2.pl t/quotemeta2.eyp 2> t/err});
+  
+  my $r = qx{cat t/err};
+
+  my $expected = q{
+*Error* Unexpected input: '=', at line 1 at file t/quotemeta2.eyp
+*Fatal* Errors detected: No output, at eof at file t/quotemeta2.eyp
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+  like($r, $expected,q{Error for %semantic token '+' = /(\+)/});
+
+  unlink 't/err';
 
 }

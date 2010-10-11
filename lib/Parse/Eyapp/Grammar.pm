@@ -30,12 +30,13 @@ sub new {
         defined($self->Option('input'))
     or  croak "No input grammar";
 
-    $values = $parser->Parse($self->Option('input'), 
-                             $self->Option('firstline'),  # Line where the grammar source starts
-                             $self->Option('inputfile'),  # The file or program containing the grammar
-                             $self->Option('tree'),       # %tree activated
-                             $self->Option('nocompact'),  # %nocompact
-                             $self->Option('lexerisdefined'),    # lexer is defined
+    $values = $parser->Parse($self->Option('input'),      # 1 input
+                             $self->Option('firstline'),  # 2 Line where the grammar source starts
+                             $self->Option('inputfile'),  # 3 The file or program containing the grammar
+                             $self->Option('tree'),       # 4 %tree activated
+                             $self->Option('nocompact'),  # 5 %nocompact
+                             $self->Option('lexerisdefined'),    # 6 lexer is defined
+                             $self->Option('prefix'),            # 7 accept prefix
                              #$self->Option('prefixname'),  # yyprefix
                              #$self->Option('buildingtree')  # If building AST
                             );

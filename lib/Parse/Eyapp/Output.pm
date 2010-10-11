@@ -170,9 +170,12 @@ our $LEX = sub {
       return ('', undef) if ($_ eq '') || (defined(pos($_)) && (pos($_) >= length($_)));
       /\G\s*(\S+)/;
       my $near = substr($1,0,10); 
-      die( "Error inside the lexical analyzer near '". $near
-          ."'. Line: ".$self->line()
-          .". File: '".$self->YYFilename()."'. No match found.\n");
+
+      return($near, $near);
+
+     # die( "Error inside the lexical analyzer near '". $near
+     #     ."'. Line: ".$self->line()
+     #     .". File: '".$self->YYFilename()."'. No match found.\n");
     }
   }
 ;

@@ -282,19 +282,33 @@ of the Eyapp language using the file C<examples/eyapplanguageref/Calc.eyp>
 that accompanies this distribution. This file implements a trivial 
 calculator. Here is the header section:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$   sed -ne '1,11p' Calc.eyp | cat -n
+  pl@nereida:~/src/perl/eyapp/examples/eyapplanguageref$ sed -ne '1,/%%/p' Calc.eyp | cat -n
      1  # examples/eyapplanguageref/Calc.eyp
-     2  %right  '='
-     3  %left   '-' '+'
-     4  %left   '*' '/'
-     5  %left   NEG
-     6  %right  '^'
-     7  %{
-     8  my %s; # symbol table
-     9  %}
-    10
-    11  %%
+     2  %whites    =  /([ \t]*(?:#.*)?)/
+     3  %token NUM =  /([0-9]+(?:\.[0-9]+)?)/
+     4  %token VAR =  /([A-Za-z][A-Za-z0-9_]*)/
+     5
+     6  %right  '='
+     7  %left   '-' '+'
+     8  %left   '*' '/'
+     9  %left   NEG
+    10  %right  '^'
+    11
+    12  %{
+    13  my %s; # symbol table
+    14  %}
+    15
+    16  %%
 
+Eyapp produces a lexical generator from the descriptions given
+by the C<%token> and C<%whites> directives plus the tokens used 
+inside the body section.
+
+       %whites    =  /([ \t]*(?:#.*)?)/
+       %token NUM =  /([0-9]+(?:\.[0-9]+)?)/
+       %token VAR =  /([A-Za-z][A-Za-z0-9_]*)/
+
+See section L<Automatic Generation of Lexical Analyzers> for more details.
 
 =head2 Declarations and Precedence
 
@@ -664,46 +678,49 @@ C<-d> activates the debug mode, the option C<-c> tells the program to get the in
 
 Following with the calculator example, the body is:
 
-  pl@nereida:~/LEyapp/examples/eyapplanguageref$ sed -ne '12,48p' Calc.eyp | cat -n
-     1  start:
-     2      input { \%s }
+  pl@nereida:~/src/perl/eyapp/examples/eyapplanguageref$ sed -ne '17,/%%/p' Calc.eyp | cat -n 
+     1  start:                                                                              
+     2      input { \%s }                                                                   
      3  ;
      4
      5  input: line *
      6  ;
      7
      8  line:
-     9    '\n'         { undef }
-    10    | exp '\n'   { print "$_[1]\n" if defined($_[1]); $_[1] }
-    11    | error  '\n'
-    12        {
-    13          $_[0]->YYErrok;
-    14          undef
-    15        }
-    16  ;
-    17
-    18  exp:
-    19      NUM
-    20    | $VAR                   { $s{$VAR} }
-    21    | $VAR '=' $exp          { $s{$VAR} = $exp }
-    22    | exp.left '+' exp.right { $left + $right }
-    23    | exp.left '-' exp.right { $left - $right }
-    24    | exp.left '*' exp.right { $left * $right }
-    25    | exp.left '/' exp.right
-    26      {
-    27         $_[3] and return($_[1] / $_[3]);
-    28         $_[0]->YYData->{ERRMSG} = "Illegal division by zero.\n";
-    29         $_[0]->YYError; # Pretend that a syntactic error occurred: _Error will be called
-    30         undef
-    31      }
-    32    | '-' $exp %prec NEG     { -$exp }
-    33    | exp.left '^' exp.right { $left ** $right }
-    34    | '(' $exp ')'           { $exp }
-    35  ;
-    36
-    37  %%
+     9      '\n'       { undef }
+    10    | exp '\n'   {
+    11                    print "$_[1]\n" if defined($_[1]);
+    12                    $_[1]
+    13                 }
+    14    | error  '\n'
+    15        {
+    16          $_[0]->YYErrok;
+    17          undef
+    18        }
+    19  ;
+    20
+    21  exp:
+    22      NUM
+    23    | $VAR                   { $s{$VAR} }
+    24    | $VAR '=' $exp          { $s{$VAR} = $exp }
+    25    | exp.left '+' exp.right { $left + $right }
+    26    | exp.left '-' exp.right { $left - $right }
+    27    | exp.left '*' exp.right { $left * $right }
+    28    | exp.left '/' exp.right
+    29      {
+    30         $_[3] and return($_[1] / $_[3]);
+    31         $_[0]->YYData->{ERRMSG} = "Illegal division by zero.\n";
+    32         $_[0]->YYError;
+    33         undef
+    34      }
+    35    | '-' $exp %prec NEG     { -$exp }
+    36    | exp.left '^' exp.right { $left ** $right }
+    37    | '(' $exp ')'           { $exp }
+    38  ;
+    39
+    40  %%
 
-This example does not uses any of the Eyapp extensions (with the exception of the 
+This body does not uses any of the Eyapp extensions (with the exception of the 
 C<*> operator at line 5) and the dot and dollar notations. 
 
 =head2 Solving Ambiguities and Conflicts

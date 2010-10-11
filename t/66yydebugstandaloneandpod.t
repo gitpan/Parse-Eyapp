@@ -37,6 +37,10 @@ In state 0:
 Stack: 0
 Need token. Got >D<
 Shift and go to state 4.
+----------------------------------------
+In state 4:
+Stack: 0->'D'->4
+Don't need token.
 BEGDEB
 
   my $x = `cat t/err`;

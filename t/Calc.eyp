@@ -19,6 +19,7 @@ input: line *
 line:       
   '\n'         { undef }
   | exp '\n'   { $_[1] }
+  | exp ''     { $_[1] } # exp followed by end of input
   | error  '\n'
       { 
         $_[0]->YYErrok; 
@@ -62,7 +63,7 @@ sub _Error {
   my($what)= $token ? "input: '$token'" : "end of input";
   my @expected = $parser->YYExpect();
   local $" = ', ';
-  print << "ERRMSG";
+  die << "ERRMSG";
 
 Syntax error near $what (lin num $lineno). 
 Expected one of these terminals: @expected
@@ -70,12 +71,10 @@ ERRMSG
 }
 
 sub make_lexer {
-  my $input = shift;
-
   return sub {
     my $parser = shift;
 
-    for ($$input) {
+    for (${$parser->input}) {
       m{\G[ \t]*}gc;
       m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM',$1);
       m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR',$1);
@@ -89,9 +88,9 @@ sub make_lexer {
 
 sub Run {
     my($self)=shift;
-    my $input = shift or die "No input given\n";
+    $self->input(shift()) unless defined(${$self->input});
 
-    return $self->YYParse( yylex => make_lexer($input), yyerror => \&_Error,
+    return $self->YYParse( yylex => make_lexer(), yyerror => \&_Error,
       #yydebug =>0x1F
     );
 }

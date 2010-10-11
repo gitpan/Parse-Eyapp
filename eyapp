@@ -250,10 +250,11 @@ use Parse::Eyapp;
 
 use strict;
 
-our ( $opt_n, $opt_m, $opt_V, $opt_v, $opt_o, $opt_h, $opt_s, $opt_t, $opt_b, $opt_c, $opt_B, $opt_C);
+our ( $opt_n, $opt_m, $opt_V, $opt_v, $opt_o, $opt_h, $opt_s, $opt_t, $opt_b, $opt_c, $opt_B, $opt_C, );
 our $opt_l = 0;
 our $opt_T; # build AST
 our $opt_N; # Do not compact action tables. No DEFAULT field for "STATES"
+our $opt_P; # Accept if prefix conforms to the language, even if not end of input
 
 sub Usage {
     my($prog)=(fileparse($0,'\..*'))[0];
@@ -284,6 +285,8 @@ Usage:  $prog [options] grammar[.eyp]
     -T          Equivalent to %tree
     -N          Equivalent to %nocompact. Do not compact action tables. 
     -l          Do not generate the lexical analyzer. One must be explictly provided
+    -P          Accept if prefix conforms to the language, even if is not legal up 
+                to the end 
     -c grammar  Displays the "clean" grammar without actions     
     -vc grammar Displays the "clean" grammar without actions. Strip comments also
     -V          Display current version of Parse::Eyapp and gracefully exits
@@ -297,7 +300,7 @@ EOF
 
 my($nbargs)=@ARGV;
 
-    getopts('CTVNhlvsnc:b:B:m:t:o:')
+    getopts('CTVNhlvsnPc:b:B:m:t:o:')
 or  Usage;
 
    (  ($opt_V and $nbargs > 1)
@@ -364,6 +367,7 @@ my @args = (inputfile => $filename, );
 
 push @args, (tree => 1) if $opt_T;
 push @args, (nocompact => 1) if (($opt_N or $opt_v) and not($opt_N and $opt_v));
+push @args, (prefix => 1) if $opt_P;
 
 my ($parser) = Parse::Eyapp->new(@args);
 

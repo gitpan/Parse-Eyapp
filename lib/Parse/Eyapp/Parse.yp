@@ -216,6 +216,8 @@ sub process_production {
         my $ch = $value->[0];
         push @{$conflict{$ch}{production}{-$position}}, $s; 
       }
+      elsif ($what eq 'CONFLICTVIEWPOINT') {
+      }
       
       push(@newrhs, $$value[0]);
   }
@@ -447,7 +449,7 @@ decl:  '\n'                 #default action
             }
     |   START ident '\n'                
             { 
-              $start=$_[2][0]; 
+              $start=$_[2][0] unless $start; 
               undef 
             }
     |   PREFIX '\n'                
@@ -566,6 +568,38 @@ CONFLICT_HEADER
 
               undef;
             }
+    /*********************************************/
+    |   EXPLORER ident CODE '\n' # research testing
+            {
+              my ($name, $code) = @_[2,3];
+              my ($cn, $line) = @$name;
+
+
+              my ($c, $li) = @$code;
+
+              # TODO: this must be in Output
+              my $conflict_header = <<"CONFLICT_EXPLORER";
+  my \$self = \$_[0];
+  for (\${\$self->input()}) {  
+#line $li "$filename" 
+CONFLICT_EXPLORER
+              $c =~ s/^/$conflict_header/; # }
+
+              # {
+              # follows the closing curly bracket of the for .. to contextualize!!!!!!                 v
+              $c =~ s/$/\n################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################\n  }\n/;
+              #$code->[0] = $c;
+              $conflict{$cn}{explorer} = $c;
+              $conflict{$cn}{explorerline} = $line;
+
+              # TODO: error control. Factorize!!!!!
+              $$syms{$cn.'_explorer'} = $line;
+              $$nterm{$cn.'_explorer'} = undef;
+
+              undef;
+            }
+    /*********************************************/
+
     |   EXPECT NUMBER '\n'             { $expect=$_[2][0]; undef }
     |   EXPECT NUMBER NUMBER '\n'      { $expect= [ $_[2][0], $_[3][0]]; undef }
     |   EXPECTRR NUMBER '\n'           { 
@@ -628,6 +662,14 @@ body:
               my $rhss = [ rhs([], name => $lhs, code => $code), ];
               _AddRules($lhs, $rhss);
               delete $conflict{$A}{codeh};
+
+              if (defined($conflict{$A}{explorer})) {
+                my $lhs = [$A.'_explorer', $conflict{$A}{explorerline}];
+                my $code = $conflict{$A}{explorer};
+                my $rhss = [ rhs([], name => $lhs, code => $code), ];
+                _AddRules($lhs, $rhss);
+                delete $conflict{$A}{explorer};
+              }
             }
 
             # # If exists an @identifiers that is not a nterm and not a term is a warn
@@ -738,6 +780,13 @@ rhseltwithid :
 rhselt:     symbol    { [ 'SYMB', $_[1] ] }
     | code    { [ 'CODE', $_[1] ] }
     | DPREC ident { [ 'CONFLICTHANDLER', $_[2] ] }
+    #************** research *****************#
+    | VIEWPOINT 
+        { 
+           $_[1][0] .='_explorer';
+           [ 'CONFLICTVIEWPOINT', $_[1] ] 
+        }
+    #************** research *****************#
     | '(' optname rhs ')' 
         { 
            my ($name, $rhs) = @_[2, 3];
@@ -1101,6 +1150,8 @@ sub _Lexer {
 
         $$input=~/\G%expect-rr/gc and return('EXPECTRR',[ undef, $lineno[0] ]);
 
+        $$input=~/\G%(explorer)/gc and return('EXPLORER',[ undef, $lineno[0] ]);
+
         $$input=~/\G%($ID)/gc     and return($headertoken{$1},[ undef, $lineno[0] ]);
 
         $$input=~/\G($REGEXP)/gc  and return('REGEXP',[ $1, $lineno[0] ]);
@@ -1145,6 +1196,11 @@ sub _Lexer {
 
             $$input=~/\G%begin\s*{/gc  # }
         and return ('BEGINCODE', &slurp_perl_code());
+
+        #********** research *************#
+            $$input=~/\G%([a-zA-Z_]\w*)\?/gc
+        and return('VIEWPOINT',[ $1, $lineno[0] ]);
+        #********** research *************#
 
     }
 
@@ -1256,8 +1312,8 @@ sub _AddRules {
 }
 
 # This sub is called fro Parse::Eyapp::Grammar::new
-#                0        1         2       3    4
-# Args: object, input, fistline, filename, tree, nocompact
+#                0        1         2       3    4          5               6!!! warning
+# Args: object, input, fistline, filename, tree, nocompact, lexerisdefined, start
 sub Parse {
     my($self)=shift;
 
@@ -1300,6 +1356,8 @@ sub Parse {
     $precterm={};
 
     $start="";
+    #$start = $_[6] if ($_[6]); 
+
     $nullable={};
     $expect=0;
     $semantic = {};
