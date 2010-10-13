@@ -1,8 +1,12 @@
-  * the two examples 
-       noPackratSolvedExpRGconcept.eyp
-    work because they run up to the end of the input!!
-    Make a test
+  * Clusplus example. Start from the documentation. For Luis
+    see file tt2/cplusplus
 
+  * my $ID = qr{...};
+    token ID = /$ID/
+
+    the code for my $ID goes after the lexer. That is an error.
+
+  * Expected for article 
   * Lalr 
       # substitute End Of Input by DEFAULT for each state
       # Will it give a false acceptance? 

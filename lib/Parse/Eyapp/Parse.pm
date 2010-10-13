@@ -26,8 +26,6 @@ BEGIN {
 }
   
 
-
-
 sub unexpendedInput { defined($_) ? substr($_, (defined(pos $_) ? pos $_ : 0)) : '' }
 
 # (c) Copyright Casiano Rodriguez-Leon 
@@ -312,6 +310,9 @@ ENDOFLEXER
 
   return $lexertemplate;
 }
+
+
+
 
 
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################

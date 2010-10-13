@@ -26,8 +26,6 @@ BEGIN {
 }
   
 
-
-
 sub unexpendedInput { defined($_) ? substr($_, (defined(pos $_) ? pos $_ : 0)) : '' }
 
 
@@ -229,6 +227,9 @@ sub new_array_star {
     attr => $var,
   }, 'Parse::Eyapp::Treeregexp::ARRAY_TERMINAL'; 
 }
+
+
+
 
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 

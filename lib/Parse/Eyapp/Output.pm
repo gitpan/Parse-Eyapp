@@ -340,11 +340,12 @@ push @<<$package>>::ISA, 'Parse::Eyapp::Driver';
 
 <<$driver>>
 
-<<$defaultLexer>>
-
 sub unexpendedInput { defined($_) ? substr($_, (defined(pos $_) ? pos $_ : 0)) : '' }
 
 <<$head>>
+
+<<$defaultLexer>>
+
 ################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
 
 my $warnmessage =<< "EOFWARN";
