@@ -1,4 +1,10 @@
 Revision history for Perl extension Eyapp.
+1.167
+  Bug solved:
+    my $ID = qr{...};
+    token ID = /$ID/
+    the code for my $ID went after the lexer. That was an error.
+
 1.165
   * New syntax %explorer CONFLICTNAME { ... }
     See examples in examples/debuggintut

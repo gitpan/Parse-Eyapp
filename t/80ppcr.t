@@ -1,9 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
-my ($nt, $nt2, $nt3);
+my ($nt, $nt2, $nt3, $nt4);
 
-BEGIN { $nt = 8; $nt2 = 7; $nt3 = 11;}
-use Test::More tests=> $nt+$nt2+$nt3;
+BEGIN { $nt = 8; $nt2 = 7; $nt3 = 11; $nt4 = 7; }
+use Test::More tests=> $nt+$nt2+$nt3+$nt4;
 
 # test PPCR methodology with Pascal range versus enumerated conflict
 SKIP: {
@@ -106,7 +106,7 @@ typeDecl_is_type_ID_type_expr(
 
 SKIP: {
   skip "t/noPackratSolvedExpRG2.eyp not found", $nt2 unless ($ENV{DEVELOPER} 
-                                                        && -r "t/pascalnestedeyapp2.eyp" 
+                                                        && -r "t/noPackratSolvedExpRG2.eyp"
                                                         && -r "t/ExpList.eyp" 
                                                         #&& $^V ge v5.10.0
                                                         && -x "./eyapp");
@@ -196,6 +196,7 @@ SKIP: {
 
   ok(-x "t/ppcr.pl", "modulino has execution permits");
 
+  # a prefix is acceptable but the whole string isn't
   eval {
 
     $r = qx{perl -Ilib t/ppcr.pl -t -c 'a=2\@'};
@@ -267,3 +268,104 @@ Expected one of these terminals: -, , /, ^, *, +,
   unlink 't/ExpList.pm';
 }
 
+# testing the use of the same conflict handler in different grammar
+# sections
+SKIP: {
+  skip "t/reuseconflicthandler.eyp not found", $nt4 unless ($ENV{DEVELOPER} 
+                                                        && -r "t/reuseconflicthandler.eyp"
+                                                        && -r "t/ExpList.eyp" 
+                                                        && -x "./eyapp");
+
+  unlink 't/ppcr.pl';
+
+  my $r = system(q{perl -I./lib/ eyapp  -Po t/ExpList.pm t/ExpList.eyp});
+  ok(!$r, "Auxiliary grammar ExpList.yp compiled witn -P option");
+
+  $r = system(q{perl -I./lib/ eyapp -TC -o t/ppcr.pl t/reuseconflicthandler.eyp 2> t/err});
+  ok(!$r, "repeated conflicts grammar compiled");
+  like(qx{cat t/err},qr{1 shift/reduce conflict},"number of conflicts eq 1");
+
+  ok(-s "t/ppcr.pl", "modulino ppcr exists");
+
+  ok(-x "t/ppcr.pl", "modulino has execution permits");
+
+  eval {
+
+    $r = qx{perl -Ilib -It t/ppcr.pl -t -i -m 1 -c '2-3 3*4 5+2 ; 4+8 3-1 2*3 ;' 2>&1};
+
+  };
+
+  ok(!$@,'t/reuseconflicthandler.eyp executed as modulino');
+
+  my $expected = q{
+Number of x's = 3
+Reducing by :MIDx input = '+2 ; 4+8 3-1 2*3 ;'
+Number of x's = 3
+Reducing by :MIDx input = '*3 ;'
+
+T_is_isInTheMiddleExplorer_S_isInTheMiddleExplorer_S(
+  S_is_x_S_x(
+    x_is_x_OP_NUM(
+      x_is_NUM(
+        TERMINAL[2]
+      ),
+      TERMINAL[-],
+      TERMINAL[3]
+    ),
+    S_is_x(
+      x_is_x_OP_NUM(
+        x_is_NUM(
+          TERMINAL[3]
+        ),
+        TERMINAL[*],
+        TERMINAL[4]
+      )
+    ),
+    x_is_x_OP_NUM(
+      x_is_NUM(
+        TERMINAL[5]
+      ),
+      TERMINAL[+],
+      TERMINAL[2]
+    )
+  ),
+  S_is_x_S_x(
+    x_is_x_OP_NUM(
+      x_is_NUM(
+        TERMINAL[4]
+      ),
+      TERMINAL[+],
+      TERMINAL[8]
+    ),
+    S_is_x(
+      x_is_x_OP_NUM(
+        x_is_NUM(
+          TERMINAL[3]
+        ),
+        TERMINAL[-],
+        TERMINAL[1]
+      )
+    ),
+    x_is_x_OP_NUM(
+      x_is_NUM(
+        TERMINAL[2]
+      ),
+      TERMINAL[*],
+      TERMINAL[3]
+    )
+  )
+)
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,q{AST for '2-3 3*4 5+2 ; 4+8 3-1 2*3 ;'} );
+
+  unlink 't/ppcr.pl';
+  unlink 't/ExpList.pm';
+
+}

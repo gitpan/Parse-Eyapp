@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.167";
+$VERSION = "1.168";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -408,20 +408,52 @@ sub YYLookaheads {
 }
 
 
+# more parameters: debug, etc, ...
+#sub YYPreParse {
+#  my $self = shift; 
+#  my $parser = shift;
+#
+#  eval "require $parser";
+#   
+#  # optimize to state variable for 5.10
+#  my $rp = $parser->new( yyerror => sub {});
+#
+#  my $pos = pos(${$self->input});
+#  #print "pos = $pos\n";
+#  $rp->input($self->input);
+#
+#  my $t = $rp->Run(@_);
+#  my $ne = $rp->YYNberr;
+#
+#  #print "After nested parsing\n";
+#
+#  pos(${$self->input}) = $pos;
+#
+#  return (wantarray ? ($t) : !$ne);
+#}
+#
+#
+## new interface
+## more parameters: debug, etc, ...
+#sub YYNestedParse {
 sub YYPreParse {
   my $self = shift; 
   my $parser = shift;
 
+  # Check for errors!
   eval "require $parser";
    
   # optimize to state variable for 5.10
   my $rp = $parser->new( yyerror => sub {});
 
-  my $pos = pos(${$self->input});
+  my $pos  = pos(${$self->input});
+  my $rpos = $self->{POS};;
+
   #print "pos = $pos\n";
   $rp->input($self->input);
+  pos(${$rp->input}) = $rpos;
 
-  my $t = $rp->Run;
+  my $t = $rp->Run(@_);
   my $ne = $rp->YYNberr;
 
   #print "After nested parsing\n";
@@ -430,6 +462,7 @@ sub YYPreParse {
 
   return (wantarray ? ($t) : !$ne);
 }
+
 
 
 # sub YYLookBothWays {
@@ -457,7 +490,7 @@ sub YYSetReduce {
   # The reduction action must be performed only if
   # the next token is inside the $token set
   my $lookahead = $self->YYLookahead();
-  return unless (grep { $_ eq $lookahead } @$token);
+  #return unless (grep { $_ eq $lookahead } @$token);
 
   croak "YYSetReduce error: specify a production" unless defined($action);
 
@@ -1640,6 +1673,7 @@ sub _Parse {
 #DBG>          "\n";
 
 
+        $self->{POS} = pos(${$self->input()});
         if  (exists($$actions{ACTIONS})) {
 
         defined($$token)

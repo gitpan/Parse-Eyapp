@@ -1,12 +1,18 @@
   * Clusplus example. Start from the documentation. For Luis
     see file tt2/cplusplus
 
-  * my $ID = qr{...};
-    token ID = /$ID/
+  * add to YYPreParse one option for debugging the preparsing.
+    idem for other options
 
-    the code for my $ID goes after the lexer. That is an error.
+  * add eyapp -Y option: equivalent to "%tree bypass"
 
-  * Expected for article 
+  * Expected and language generation for article 
+
+  * There is s.t. wrong in reuseconflicthandler.eyp and 
+    noPackratSolvedExpRGconcept.eyp. why is it that we have to specify
+    a reduction by 'end of input' when there is no conflict for such 
+    token?????
+
   * Lalr 
       # substitute End Of Input by DEFAULT for each state
       # Will it give a false acceptance? 
@@ -14,6 +20,7 @@
       # make a test
 
   * Merge PPCR branch with trunk
+
   * Include %from directive. See examples/debuggingtut/Range2.eyp
 
         %from pascalnestedeyapp2 import expr
