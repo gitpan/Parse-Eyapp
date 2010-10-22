@@ -1,5 +1,8 @@
-  * Clusplus example. Start from the documentation. For Luis
-    see file tt2/cplusplus
+  * add parsing strings and trees as a test
+  * add data generation as a test
+  * tag for 1.168 and test t/80 with Cplusplus
+
+  * Update documentation
 
   * add to YYPreParse one option for debugging the preparsing.
     idem for other options
@@ -7,11 +10,6 @@
   * add eyapp -Y option: equivalent to "%tree bypass"
 
   * Expected and language generation for article 
-
-  * There is s.t. wrong in reuseconflicthandler.eyp and 
-    noPackratSolvedExpRGconcept.eyp. why is it that we have to specify
-    a reduction by 'end of input' when there is no conflict for such 
-    token?????
 
   * Lalr 
       # substitute End Of Input by DEFAULT for each state

@@ -10,25 +10,25 @@ that fulfills the parser expectatives.
 
 Compile it with:
 
-               eyapp -C PL_I_conflict.eyp
+               eyapp -C PL_I_conflictNested.eyp
 
 Run it with:
 
-               ./PL_I_conflict.pm -t -c 'if if=then then then=if'
+               ./PL_I_conflictNested.pm -t -c 'if if=then then then=if'
 
 for more detail:
 
-               ./PL_I_conflict.pm -d -t -c 'if if=then then then=if'
+               ./PL_I_conflictNested.pm -d -t -c 'if if=then then then=if'
 
 and also
 
-               ./PL_I_conflict.pm -t -i -c 'if then=if then if=then
+               ./PL_I_conflictNested.pm -t -i -c 'if then=if then if=then
 
 The problem arises again
 
 Also try:
 
-                ./PL_I_conflict.pm -t -c 'if then=if then if a=b then c=d'
+                ./PL_I_conflictNested.pm -t -c 'if then=if then if a=b then c=d'
 
 =cut
 
@@ -45,8 +45,10 @@ Also try:
       m{\G([a-zA-Z_]\w*)}gc and do {
         my $id = $1;
 
-        return ('if',   'if')   if ($id eq 'if')   && $self->expects('if') && /\G(?!\s*=)/;
-        return ('then', 'then') if ($id eq 'then') && $self->expects('then');
+        return ('if',   'if')   if ($id eq 'if')   && $self->YYExpects('if') 
+               && !$self->YYPreParse('Assign');     #, 0xF # debug ); 
+
+        return ('then', 'then') if ($id eq 'then') && $self->YYExpects('then');
         
         return ('ID', $id);
       };

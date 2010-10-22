@@ -26,8 +26,9 @@ sub defined_variable {
 sub generate_token {
   my $parser = shift;
 
-  my @token = $parser->YYExpect;
+  my @token = $parser->YYExpect; # the list of token that can be expected 
 
+  # Generate on of those using the token_weight distribution
   my $tokengen = Frequency( map { [$parser->token_weight($_), Unit($_)] } @token);
 
   return $tokengen->generate;
@@ -73,16 +74,6 @@ sub evaluate_using_perl { # if possible
   $res;
 }
 
-sub Run {
-    my($self)=shift;
-    my $yydebug = shift || 0;
-
-    return $self->YYParse( 
-      yylex => \&gen_lexer, 
-      yyerror => \&_Error,
-      yydebug => $yydebug, # 0x1F
-    );
-}
 
 sub main {
   my $package = shift;
@@ -96,6 +87,9 @@ sub main {
 
   my $parser = $package->new();
 
+  # set_tokenweightsandgenerators receives the parser object and the pairs 
+  #   token => [weight, generator] or token => weight
+  # and sets the weight and generator attributes of the tokens.
   $parser->set_tokenweightsandgenerators(
     NUM => [ 2, Int(range=>[0, 9], sized=>0)],
     VAR => [
@@ -115,7 +109,11 @@ sub main {
     ''  => 2, 'error' => 0,
   );
 
-  my $exp = $parser->Run( $debug );
+  my $exp = $parser->YYParse( 
+      yylex => \&gen_lexer, 
+      yyerror => \&_Error,
+      yydebug => $debug, # 0x1F
+    );
 
   my $res = evaluate_using_perl($exp);
 

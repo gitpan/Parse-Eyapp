@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.168";
+$VERSION = "1.169";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -1043,38 +1043,25 @@ sub YYCurval {
     ${$$self{VALUE}};
 }
 
-#sub YYExpect {
-#  my($self)=shift;
-#  my $state = shift || $self->{STATES}[$self->{STACK}[-1][0]];
-#
-#  my %expected = %{$state->{ACTIONS}};
-#  if (exists($expected{"\c@"})) {
-#    $expected{''} = 1;
-#    delete($expected{"\c@"});
-#  }
-#  
-#  return keys %expected;
-#}
-
 {
-  my @STACK; # Used for symbolic simulation
-
   sub YYSymbolicSim {
     my $self = shift;
+    my $stack = shift;
     my @reduce = @_;
     my @expected;
 
     while (@reduce) {
       my $index = shift @reduce;
       my ($lhs, $length) = @{$self->{RULES}[-$index]};
-      if (@STACK > $length) {
-        splice @STACK, -$length if $length;
+      my @auxstack = @$stack;
+      if (@auxstack > $length) {
+        splice @auxstack, -$length if $length;
 
-        my $state = $STACK[-1]->[0];
+        my $state = $auxstack[-1]->[0];
         my $nextstate = $self->{STATES}[$state]{GOTOS}{$lhs};
         if (defined($nextstate)) {
-          push @STACK, [$nextstate, undef];
-          @expected = $self->YYExpected;
+          push @auxstack, [$nextstate, undef];
+          push @expected, $self->YYExpected(\@auxstack);
         }
       }
       # else something went wrong!!! See Frank Leray report
@@ -1085,14 +1072,19 @@ sub YYCurval {
 
   sub YYExpected {
     my($self)=shift;
-    my $state = $self->{STATES}[$STACK[-1][0]];
+    my $stack = shift;
+
+    # The state in the top of the stack
+    my $state = $self->{STATES}[$stack->[-1][0]];
 
     my %actions;
     %actions = %{$state->{ACTIONS}} if exists $state->{ACTIONS};
 
-    my (%expected, %reduce);
+    # The keys of %reduction are the -production numbers
+    # Use hashes and not lists to guarantee that no tokens are repeated
+    my (%expected, %reduce); 
     for (keys(%actions)) {
-      if ($actions{$_} > 0) {
+      if ($actions{$_} > 0) { # shift
         $expected{$_} = 1;
         next;
       }
@@ -1101,23 +1093,88 @@ sub YYCurval {
     $reduce{$state->{DEFAULT}} = 1 if exists($state->{DEFAULT});
 
     if (keys %reduce) {
-      %expected = (%expected, $self->YYSymbolicSim(keys %reduce));
+      %expected = (%expected, $self->YYSymbolicSim($stack, keys %reduce));
     }
     
     return keys %expected;
   }
 
   sub YYExpect {
-    @STACK = @{$_[0]->{STACK}};
-    goto &YYExpected;
+    return YYExpected(@_, [ @{$_[0]->{STACK}} ]);
   }
 }
 
+#{
+#  my @STACK; # Used for symbolic simulation !!! reentrancy problem??
+#
+#  sub YYSymbolicSim {
+#    my $self = shift;
+#    my @reduce = @_;
+#    my @expected;
+#
+#    while (@reduce) {
+#      my $index = shift @reduce;
+#      my ($lhs, $length) = @{$self->{RULES}[-$index]};
+#      if (@STACK > $length) {
+#        splice @STACK, -$length if $length;
+#
+#        my $state = $STACK[-1]->[0];
+#        my $nextstate = $self->{STATES}[$state]{GOTOS}{$lhs};
+#        if (defined($nextstate)) {
+#          push @STACK, [$nextstate, undef];
+#          @expected = $self->YYExpected;
+#        }
+#      }
+#      # else something went wrong!!! See Frank Leray report
+#    }
+#
+#    return map { $_ => 1 } @expected;
+#  }
+#
+#  sub YYExpected {
+#    my($self)=shift;
+#
+#    # The state in the top of the stack
+#    my $state = $self->{STATES}[$STACK[-1][0]];
+#
+#    my %actions;
+#    %actions = %{$state->{ACTIONS}} if exists $state->{ACTIONS};
+#
+#    # The keys of %reduction are the -production numbers
+#    # Use hashes and not lists to guarantee that no tokens are repeated
+#    my (%expected, %reduce); 
+#    for (keys(%actions)) {
+#      if ($actions{$_} > 0) { # shift
+#        $expected{$_} = 1;
+#        next;
+#      }
+#      $reduce{$actions{$_}} = 1;
+#    }
+#    $reduce{$state->{DEFAULT}} = 1 if exists($state->{DEFAULT});
+#
+#    if (keys %reduce) {
+#      %expected = (%expected, $self->YYSymbolicSim(keys %reduce));
+#    }
+#    
+#    return keys %expected;
+#  }
+#
+#  sub YYExpect {
+#    @STACK = @{$_[0]->{STACK}};
+#    goto &YYExpected;
+#  }
+#}
+
+# $self->expects($token) : returns true if the token is among the expected ones
 sub expects {
   my $self = shift;
   my $token = shift;
 
   return grep { $_ eq $token } $self->YYExpect;
+}
+
+BEGIN {
+*YYExpects = \&expects;
 }
 
 # Set/Get a static/class attribute for $class

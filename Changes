@@ -1,4 +1,14 @@
 Revision history for Perl extension Eyapp.
+1.169
+  * Clusplus example. Start from the documentation. For Luis
+    see file tt2/cplusplus
+
+  * This important bug was fixed: 
+    There is s.t. wrong in reuseconflicthandler.eyp and 
+    noPackratSolvedExpRGconcept.eyp. why is it that we have to specify
+    a reduction by 'end of input' when there is no conflict for such 
+    token?????
+
 1.167
   Bug solved:
     my $ID = qr{...};

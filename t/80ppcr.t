@@ -1,9 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
-my ($nt, $nt2, $nt3, $nt4);
+my ($nt, $nt2, $nt3, $nt4, $nt5);
 
-BEGIN { $nt = 8; $nt2 = 7; $nt3 = 11; $nt4 = 7; }
-use Test::More tests=> $nt+$nt2+$nt3+$nt4;
+BEGIN { $nt = 8; $nt2 = 7; $nt3 = 11; $nt4 = 7; $nt5 = 7;
+}
+use Test::More tests=> $nt+$nt2+$nt3+$nt4+$nt5;
 
 # test PPCR methodology with Pascal range versus enumerated conflict
 SKIP: {
@@ -367,5 +368,52 @@ T_is_isInTheMiddleExplorer_S_isInTheMiddleExplorer_S(
 
   unlink 't/ppcr.pl';
   unlink 't/ExpList.pm';
+
+}
+
+# testing PPCR with CplusplusNested.eyp
+# testing nested parsing (YYPreParse) when one token 
+# has been read by the outer parser
+SKIP: {
+  skip "t/CplusplusNested.eyp not found", $nt5 unless ($ENV{DEVELOPER} 
+                                                        && -r "t/CplusplusNested.eyp"
+                                                        && -r "t/Decl.eyp" 
+                                                        && -x "./eyapp");
+
+  unlink 't/ppcr.pl';
+
+  my $r = system(q{perl -I./lib/ eyapp  -Po t/Decl.pm t/Decl.eyp});
+  ok(!$r, "Auxiliary grammar Decl.eyp compiled witn -P option");
+
+  $r = system(q{perl -I./lib/ eyapp -C -o t/ppcr.pl t/CplusplusNested.eyp 2> t/err});
+  ok(!$r, "t/CplusplusNested.eyp grammar compiled");
+  like(qx{cat t/err},qr{^$},"no warning: %expect-rr 1");
+
+  ok(-s "t/ppcr.pl", "modulino ppcr exists");
+
+  ok(-x "t/ppcr.pl", "modulino has execution permits");
+
+  eval {
+
+    $r = qx{perl -Ilib -It t/ppcr.pl -t -i -c 'int (x) + 2; int (z) = 4;' 2>&1};
+
+  };
+
+  ok(!$@,'t/CplusplusNested.eyp executed as modulino');
+
+  my $expected = q{
+PROG(PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],ID[x]),NUM[2])),DECL(TERMINAL[int],ID[z],NUM[4]))
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST for "int (x) + 2; int (z) = 4;"');
+
+  unlink 't/ppcr.pl';
+  unlink 't/Decl.pm';
 
 }

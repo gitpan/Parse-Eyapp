@@ -55,7 +55,7 @@ SKIP: {
   ok(!$@,'minusv.pl executed as standalone modulino');
 
   $expected =  q{
-  Statement 1: Syntax error at org. Expected ('nop', '\n').
+  Statement 1: Syntax error at org. Expected ('', 'nop', '\n').
   };
   $expected =~ s/\s+//g;
   $expected = quotemeta($expected);

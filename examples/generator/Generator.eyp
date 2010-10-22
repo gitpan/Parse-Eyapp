@@ -1,5 +1,5 @@
 # file: Generator.eyp
-# compile with: eyapp -b '' Generator.eyp
+# compile with: eyapp -C '' Generator.eyp
 # then run: ./Generator.pm
 %strict
 %token NUM VARDEF VAR
@@ -64,6 +64,3 @@ exp:
 
 %%
 
-unless (caller) {
-  __PACKAGE__->main(@ARGV);
-}

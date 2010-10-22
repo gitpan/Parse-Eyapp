@@ -366,6 +366,9 @@ t/81tokendirectiveandsubstitution.t
 t/pascalnestedeyapp2.eyp
 t/Range.eyp
 t/ExpList.eyp
+t/82expectandPLI.t
+t/Assign.eyp
+t/PL_I_conflictNested.eyp
 #t/97podcoverage.t
 t/98nopm.t
 t/99Cplusplusgrammar.t
