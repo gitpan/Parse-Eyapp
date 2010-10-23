@@ -1,4 +1,8 @@
 Revision history for Perl extension Eyapp.
+1.170
+  * An important bug while computing YYExpected was fixed
+  * Added data generation as a test
+
 1.169
   * Clusplus example. Start from the documentation. For Luis
     see file tt2/cplusplus
@@ -9,11 +13,24 @@ Revision history for Perl extension Eyapp.
     a reduction by 'end of input' when there is no conflict for such 
     token?????
 
+  * test t/80 with Cplusplus
+
 1.167
   Bug solved:
     my $ID = qr{...};
     token ID = /$ID/
     the code for my $ID went after the lexer. That was an error.
+
+   * Syntax for conflicts include an explorer (pre-parser/nested parsing)
+
+        T: %isInTheMiddle? S
+        ;
+
+        S:
+             x  %PREC isInTheMiddle S x  
+          |  %name :MIDx 
+             x  %PREC isInTheMiddle 
+        ;
 
 1.165
   * New syntax %explorer CONFLICTNAME { ... }

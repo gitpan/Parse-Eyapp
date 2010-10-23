@@ -353,6 +353,8 @@ t/73dynamicshiftreduceconflictresolution.t
 t/74lalrdependanttest.t
 t/75tokenandvariablewiththesamename.t
 t/76minusvoption.t
+t/GenSupport.pm
+t/Generator.eyp
 t/77lexicalanalyzergeneration.t
 t/78twolexers.t
 t/79syntactictokenwithdef.t
@@ -367,6 +369,18 @@ t/pascalnestedeyapp2.eyp
 t/Range.eyp
 t/ExpList.eyp
 t/82expectandPLI.t
+t/83parsingstringsandtrees.t
+t/ParsingStringsAndTrees/I2PIR.trg
+t/ParsingStringsAndTrees/Infix.eyp
+t/ParsingStringsAndTrees/fold.inf
+t/ParsingStringsAndTrees/infix2pir.pl
+t/ParsingStringsAndTrees/input1.inf
+t/ParsingStringsAndTrees/simple.inf
+t/ParsingStringsAndTrees/simple2.inf
+t/ParsingStringsAndTrees/simple3.inf
+t/ParsingStringsAndTrees/simple4.inf
+t/ParsingStringsAndTrees/simple5.inf
+t/ParsingStringsAndTrees/simple6.inf
 t/Assign.eyp
 t/PL_I_conflictNested.eyp
 #t/97podcoverage.t

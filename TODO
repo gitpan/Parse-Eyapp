@@ -1,6 +1,4 @@
   * add parsing strings and trees as a test
-  * add data generation as a test
-  * tag for 1.168 and test t/80 with Cplusplus
 
   * Update documentation
 
@@ -31,16 +29,6 @@
         ;
 
         %%
-   * Syntax for conflicts must include an explorer (pre-parser/nested parsing)
-
-        T: %isInTheMiddle? S
-        ;
-
-        S:
-             x  %PREC isInTheMiddle S x  
-          |  %name :MIDx 
-             x  %PREC isInTheMiddle 
-        ;
 
   * Change the API for YYSetReduce and YYSetshift to include the name of the conflict?
 
