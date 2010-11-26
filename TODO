@@ -1,13 +1,9 @@
-  * add parsing strings and trees as a test
+  * $t->str method to produce .dot descriptions of the AST tree
+    -- see removed vgg
 
   * Update documentation
 
-  * add to YYPreParse one option for debugging the preparsing.
-    idem for other options
-
   * add eyapp -Y option: equivalent to "%tree bypass"
-
-  * Expected and language generation for article 
 
   * Lalr 
       # substitute End Of Input by DEFAULT for each state

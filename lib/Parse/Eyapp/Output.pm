@@ -465,7 +465,6 @@ sub new_grammar {
   return $p;
 }
 
-
 1;
 
 __END__

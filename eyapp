@@ -255,6 +255,8 @@ our $opt_l = 0;
 our $opt_T; # build AST
 our $opt_N; # Do not compact action tables. No DEFAULT field for "STATES"
 our $opt_P; # Accept if prefix conforms to the language, even if not end of input
+our $opt_w; #  Produce a .dot graph describing the LR non-compacted automaton
+our $opt_W; #  Produce a .dot graph describing the LR non-compacted automaton
 
 sub Usage {
     my($prog)=(fileparse($0,'\..*'))[0];
@@ -270,6 +272,11 @@ Usage:  $prog [options] grammar[.eyp]
                 The LALR tables aren't compacted
     -vN         Create a file <grammar>.output describing your parser
                 LALR tables are compacted.
+    -w          Create a file <grammar>.dot graph describing your parser.
+                You can then generate a .png file using dot:
+                            dot -Tpng  grammar.dot -o grammar.png
+    -W          Create a file <grammar>.dot graph describing your parser
+                Nodes are labelled with core LR-items
     -s          Create a standalone module in which the driver is included
     -n          Disable source file line numbering embedded in your parser
     -o outfile  Create the file <outfile> for your parser module
@@ -300,7 +307,7 @@ EOF
 
 my($nbargs)=@ARGV;
 
-    getopts('CTVNhlvsnPc:b:B:m:t:o:')
+    getopts('CTVNhlvsnwWPc:b:B:m:t:o:')
 or  Usage;
 
    (  ($opt_V and $nbargs > 1)
@@ -315,6 +322,10 @@ and do {
     print "This is Parse::Eyapp version $Parse::Eyapp::Driver::VERSION.\n";
     exit(0);
 
+};
+
+($opt_w or $opt_W) and do { 
+  $opt_v = 1;
 };
 
     $opt_c and do {
@@ -376,6 +387,8 @@ my($warnings)=$parser->Warnings();
 $warnings !~ m{^\s*$} and print STDERR "$warnings\n";
 
 $parser->outputtables($path, $base) if $opt_v;
+$parser->outputDot($path, $base, 0) if $opt_w;
+$parser->outputDot($path, $base, 1) if $opt_W;
 
 my($outfile)="$path$base.pm";
 my($package)="$base";

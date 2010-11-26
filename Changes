@@ -1,5 +1,26 @@
 Revision history for Perl extension Eyapp.
+1.171
+   * .dot file describing the LR tables generated with options -w and -W
+      - Option -W visualize with kernel items
+      - Option -w visualize without kernel items
+      - visualize conflicts
+   * vgg removed
 1.170
+
+  * Expected and language generation for article 
+
+  * add to YYPreParse one option for debugging the preparsing.
+    idem for other options
+  * GeneratorF.eyp forbid division by zero error in the generated expressions
+  *TokenGen::generate 
+    Check for existence of arg yylex or set to reasonable defaults
+  * Write Test::LectroTest::Generator::Grammar
+
+  *YYSymbolStack: there is no need to copy the stack each time. 
+   Saving the position is enough
+
+  * add parsing strings and trees as a test
+
   * An important bug while computing YYExpected was fixed
   * Added data generation as a test
 

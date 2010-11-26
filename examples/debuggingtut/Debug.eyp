@@ -3,7 +3,6 @@
 
 This grammar has an unsolved shift-reduce conflict.
 
-Be sure C<DebugTail.pm> is reachable.
 Compile it with 
 
       eyapp -C Debug.eyp
@@ -27,13 +26,6 @@ Try input C<'D; D; S'>.
 =cut
 
 %}
-
-%token D S
-
-%lexer {
-    /\G(\s+)/gc;
-    return ($1,$1) if /\G(.)/gc;
-}
 
 %%
 p:

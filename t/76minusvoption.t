@@ -1,12 +1,13 @@
 #!/usr/bin/perl -w
 use strict;
-my ($nt, $nt2);
+my ($nt, $nt2, $numop);
 
 BEGIN { 
 $nt = 10; 
-$nt2 = 50;
+$nt2 = 100;
+$numop = 8;
 }
-use Test::More tests=>$nt+3+2*$nt2;
+use Test::More tests=>$nt+3+2*$nt2+$numop;
 
 SKIP: {
   skip "t/minusvoption/paulocustodio.eyp not found", $nt unless ($ENV{DEVELOPER} && ($ENV{DEVELOPER} eq 'casiano') && -r "t/minusvoption/paulocustodio.eyp" && -x "./eyapp");
@@ -73,11 +74,16 @@ SKIP: {
 
 # Test YYExpected using the data generation program
 SKIP: {
-  skip "t/Generator.eyp not found", 3+2*$nt2 unless ($ENV{DEVELOPER} 
+  eval { require Test::LectroTest::Generator };
+  my $TLTinstalled = !$@;
+  skip "t/Generator.eyp not found", 3+2*$nt2+$numop unless ($ENV{DEVELOPER} 
                                                && ($ENV{DEVELOPER} eq 'casiano') 
                                                && -r "t/Generator.eyp" 
                                                && -r "t/GenSupport.pm" 
+                                               && $TLTinstalled
                                                && -x "./eyapp");
+
+  my %count;
 
   unlink 't/generator.pl';
 
@@ -106,7 +112,21 @@ SKIP: {
     };
 
 
-    like($r, $expected,'arithmetic expressions generated');
+    like($r, $expected,'random arithmetic expression generated');
+
+    $count{'+'}++ if $r =~ /[+]/;
+    $count{'-'}++ if $r =~ /-/;
+    $count{'*'}++ if $r =~ /[*]/;
+    $count{'/'}++ if $r =~ m{/};
+    $count{'('}++ if $r =~ /[(]/;
+    $count{')'}++ if $r =~ /[)]/;
+    $count{'^'}++ if $r =~ /\^/;
+    $count{'--'}++ if $r =~ /--/;
+  }
+
+  # Warning! There is a low probability that this tests may fail without significance
+  for my $operator (qw{ + - * / ( ) ^ --}) {
+    ok($count{$operator} > 0, "$operator appears $count{$operator} times in $nt2 random generations");
   }
 
   unlink 't/generator.pl';

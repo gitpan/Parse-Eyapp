@@ -3,7 +3,8 @@ use warnings;
 use strict;
 use ExtUtils::MakeMaker;
 
-my @exe_files = qw{eyapp treereg vgg};
+# treereg is the compiler for the tree transformation language
+my @exe_files = qw{eyapp treereg};
 
 WriteMakefile(
     'NAME'         => 'Parse::Eyapp',
@@ -166,14 +167,11 @@ treereg.html:treereg
 eyapp.html:eyapp
 	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc eyapp  -o $@
 
-vgg.html:vgg
-	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc vgg  -o $@
-
 %.html:%.pod
 	mpod2html -nowarnings -noverbose -nonavigation -nobanner -noidx -notoc $*.pod  -o $@
 	#perl -e 's/^Cannot find .*//gi; s/\A\s+//' -p -i.bak $@
 
-htmls: ${HTMLS} eyapp.html treereg.html vgg.html
+htmls: ${HTMLS} eyapp.html treereg.html 
 
 <<PUBLIC_PLACE>>%.pdf:%.pdf
 	cp $*.pdf <<PUBLIC_PLACE>>
@@ -190,7 +188,7 @@ publicpdf: pdfs
 	chmod a+r <<PUBLIC_PLACE>>*.pdf
 
 publichtml: htmls
-	cp ${HTMLS} eyapp.html treereg.html vgg.html <<PUBLIC_PLACE>>
+	cp ${HTMLS} eyapp.html treereg.html <<PUBLIC_PLACE>>
 	chmod a+r <<PUBLIC_PLACE>>/*.html
 	
 commit:
@@ -198,7 +196,7 @@ commit:
 
 .PHONY: tags
 tags: 
-	${PLTAGS} eyapp treereg vgg lib/Parse/Eyapp/*.pm lib/Parse/Eyapp/*.yp lib/Parse/Eyapp.pm 
+	${PLTAGS} eyapp treereg lib/Parse/Eyapp/*.pm lib/Parse/Eyapp/*.yp lib/Parse/Eyapp.pm 
 	ctags -a --exclude=examples --exclude=t --exclude=doc --exclude=tt2
 
 wiki:

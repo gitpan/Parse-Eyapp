@@ -2,7 +2,53 @@ package Parse::Eyapp::TokenGen;
 use strict;
 use warnings;
 
+eval { require Test::LectroTest::Generator };
+die "Please, install Test::LectroTest from CPAN\n" if $@;
+Test::LectroTest::Generator->import(qw(:all));
+
 use Scalar::Util qw{reftype looks_like_number};
+
+# Arguments: probabilities and generators
+sub LexerGen {
+  my $parser = shift;
+
+  my $tg = sub {
+    Frequency( map { [$parser->token_weight($_), Unit($_)] } @_);
+  };
+
+  $parser->set_tokenweightsandgenerators(@_);
+
+  $parser->YYLexer(sub {
+      my $parser = shift;
+
+      my @token = $parser->YYExpect; # the list of token that can be expected 
+
+      # Generate on of those using the token_weight distribution
+      my $tokengen = $tg->(@token);
+
+      my $token = $tokengen->generate();
+
+      my $gen = $parser->token_generator($token);
+
+      my $attr = $gen->generate();
+
+      return ($token, $attr);
+    }
+  );
+}
+
+sub generate {
+  my $gen = shift;
+  my %args = @_;
+
+  #TODO: check for existence of arg yylex or set to reasonable defaults
+  if (exists($args{yylex}) && (reftype($args{yylex}) eq 'HASH')) {
+    my %lexargs = %{$args{yylex}};
+    $args{yylex} = $gen->LexerGen(%lexargs);
+  }
+
+  return $gen->YYParse(%args);
+}
 
 sub set_tokengens {
   my $parser = shift;
@@ -43,7 +89,7 @@ sub set_tokenweightsandgenerators {
       if ($par{$_} < 0) {
         warn "Warning: set_weights_and_generators: negative weight ($par{$_}) for token <$_>\n"; 
       }
-      $terms->{$_}{WEIGHT} = $par{$_};
+      ($t->{WEIGHT}, $t->{GENERATOR})  = ($par{$_}, Unit($_));
       next;
     }
 

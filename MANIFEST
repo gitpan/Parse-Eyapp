@@ -5,7 +5,6 @@ Makefile.PL
 TODO
 eyapp
 treereg
-vgg
 examples/Calculator/Changes
 examples/Calculator/etc/setperl5lib
 examples/Calculator/lib/Math/Calc.eyp
