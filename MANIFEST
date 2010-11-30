@@ -367,6 +367,8 @@ t/81tokendirectiveandsubstitution.t
 t/pascalnestedeyapp2.eyp
 t/Range.eyp
 t/ExpList.eyp
+t/dynamic.eyp
+t/input_for_dynamicgrammar.txt
 t/82expectandPLI.t
 t/83parsingstringsandtrees.t
 t/ParsingStringsAndTrees/I2PIR.trg

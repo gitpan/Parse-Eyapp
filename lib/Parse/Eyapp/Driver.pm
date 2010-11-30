@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.171";
+$VERSION = "1.172";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -489,16 +489,28 @@ sub YYSetReduce {
   
   # The reduction action must be performed only if
   # the next token is inside the $token set
-  my $lookahead = $self->YYLookahead();
+  #my $lookahead = $self->YYLookahead();
   #return unless (grep { $_ eq $lookahead } @$token);
+  #$self->{CONFLICTHANDLERS}{leftORright}{states}
+  #     0  HASH(0x100b4e0f0)
+  #        15 => ARRAY(0x100b2
+  #          0  '\'-\''
+
 
   croak "YYSetReduce error: specify a production" unless defined($action);
 
   # Conflict state
   my $conflictstate = $self->YYNextState();
 
+  my $conflictName = $self->YYLhs;
+  my @conflictStates = @{$self->{CONFLICTHANDLERS}{$conflictName}{states}};
+  my ($cs) = (grep { exists $_->{$conflictstate}} @conflictStates); 
+  return unless $cs;
+  ##my $lookahead = $self->YYLookahead();
+
   # Action can be given using the name of the production
   unless (looks_like_number($action)) {
+    # Improve this!! takes too much time
     if ($action =~ /^:/) {
       ($action) = grep { /$action/ } $self->YYNames;
     }
@@ -509,9 +521,11 @@ sub YYSetReduce {
     $action = -$actionnum;
   }
 
-  my $conflictname = $self->YYLhs;
   for (@$token) {
-    $self->{CONFLICT}{$conflictname}{$_}  = [ $conflictstate,  $self->{STATES}[$conflictstate]{ACTIONS}{$_} ];
+    # save if shift
+    if ($self->{STATES}[$conflictstate]{ACTIONS}{$_} >= 0) {
+      $self->{CONFLICT}{$conflictName}{$_}  = [ $conflictstate,  $self->{STATES}[$conflictstate]{ACTIONS}{$_} ];
+    }
     $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $action;
   }
 }

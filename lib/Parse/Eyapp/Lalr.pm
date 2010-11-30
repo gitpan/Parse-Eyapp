@@ -294,14 +294,14 @@ sub outputDot {
   my %grammar = $grammar =~ m{(\d+):\s+(.*)}gx;
 
   # escape double quotes inside %grammar
-  $graph .= qq{"$grammar{0}" [shape = doubleoctagon, fontcolor=blue, color=blue ]\n};
+  $graph .= qq{"$grammar{0}" [label="0: $grammar{0}", shape = doubleoctagon, fontcolor=blue, color=blue ]\n};
   for (1 .. (keys %grammar)-1) {
     $grammar{$_} =~ s/\\/\\\\/g;
     $grammar{$_} =~ s/"/\\"/g;
 
     #warn "$_ => $grammar{$_}\n";
 
-    $graph .= qq{"$grammar{$_}" [shape = box, fontcolor=blue, color=blue ]\n};
+    $graph .= qq{"$grammar{$_}" [label="$_: $grammar{$_}", shape = box, fontcolor=blue, color=blue ]\n};
   }
 
   my $conflicts = $parser->Conflicts();
@@ -365,7 +365,7 @@ sub outputDot {
     # ';'	[reduce using rule 4 (ds)]
     while ($desc =~ m{\t(\S+)\s+\[\s*reduce\s+using\s+rule\s+(\d+)}gx) {
       $graph .=  
-        qq{$_ -> "$grammar{$2}" [label = "$1", arrowhead=dot, style=dotted, color = "orange", fontcolor = "orange"]\n};
+        qq{$_ -> "$grammar{$2}" [label = "$1", arrowhead=dot, style=dotted, color = "red", fontcolor = "black"]\n};
     }
 
     # $default    accept
@@ -569,19 +569,22 @@ sub _DynamicConflicts {
 
   my $co = $self->{CONFLICTS}{FORCED}{DETAIL};
 
-  my %C;
+  my %C; # keys: 
+         #     conflictive grammar productions. 
+         # Values: 
+         #     tokens for which there is a conflict with this production
   for my $state (keys %$co) {
     my @conList = @{$co->{$state}{LIST}};
 
     for my $c (@conList) {
       my ($token, $production) = @$c;
-      push @{$C{(0-$production)}{$state}}, $token;
+      push @{$C{($production)}{$state}}, $token;
     }
   }
 
   for my $c (keys %$ch) {                 # for each conflict handler
-    my $d = $ch->{$c}{production};        # list of productions managed by this handler
-    for my $p (keys %$d) {               # for each production
+    my $d = $ch->{$c}{production};        # hash ref of productions managed by this handler
+    for my $p (keys %$d) {                # for each production
   #    # if $p reduce or shift?
   #    # find the conflictive states where $p appears
   #    # if $p is reduce and appears in state $s as -$p it is a state of conflict (the other is in the action table)

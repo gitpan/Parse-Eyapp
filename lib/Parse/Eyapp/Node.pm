@@ -785,6 +785,58 @@ sub _str {
   return $class;
 }
 
+sub _dot {
+  my $root = CORE::shift;
+  my @dots = map { $_->_dot() }  $root->children;
+  my $dot = '';
+  $dot .= $root->type()." -> ".$_->type()."\n" for $root->children;
+  return "$dot@dots";
+}
+
+sub dot {
+  my $dot = $_[0]->_dot();
+  return << "EOGRAPH";
+digraph G {
+$dot
+}
+EOGRAPH
+}
+
+sub fdot {
+  my ($self, $file) = @_;
+
+  if ($file) {
+    $file .= '.dot' unless $file =~ /\.dot$/;
+  }
+  else {
+    $file = $self->type().".dot";
+  }
+  open my $f, "> $file";
+  print $f $self->dot();
+  close($f);
+}
+
+BEGIN {
+  my @dotFormats = qw{bmp canon cgimage cmap cmapx cmapx_np eps exr fig gd gd2 gif gv imap imap_np ismap jp2 jpe jpeg jpg pct pdf pict plain plain-ext png ps ps2 psd sgi svg svgz tga tif tiff tk vml vmlz vrml wbmp x11 xdot xlib};
+
+  for my $format (@dotFormats) {
+     
+    no strict 'refs';
+    *{'Parse::Eyapp::Node::'.$format} = sub { 
+       my ($self, $file) = @_;
+   
+       $file = $self->type() unless defined($file);
+   
+       $self->fdot($file);
+   
+       $file =~ s/\.(dot|$format)$//;
+       my $dotfile = "$file.dot";
+       my $pngfile = "$file.$format";
+       my $err = qx{dot -T$format $dotfile -o $pngfile 2>&1};
+       return ($err, $?);
+    }
+  }
+}
 
 sub translation_scheme {
   my $self = CORE::shift; # root of the subtree

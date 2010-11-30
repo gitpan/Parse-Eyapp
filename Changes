@@ -5,6 +5,15 @@ Revision history for Perl extension Eyapp.
       - Option -w visualize without kernel items
       - visualize conflicts
    * vgg removed
+   * dynamicgrammar. There was a bug
+        check inside YYSetReduce if the next states is a truly conflict state
+
+        save the conflict states at compile time
+        and send them to the parser,
+        then inside YYsetReduce, check that the next state is inside
+        the listed conflict states
+
+    * $t->png etc. for trees implemented 
 1.170
 
   * Expected and language generation for article 
