@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.172.
+#    This file was generated using Parse::Eyapp version 1.173.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -243,9 +243,9 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.172',
+    yyversion => '1.173',
     yyGRAMMAR  =>
-[
+[#[productionNameAndLabel => lhs, [ rhs], bypass]]
   [ '_SUPERSTART' => '$start', [ 'treeregexplist', '$end' ], 0 ],
   [ '_STAR_LIST' => 'STAR-1', [ 'STAR-1', 'treeregexp' ], 0 ],
   [ '_STAR_LIST' => 'STAR-1', [  ], 0 ],
@@ -305,6 +305,67 @@ sub new {
   [ '_STAR_LIST' => 'STAR-26', [  ], 0 ],
   [ 'childlist_57' => 'childlist', [ 'STAR-26' ], 0 ],
 ],
+    yyLABELS  =>
+{
+  '_SUPERSTART' => 0,
+  '_STAR_LIST' => 1,
+  '_STAR_LIST' => 2,
+  'treeregexplist_3' => 3,
+  '_PAREN' => 4,
+  '_OPTIONAL' => 5,
+  '_OPTIONAL' => 6,
+  '_PLUS_LIST' => 7,
+  '_PLUS_LIST' => 8,
+  'treeregexp_9' => 9,
+  'treeregexp_10' => 10,
+  'treeregexp_11' => 11,
+  'treeregexp_12' => 12,
+  '_PAREN' => 13,
+  '_OPTIONAL' => 14,
+  '_OPTIONAL' => 15,
+  '_PAREN' => 16,
+  '_OPTIONAL' => 17,
+  '_OPTIONAL' => 18,
+  '_PAREN' => 19,
+  '_OPTIONAL' => 20,
+  '_OPTIONAL' => 21,
+  '_PAREN' => 22,
+  '_OPTIONAL' => 23,
+  '_OPTIONAL' => 24,
+  '_PAREN' => 25,
+  '_OPTIONAL' => 26,
+  '_OPTIONAL' => 27,
+  '_PAREN' => 28,
+  '_OPTIONAL' => 29,
+  '_OPTIONAL' => 30,
+  '_PAREN' => 31,
+  '_OPTIONAL' => 32,
+  '_OPTIONAL' => 33,
+  '_PAREN' => 34,
+  '_OPTIONAL' => 35,
+  '_OPTIONAL' => 36,
+  '_PAREN' => 37,
+  '_OPTIONAL' => 38,
+  '_OPTIONAL' => 39,
+  '_PAREN' => 40,
+  '_OPTIONAL' => 41,
+  '_OPTIONAL' => 42,
+  'treereg_43' => 43,
+  'treereg_44' => 44,
+  'treereg_45' => 45,
+  'treereg_46' => 46,
+  'treereg_47' => 47,
+  'treereg_48' => 48,
+  'treereg_49' => 49,
+  'treereg_50' => 50,
+  'treereg_51' => 51,
+  'treereg_52' => 52,
+  '_STAR_LIST' => 53,
+  '_STAR_LIST' => 54,
+  '_STAR_LIST' => 55,
+  '_STAR_LIST' => 56,
+  'childlist_57' => 57,
+},
     yyTERMS  =>
 { '' => { ISSEMANTIC => 0 },
 	'(' => { ISSEMANTIC => 0 },

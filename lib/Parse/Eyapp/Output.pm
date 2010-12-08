@@ -227,7 +227,7 @@ sub Output {
 
   $self->Options(@_);
 
-  my ($GRAMMAR, $TERMS, $FILENAME, $PACKAGES); # Cas
+  my ($GRAMMAR, $TERMS, $FILENAME, $PACKAGES, $LABELS); # Cas
   my($package)=$self->Option('classname');
 
   my $modulino = $self->Option('modulino'); # prompt or undef 
@@ -268,7 +268,7 @@ MODULINO
   $tail = $tail."\n\n=for None\n\n=cut\n\n" unless $tail =~ /\n\n=cut\n/;
   #local $Data::Dumper::Purity = 1;
 
-  ($GRAMMAR, $PACKAGES) = $self->Rules();
+  ($GRAMMAR, $PACKAGES, $LABELS) = $self->Rules();
   $bypass = $self->Bypass;
   $prefix = $self->Prefix;
 
@@ -361,6 +361,8 @@ sub new {
     yyversion => '<<$version>>',
     yyGRAMMAR  =>
 <<$GRAMMAR>>,
+    yyLABELS  =>
+<<$LABELS>>,
     yyTERMS  =>
 <<$TERMS>>,
     yyFILENAME  => <<$FILENAME>>,

@@ -1,7 +1,6 @@
 %{
 =head1 SYNOPSIS
 
-Be sure Math::Tail in examples/Calculator/lib is reachable
 compile it with 
 
   eyapp -b '/usr/bin/perl -I ../Calculator/lib' Precedencia.eyp
@@ -26,12 +25,9 @@ Abstract Syntax Tree
 
 =cut
 
-our $VERSION = '0.01';
-use base q{Math::Tail};
-
 %}
 
-%token NUM
+%token NUM=/(\d+)/
 %left '@'
 %right '&'  dummy
 
@@ -41,7 +37,7 @@ list
     : /* empty */
     | list '\n' {}
     | $list $e { print $e->str."\n"; 
-                 $e->png(); 
+                 $e->png('tree'); 
                  $e; 
                }
     ;
@@ -55,8 +51,3 @@ e : %name NUM
   ;
 
 %%
-
-__PACKAGE__->lexer( \&Math::Tail::lex); 
-__PACKAGE__->main('Input (try st. like 2@3&4<CR><CTRL-D>): ') unless caller();
-
-1;

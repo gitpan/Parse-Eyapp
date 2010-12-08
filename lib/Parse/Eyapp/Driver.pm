@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.172";
+$VERSION = "1.173";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -42,6 +42,7 @@ my (%params)=(YYLEX => 'CODE', 'YYERROR' => 'CODE', YYVERSION => '',
        YYBUILDINGTREE  => '',
        YYACCESSORS => 'HASH',
        YYCONFLICTHANDLERS => 'HASH',
+       YYLABELS => 'HASH',
        ); 
 my (%newparams) = (%params, YYPREFIX => '',);
 
@@ -487,15 +488,6 @@ sub YYSetReduce {
 
   $token = [ $token ] unless ref($token);
   
-  # The reduction action must be performed only if
-  # the next token is inside the $token set
-  #my $lookahead = $self->YYLookahead();
-  #return unless (grep { $_ eq $lookahead } @$token);
-  #$self->{CONFLICTHANDLERS}{leftORright}{states}
-  #     0  HASH(0x100b4e0f0)
-  #        15 => ARRAY(0x100b2
-  #          0  '\'-\''
-
 
   croak "YYSetReduce error: specify a production" unless defined($action);
 
@@ -503,18 +495,21 @@ sub YYSetReduce {
   my $conflictstate = $self->YYNextState();
 
   my $conflictName = $self->YYLhs;
-  my @conflictStates = @{$self->{CONFLICTHANDLERS}{$conflictName}{states}};
+
+  #$self->{CONFLICTHANDLERS}{conflictName}{states}
+  # is a hash
+  #        statenumber => [ tokens, '\'-\'' ]
+  my $cS = $self->{CONFLICTHANDLERS}{$conflictName}{states};
+  my @conflictStates = $cS ? @$cS : ();
+
+  # Perform the action to change the LALR tables only if the next state 
+  # is listed as a conflictstate
   my ($cs) = (grep { exists $_->{$conflictstate}} @conflictStates); 
   return unless $cs;
-  ##my $lookahead = $self->YYLookahead();
 
   # Action can be given using the name of the production
   unless (looks_like_number($action)) {
-    # Improve this!! takes too much time
-    if ($action =~ /^:/) {
-      ($action) = grep { /$action/ } $self->YYNames;
-    }
-    my $actionnum = $self->YYIndex($action);
+    my $actionnum = $self->{LABELS}{$action};
     unless (looks_like_number($actionnum)) {
       croak "YYSetReduce error: can't find production '$action'. Did you forget to name it?";
     }
@@ -1383,6 +1378,7 @@ sub main {
   my $commandinput = '';
   my $quotedcommandinput = '';
   my $yaml = 0;
+  my $dot = 0;
 
   my $result = GetOptions (
     "debug!"         => \$debug,         # sets yydebug on
@@ -1394,6 +1390,7 @@ sub main {
     "slurp!"         => \$slurp,         # read until EOF or CR is reached
     "argfile!"       => \$inputfromfile, # take input string from @_
     "yaml"           => \$yaml,          # dumps YAML for $tree: YAML must be installed
+    "dot=s"          => \$dot,          # dumps YAML for $tree: YAML must be installed
     "margin=i"       => \$Parse::Eyapp::Node::INDENT,      
   );
 
@@ -1423,6 +1420,14 @@ sub main {
     }
   }
 
+  if (defined($TERMINALinfo)) {
+    my $prefix = ($parser->YYPrefix || '');
+    no strict 'refs';
+    *{$prefix.'TERMINAL::info'} = sub { 
+      (ref($_[0]->attr) eq 'ARRAY')? $_[0]->attr->[0] : $_[0]->attr 
+    };
+  }
+
   my $tree = $parser->Run( $debug, @_ );
 
   if (my $ne = $parser->YYNberr > 0) {
@@ -1432,13 +1437,6 @@ sub main {
   else {
     if ($showtree) {
       if ($tree && blessed $tree && $tree->isa('Parse::Eyapp::Node')) {
-
-        if (defined($TERMINALinfo)) {
-          $showtree = 1;
-          my $prefix = ($parser->YYPrefix || '');
-          no strict 'refs';
-          *{$prefix.'TERMINAL::info'} = sub {  (ref($_[0]->attr) eq 'ARRAY')? $_[0]->attr->[0] : $_[0]->attr };
-        }
 
           print $tree->str()."\n";
       }
@@ -1461,6 +1459,12 @@ sub main {
         YAML->import;
         print Dump($tree);
       }
+    }
+    if ($dot && blessed($tree)) {
+      my ($sfile, $extension) = $dot =~ /^(.*)\.([^.]*)$/;
+      $extension = 'png' unless (defined($extension) and $tree->can($extension));
+      ($sfile) = $file =~ m{(.*[^.])} if !defined($sfile) and defined($file);
+      $tree->$extension($sfile);
     }
 
     return $tree
@@ -1486,6 +1490,7 @@ Available options:
     --noargfile                main() will not take the input string from its @_
     --yaml                     dumps YAML for $tree: YAML module must be installed
     --margin=i                 controls the indentation of $tree->str (i.e. $Parse::Eyapp::Node::INDENT)      
+    --dot format               produces a .dot and .format file (png,jpg,bmp, etc.)
 AYUDA
 
   $package->help() if ($package & $package->can("help"));

@@ -1,4 +1,10 @@
 Revision history for Perl extension Eyapp.
+1.173
+    -- Merged PPCR branch with trunk
+    -- option for main to produce .png version of the AST
+    -- png for .output also: options -w and -W
+    -- improved $t->png to include attribute info
+    -- $t->png: order of the children is respected
 1.171
    * .dot file describing the LR tables generated with options -w and -W
       - Option -W visualize with kernel items

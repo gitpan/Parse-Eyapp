@@ -251,6 +251,7 @@ use Parse::Eyapp;
 use strict;
 
 our ( $opt_n, $opt_m, $opt_V, $opt_v, $opt_o, $opt_h, $opt_s, $opt_t, $opt_b, $opt_c, $opt_B, $opt_C, );
+our $opt_S; # Specify start symbol
 our $opt_l = 0;
 our $opt_T; # build AST
 our $opt_N; # Do not compact action tables. No DEFAULT field for "STATES"
@@ -278,6 +279,7 @@ Usage:  $prog [options] grammar[.eyp]
     -W          Create a file <grammar>.dot graph describing your parser
                 Nodes are labelled with core LR-items
     -s          Create a standalone module in which the driver is included
+    -S symbol   Use 'symbol' as start symbol of the grammar
     -n          Disable source file line numbering embedded in your parser
     -o outfile  Create the file <outfile> for your parser module
                 Default is <grammar>.pm or, if -m A::Module::Name is
@@ -307,7 +309,7 @@ EOF
 
 my($nbargs)=@ARGV;
 
-    getopts('CTVNhlvsnwWPc:b:B:m:t:o:')
+    getopts('CTVNhlvsnwWPc:b:B:m:t:o:S:')
 or  Usage;
 
    (  ($opt_V and $nbargs > 1)
@@ -379,6 +381,7 @@ my @args = (inputfile => $filename, );
 push @args, (tree => 1) if $opt_T;
 push @args, (nocompact => 1) if (($opt_N or $opt_v) and not($opt_N and $opt_v));
 push @args, (prefix => 1) if $opt_P;
+push @args, (start => $opt_S) if $opt_S;
 
 my ($parser) = Parse::Eyapp->new(@args);
 
@@ -387,16 +390,29 @@ my($warnings)=$parser->Warnings();
 $warnings !~ m{^\s*$} and print STDERR "$warnings\n";
 
 $parser->outputtables($path, $base) if $opt_v;
-$parser->outputDot($path, $base, 0) if $opt_w;
-$parser->outputDot($path, $base, 1) if $opt_W;
+
+if ($opt_w or $opt_W) { 
+  $parser->outputDot($path, $base, 0) if $opt_w;
+  $parser->outputDot($path, $base, 1) if $opt_W;
+
+  my ($pngfile)= "$path$base.png";
+  my ($dotfile)= "$path$base.dot";
+  system qq{dot -Tpng $dotfile -o $pngfile};
+}
 
 my($outfile)="$path$base.pm";
 my($package)="$base";
 
+# Use the name of the start symbol for the package, if specified
+$opt_m = $opt_S unless $opt_m;
+
     $opt_m
 and do {
     $package=$opt_m;
-    $package=~/^(?:(?:[^:]|:(?!:))*::)*(.*)$/;
+    $package=~/^(?:
+                  (?:[^:]|:(?!:))*::)*       # The ID up to the last ::
+                  (.*)                       # No colons here
+               $/x;
     $outfile="$1.pm";
 };
 

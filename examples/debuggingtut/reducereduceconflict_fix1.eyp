@@ -1,9 +1,6 @@
-%lexer {
-      m{\G([ \t\n]*(\#.*)?\s*)}gc and $self->tokenline($1 =~ tr/\n//);
+%whites    =  /([ \t]*(?:#.*)?)/
+%token ID  =  /([A-Za-z][A-Za-z0-9_]*)/
 
-      m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('ID', $1);
-      m{\G(.)}gc                     and return ($1,    $1);
-}
 
 %namingscheme { \&give_rhs_name }
 

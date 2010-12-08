@@ -786,17 +786,33 @@ sub _str {
 }
 
 sub _dot {
-  my $root = CORE::shift;
-  my @dots = map { $_->_dot() }  $root->children;
-  my $dot = '';
-  $dot .= $root->type()." -> ".$_->type()."\n" for $root->children;
-  return "$dot@dots";
+  my ($root, $number) = @_;
+
+  my $type = $root->type();
+
+  my $information;
+  $information = $root->info if ($INDENT >= 0 && $root->can('info'));
+  my $class = $CLASS_HANDLER->($root);
+  $class = qq{$class<font color="red">$DELIMITER$information$pair</font>} if defined($information);
+
+  my $dot = qq{  $number [label = <$class>];\n};
+
+  my $k = 0;
+  my @dots = map { $k++; $_->_dot("$number$k") }  $root->children;
+
+  for($k = 1; $k <= $root->children; $k++) {;
+    $dot .= qq{  $number -> $number$k;\n};
+  }
+
+  return $dot.join('',@dots);
 }
 
 sub dot {
-  my $dot = $_[0]->_dot();
+  my $dot = $_[0]->_dot('0');
   return << "EOGRAPH";
 digraph G {
+ordering=out
+
 $dot
 }
 EOGRAPH

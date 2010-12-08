@@ -57,6 +57,7 @@ examples/debuggingtut/Precedencia.eyp
 examples/debuggingtut/reducereduceconflict.eyp
 examples/debuggingtut/reducereduceconflict_fix1.eyp
 examples/debuggingtut/reducereduceconflict_fix2.eyp
+examples/debuggingtut/reducereduceconflictPPCR.eyp
 examples/debuggingtut/rrconflictnamefirst.eyp
 examples/debuggingtut/rrconflictnamefirst_fix1.eyp
 examples/debuggingtut/SemanticInfoInTokens.eyp
@@ -384,6 +385,15 @@ t/ParsingStringsAndTrees/simple5.inf
 t/ParsingStringsAndTrees/simple6.inf
 t/Assign.eyp
 t/PL_I_conflictNested.eyp
+t/84graphics.t
+t/AmbiguousCalc.eyp
+t/AmbiguousCalc.WWexpected
+t/AmbiguousCalc.wexpected
+t/tree.dot.expected
+t/Precedencia.eyp
+t/85minusSoption.t
+t/pascalnestedeyapp3.eyp
+t/CplusplusNested2.eyp
 #t/97podcoverage.t
 t/98nopm.t
 t/99Cplusplusgrammar.t

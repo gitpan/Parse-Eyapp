@@ -1,10 +1,6 @@
-%lexer {
-  m{\G([ \t\n]*(\#.*)?\s*)}gc and $self->tokenline($1 =~ tr/\n//);
+%whites    =  /([ \t]*(?:#.*)?)/
+%token VAR =  /([A-Za-z][A-Za-z0-9_]*)/
 
-  m{\G([0-9]+(?:\.[0-9]+)?)}gc   and return ('NUM', $1);
-  m{\G([A-Za-z][A-Za-z0-9_]*)}gc and return ('VAR', $1);
-  m{\G(.)}gc                     and return ($1,    $1);
-}
 %%
 
 def:    param_spec return_spec ','
@@ -31,11 +27,11 @@ name_list:
 
 Compile it with:
 
-            eyapp -NC reducereduceconflict.eyp
+            eyapp -wC reducereduceconflict.eyp
 
 See the C<.output> file. Run it with this options:
 
-            ./reducereduceconflict.pm -d -c 'a,b:c d:e,'
+            ./reducereduceconflict.pm -deb -c 'a,b:c d:e,'
 
 =cut
 

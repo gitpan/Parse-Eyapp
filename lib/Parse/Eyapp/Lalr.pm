@@ -99,16 +99,13 @@ sub Warnings {
     my $expected = $$self{GRAMMAR}{EXPECT};
     my ($sre, $rre) = ref($expected) ? @$expected : ($expected, 0);
 
-        $nbsr != $sre
-    and do {
-      $text.="$nbsr shift/reduce conflict".($nbsr != 1 ? "s " : " "); 
+    $nbsr != $sre and $nbsr > 0 and do {
+      $text.="$nbsr shift/reduce conflict".($nbsr > 1 ? "s " : " "); 
     };  # end of $nbsr != $sre There were shift-reduce conflicts
 
-        $nbrr != $rre
-    and do {
-            $nbsr != $sre
-        and $text.="and ";
-        $text.="$nbrr reduce/reduce conflict".($nbrr != 1 ? "s" : "");
+    $nbrr != $rre and $nbrr > 0 and do {
+      $nbsr != $sre and $text.="and ";
+      $text.="$nbrr reduce/reduce conflict".($nbrr > 1 ? "s" : "");
     };
 
     $text;
@@ -294,14 +291,19 @@ sub outputDot {
   my %grammar = $grammar =~ m{(\d+):\s+(.*)}gx;
 
   # escape double quotes inside %grammar
-  $graph .= qq{"$grammar{0}" [label="0: $grammar{0}", shape = doubleoctagon, fontcolor=blue, color=blue ]\n};
+  $graph .= qq{  "g0" [label="0: $grammar{0}", shape = doubleoctagon, fontcolor=blue, color=blue ]\n};
   for (1 .. (keys %grammar)-1) {
-    $grammar{$_} =~ s/\\/\\\\/g;
-    $grammar{$_} =~ s/"/\\"/g;
+    $grammar{$_} =~ s/\\/\\\\/g;  # escape escapes
+    $grammar{$_} =~ s/"/\\"/g;    # escape double quotes
 
     #warn "$_ => $grammar{$_}\n";
 
-    $graph .= qq{"$grammar{$_}" [label="$_: $grammar{$_}", shape = box, fontcolor=blue, color=blue ]\n};
+    $graph .= qq{  "g$_" [label="$_: $grammar{$_}", shape = box, fontcolor=blue, color=blue ]\n};
+  }
+
+  for (0 .. (keys %grammar)-2) {
+    my $n = $_+1;
+    $graph .= qq{  g$_ ->g$n [style=dotted];\n};
   }
 
   my $conflicts = $parser->Conflicts();
@@ -335,7 +337,10 @@ sub outputDot {
     # label states with core LR-0 items
     if ($labelWithCore) { # this is optional
       local $" = "\\n";
-      $graph .= qq{$_ [shape = plaintext, label = "$_\\n@LRitems"]\n};
+      $graph .= qq{$_ [ label = "$_\\n@LRitems"}; #shape = plaintext,
+      my $s = $_;
+      $graph .= qq{, shape = plaintext} unless (grep { $_ eq $s}  @conflictstates);
+      $graph .= "]\n";
     }
 
     #warn "LRitems in $_:\n@LRitems\n";
@@ -358,20 +363,20 @@ sub outputDot {
     # $default	reduce using rule 1 (prog)
     # ID	reduce using rule 15 (decORexp_explorer)
     while ($desc =~ m{\t(\S+)\s+reduce\s+using\s+rule\s+(\d+)}gx) {
-      $graph .=  qq{$_ -> "$grammar{$2}" [label = "$1", arrowhead=dot, color = "blue", fontcolor = "blue"]\n};
+      $graph .=  qq{$_ -> "g$2" [label = "$1", arrowhead=dot, color = "blue", fontcolor = "blue"]\n};
     }
 
     # shift-reduce conflicts
     # ';'	[reduce using rule 4 (ds)]
     while ($desc =~ m{\t(\S+)\s+\[\s*reduce\s+using\s+rule\s+(\d+)}gx) {
       $graph .=  
-        qq{$_ -> "$grammar{$2}" [label = "$1", arrowhead=dot, style=dotted, color = "red", fontcolor = "black"]\n};
+        qq{$_ -> "g$2" [label = "$1", arrowhead=dot, style=dotted, color = "red", fontcolor = "red"]\n};
     }
 
     # $default    accept
     if ($desc =~ m{\t\$default\s+accept\s*}gx) {
       $graph .=  qq{$_ [shape = doublecircle]\n};
-      $graph .=  qq{$_ -> "$grammar{0}" [arrowhead = dot, color = blue]\n};
+      $graph .=  qq{$_ -> "g0" [arrowhead = dot, color = blue]\n};
     }
 
     #warn "$_ => $desc\n";
@@ -379,7 +384,7 @@ sub outputDot {
   }
   print $OUT <<"EOGRAPH";
 digraph G {
-concentrate = true
+#concentrate = true
 
 $graph
 }

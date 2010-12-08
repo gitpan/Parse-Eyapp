@@ -1,7 +1,42 @@
-  * dynamicgrammar. There is a bug
+  *There is abug in "eyapp" in the call 
+                my ($parser) = Parse::Eyapp->new(@args);
+    order of arguments?
+    test the behavior of the function with different arguments
+
+  * Generation of Several Parsers
+      - Or, perhaps, eyapp -S C etc. will generate a %start directive and warnings will be supressed
+        make tests
+
+           ~/LEyapp/examples/debuggingtut$ eyapp -S decl -m Decl -P CplusplusNested.eyp
+
+       if no -m the default will be "decl.pm" i.e. the start symbol will name the module
+
+      - %PREC conflict does not check that a conflict handler has been previously declared
+      - The lexer must be the one of the main parser
+      - The accept state must change
+          A$ -> A
+          A$ -> A.b where b is in the follow of A, means acceptation
+          Where are the follows?. They have been computed somewhere
+      - Avoid warnings: rule not used, rule not used, etc. How?
+        Shall I use a subgrammar that is the closure of the syntactic variable
+      - %start A
+        %prestart B
+        %start C
+        will generate three files File.pm FileB.pm FileC.pm
+
+  * Use %{ ... %} as syntactic sugar for syntactic code actions
+  * Tests for png
+  * GLR in eyapp
+  * eyapp and PPCR in the Wikipedia
 
   * $t->str method to produce .dot descriptions of the AST tree
-    -- improve $t->png to include attribute info
+    -- parametrize call to dot program using file ~/.eyapprc
+
+    -- name of the file: the name of the inputfile. The extension
+       decides the type. But what name to choose for the default case?
+
+    -- write help --dot 
+    -- png for .output also: options -w and -W
 
   * Update documentation
 
@@ -12,8 +47,6 @@
       # Will it give a false acceptance? 
       # I think I shall use an option in eyapp?
       # make a test
-
-  * Merge PPCR branch with trunk
 
   * Include %from directive. See examples/debuggingtut/Range2.eyp
 
@@ -32,16 +65,6 @@
 
   * Bug/limitation: When using -m and -o the output file still uses the original grammar name.
     It seems more convenient to rename it to the output file suffixed with .output
-
-  * Generation of Several Parsers
-      - %PREC conflict does not check that a conflict handler has been previously declared
-      - The lexer must be the one of the main parser
-      - The accept state must change
-          A$ -> A
-          A$ -> A.b where b is in the follow of A, means acceptation
-          Where are the follows?. They have been computed somewhere
-      - Avoid warnings: rule not used, rule not used, etc. How?
-        Shall I use a subgrammar that is the closure of the syntactic variable
 
   * Lexical Analyzer generation:
       * incremental lexer also influences the way the directive
@@ -102,7 +125,7 @@
      - Warning Grammar.pm 
          sub Parse::Eyapp::Grammar::conflictHandlers  rewrite! or use Data::Dumper forever?
 
-  * %package directive: equvalent to eyapp -m option 
+  * %package directive: equivalent to eyapp -m option 
 
   * -%modulino directive 
       %modulino perlinterpreter prompt

@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.172.
+#    This file was generated using Parse::Eyapp version 1.173.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -327,9 +327,9 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.172',
+    yyversion => '1.173',
     yyGRAMMAR  =>
-[
+[#[productionNameAndLabel => lhs, [ rhs], bypass]]
   [ '_SUPERSTART' => '$start', [ 'eyapp', '$end' ], 0 ],
   [ 'eyapp_1' => 'eyapp', [ 'head', 'body', 'tail' ], 0 ],
   [ 'symbol_2' => 'symbol', [ 'LITERAL' ], 0 ],
@@ -423,6 +423,101 @@ sub new {
   [ 'tail_90' => 'tail', [  ], 0 ],
   [ 'tail_91' => 'tail', [ 'TAILCODE' ], 0 ],
 ],
+    yyLABELS  =>
+{
+  '_SUPERSTART' => 0,
+  'eyapp_1' => 1,
+  'symbol_2' => 2,
+  'symbol_3' => 3,
+  'ident_4' => 4,
+  'head_5' => 5,
+  'headsec_6' => 6,
+  'headsec_7' => 7,
+  'decls_8' => 8,
+  'decls_9' => 9,
+  'decl_10' => 10,
+  'decl_11' => 11,
+  'decl_12' => 12,
+  'decl_13' => 13,
+  'decl_14' => 14,
+  'decl_15' => 15,
+  'decl_16' => 16,
+  'decl_17' => 17,
+  'decl_18' => 18,
+  'decl_19' => 19,
+  'decl_20' => 20,
+  'decl_21' => 21,
+  'decl_22' => 22,
+  'decl_23' => 23,
+  'decl_24' => 24,
+  'decl_25' => 25,
+  'decl_26' => 26,
+  'decl_27' => 27,
+  'decl_28' => 28,
+  'decl_29' => 29,
+  'decl_30' => 30,
+  'decl_31' => 31,
+  'decl_32' => 32,
+  'decl_33' => 33,
+  'decl_34' => 34,
+  'decl_35' => 35,
+  'decl_36' => 36,
+  'decl_37' => 37,
+  'decl_38' => 38,
+  'typedecl_39' => 39,
+  'typedecl_40' => 40,
+  'symlist_41' => 41,
+  'symlist_42' => 42,
+  'toklist_43' => 43,
+  'toklist_44' => 44,
+  'tokendef_45' => 45,
+  'tokendef_46' => 46,
+  'tokendef_47' => 47,
+  'identlist_48' => 48,
+  'identlist_49' => 49,
+  'body_50' => 50,
+  'body_51' => 51,
+  'rulesec_52' => 52,
+  'rulesec_53' => 53,
+  'startrules_54' => 54,
+  '_CODE' => 55,
+  'startrules_56' => 56,
+  'rules_57' => 57,
+  'rules_58' => 58,
+  'rhss_59' => 59,
+  'rhss_60' => 60,
+  'rule_61' => 61,
+  'rule_62' => 62,
+  'rhs_63' => 63,
+  'rhs_64' => 64,
+  'rhselts_65' => 65,
+  'rhselts_66' => 66,
+  'rhseltwithid_67' => 67,
+  'rhseltwithid_68' => 68,
+  'rhseltwithid_69' => 69,
+  'rhseltwithid_70' => 70,
+  'rhselt_71' => 71,
+  'rhselt_72' => 72,
+  'rhselt_73' => 73,
+  'rhselt_74' => 74,
+  'rhselt_75' => 75,
+  'rhselt_76' => 76,
+  'rhselt_77' => 77,
+  'rhselt_78' => 78,
+  'rhselt_79' => 79,
+  'rhselt_80' => 80,
+  'optname_81' => 81,
+  'optname_82' => 82,
+  'optname_83' => 83,
+  'optname_84' => 84,
+  'prec_85' => 85,
+  'epscode_86' => 86,
+  'epscode_87' => 87,
+  'code_88' => 88,
+  'code_89' => 89,
+  'tail_90' => 90,
+  'tail_91' => 91,
+},
     yyTERMS  =>
 { '' => { ISSEMANTIC => 0 },
 	'$' => { ISSEMANTIC => 0 },
@@ -2823,8 +2918,9 @@ sub _AddRules {
 }
 
 # This sub is called fro Parse::Eyapp::Grammar::new
-#                0        1         2       3    4          5               6!!! warning
-# Args: object, input, fistline, filename, tree, nocompact, lexerisdefined, start
+#       0       1      2         3     4          5               6                  7  
+# Args: object, input, filename, tree, nocompact, lexerisdefined, acceptinputprefix, start
+#  See the call to thsi sub 'Parse' inside sub new in module Grammar.pm 
 sub Parse {
     my($self)=shift;
 
@@ -2867,7 +2963,7 @@ sub Parse {
     $precterm={};
 
     $start="";
-    #$start = $_[6] if ($_[6]); 
+    $start = $_[7] if ($_[7]); 
 
     $nullable={};
     $expect=0;

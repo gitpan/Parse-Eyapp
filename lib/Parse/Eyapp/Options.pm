@@ -66,6 +66,9 @@ my(%known_options)= (
     modulino   =>  {
         ''      =>  "Produce modulino code at the end of the generated module"
     },
+    start      =>  {
+        ''      =>  "Specify start symbol"
+    },
     tree  =>  {
         0       =>  "don't build AST",
         1       =>  "build AST"

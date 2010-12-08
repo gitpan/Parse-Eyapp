@@ -16,7 +16,7 @@ SKIP: {
 
   unlink 't/ppcr.pl';
 
-  my $r = system(q{perl -I./lib/ eyapp  -Po t/Range.pm t/Range.eyp});
+  my $r = system(q{perl -I./lib/ eyapp  -Po t/Range.pm t/Range.eyp 2>&1});
   ok(!$r, "Auxiliary grammar Range.yp compiled with option -P");
 
   $r = system(q{perl -I./lib/ eyapp -TC -o t/ppcr.pl t/pascalnestedeyapp2.eyp});
