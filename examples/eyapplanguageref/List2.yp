@@ -23,5 +23,5 @@ S:
 ;
 %%
 
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
+# eyapp -C List2.yp
+# ./List2.pm -c 'aacbb'

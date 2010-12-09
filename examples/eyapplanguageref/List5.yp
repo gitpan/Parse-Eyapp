@@ -9,6 +9,6 @@ S: 'c' 'c'?
 ;
 
 %%
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
+# eyapp -C List5.yp
+# ./List5.pm -c 'cc'
 

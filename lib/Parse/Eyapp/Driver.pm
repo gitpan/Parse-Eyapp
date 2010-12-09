@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.173";
+$VERSION = "1.174";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -296,27 +296,12 @@ sub YYNames {
 sub YYIndex {
   my $self = shift;
 
-  # Already computed
-  if ($self->{INDICES} && reftype($self->{INDICES}) eq 'HASH') {
-    if (@_) {
-      my @indices = map { $self->{INDICES}{$_} } @_;
-      return wantarray? @indices : $indices[0];
-    }
-    return wantarray? %{$self->{INDICES}} : $self->{INDICES};
-  }
-
-  my @names = $self->YYNames;
-  my %index;
-  my $i = 0;
-  $index{$_} = $i++ for (@names);
-
-  $self->{INDICES} = \%index;
-  
   if (@_) {
-    my @indices = map { $index{$_} } @_;
+    my @indices = map { $self->{LABELS}{$_} } @_;
     return wantarray? @indices : $indices[0];
   }
-  return wantarray? %index : \%index;
+  return wantarray? %{$self->{LABELS}} : $self->{LABELS};
+
 }
 
 sub YYTopState {

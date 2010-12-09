@@ -1,0 +1,126 @@
+%{
+
+# This is a modification of the grammar in file 'nolalrrrconflict.eyp'
+our $VERSION = '0.01';
+use base q{DebugTail}; 
+
+%}
+%namingscheme {
+  #Receives a Parse::Eyapp object describing the grammar
+  my $self = shift;
+
+  $self->tokennames(
+    '(' => 'LP',
+    'x' => 'X',
+    '.' => 'DOT',
+    ',' => 'COMMA',
+    '(.' => 'PL',
+    ')' => 'RP',
+  );
+
+  # returns the handler that will give names
+  # to the right hand sides
+  \&give_rhs_name;
+}
+
+%tree
+%%
+S: 
+    '(' A ')'
+  | B '.' B
+;
+
+A: 
+    'x'
+  | A ',' 'x'
+;
+
+B: 
+    'x'
+  | '(.' B ')'
+;
+
+%%
+
+__PACKAGE__->lexer(
+  sub {
+    my $parser = shift;
+
+    for (${$parser->input()}) {    # contextualize
+      m{\G\s*(\#.*)?}gc;
+
+      m{\G(
+        \(                # A parenthesis
+        (?=\(*x\)*(\.|$)) # (((x))) followed by a dot or end of input (zero-width positive lookahead assertion) 
+        )                 # End capture parenthesis
+      }gxsc                    and return ('(.', '(');
+      m{\G(.)}gsc              and return ($1, $1);
+
+      return('',undef);
+    }
+  }
+);
+
+sub TERMINAL::info {
+  $_[0]->{attr}[0]
+}
+
+my $prompt = 'Try '.
+             '(press <CR><CTRL-D> to finish): ';
+__PACKAGE__->main($prompt) unless caller();
+
+=head1 INTRODUCTION
+
+This grammar introduces a problem that arises in the declaration of enumerated 
+and subrange types in Pascal:
+
+  type subrange = lo .. hi;
+  type enum = (a, b, c);
+
+The original language standard allows only numeric literals and constant
+identifiers for the subrange bounds (`lo' and `hi'), but Extended Pascal
+and many other Pascal implementations allow arbitrary expressions there. This
+gives rise to the following situation, containing a superfluous pair of
+parentheses:
+
+     type subrange = (a) .. b;
+
+Compare this to the following declaration of an enumerated type with only one value:
+
+      type enum = (a);
+
+These two declarations look identical until the C<..> token. With normal LALR(1)
+one-token look-ahead it is not possible to decide between the two forms when
+the identifier C<a> is parsed. It is, however, desirable for a parser to decide
+this, since in the latter case C<a> must become a new identifier to represent
+the enumeration value, while in the former case C<a> must be evaluated with its
+current meaning, which may be a constant or even a function call.
+
+You could parse C<(a)> as an 'unspecified identifier in parentheses', to be
+resolved later, but this typically requires substantial contortions in both
+semantic actions and large parts of the grammar, where the parentheses are
+nested in the recursive rules for expressions.
+
+  # This is a modification of the grammar in file 'nolalrrrconflict.eyp'
+
+  S:
+        '(' A ')'
+      | B '.' B 
+  ;
+  A:
+        'x'
+      | A ',' 'x' 
+  ;
+  B:
+        'x'
+      | '(.' B ')' 
+  ;
+
+%%
+=head1 SEE ALSO 
+
+=over 2
+
+=item * The Bison manual L<http://www.gnu.org/software/bison/manual/html_mono/bison.html>
+
+=back

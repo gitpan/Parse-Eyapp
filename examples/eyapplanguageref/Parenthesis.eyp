@@ -5,8 +5,6 @@ S:
 ;
 %%
 
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
+# eyapp -TC Parenthesis.eyp
+# ./Parenthesis.pm -t -c 'acb'
 
-# modulino code: compile with: eyapp -b '' Parenthesis.eyp
-__PACKAGE__->new()->main("Try 'acb': ") unless caller();

@@ -22,5 +22,5 @@ S:
 
 %%
 
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
+# eyapp -C CsBetweenCommansAndD.eyp
+# ./CsBetweenCommansAndD.pm -c 'c , c, c d'

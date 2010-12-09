@@ -24,8 +24,6 @@ S:
 
 %%
 
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
-
-# modulino code: compile with: eyapp -b '' CsBetweenCommansAndDWithNames.eyp
-__PACKAGE__->new()->main("Try 'c,c, d': ") unless caller();
+# Try:
+# modulino code: compile with: eyapp -C CsBetweenCommansAndDWithNames.eyp
+#  ./CsBetweenCommansAndDWithNames.pm -c 'c,c,cd c,c, cd'

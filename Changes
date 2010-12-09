@@ -1,4 +1,8 @@
 Revision history for Perl extension Eyapp.
+1.174
+      - eyapp -S C etc. will generates a %start C directive and warnings will be supressed
+       if no -m the default will be "decl.pm" i.e. the start symbol will name the module
+
 1.173
     -- Merged PPCR branch with trunk
     -- option for main to produce .png version of the AST

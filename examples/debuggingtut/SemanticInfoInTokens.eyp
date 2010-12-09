@@ -8,13 +8,33 @@
 
 %syntactic token HEX
 
-%right '='
-%left '+'
-
 %{
-use base q{DebugTail};
 my %st;
 %}
+
+%lexer  {
+    my $hexflag = $self->{HEXFLAG};
+
+    m{\G\s*(\#.*)?}gc;
+
+    m{\G(HEX\b|INT\b)}igc and return (uc($1), $1);
+
+    m{(\G\d+)}gc and return ('INTEGER', $hexflag? hex($1) : $1);
+
+
+    m{\G([a-zA-Z_]\w*)}gc and do {
+        my $match = $1;
+        $hexflag and !exists($st{$match}) and $match =~ m{^([A-F0-9]+$)}gc and return ('INTEGER', hex($match)); 
+        return ('ID', $1);
+    };
+
+    m{\G(.)}gc and return ($1, $1);
+
+    return('',undef);
+  }
+
+%right '='
+%left '+'
 
 %tree bypass alias
 
@@ -60,50 +80,20 @@ id : ID
 %%
 
 # Context-dependant lexer
-__PACKAGE__->lexer( sub {
-    my $parser = shift;
-    my $hexflag = $parser->{HEXFLAG};
-
-    for (${$parser->input}) {    # contextualize
-      m{\G\s*(\#.*)?}gc;
-
-      m{\G(HEX\b|INT\b)}igc and return (uc($1), $1);
-
-      m{(\G\d+)}gc and return ('INTEGER', $hexflag? hex($1) : $1);
-
-
-      m{\G([a-zA-Z_]\w*)}gc and do {
-        my $match = $1;
-        $hexflag and !exists($st{$match}) and $match =~ m{^([A-F0-9]+$)}gc and return ('INTEGER', hex($match)); 
-        return ('ID', $1);
-      };
-
-      m{\G(.)}gc         and return ($1, $1);
-
-      return('',undef);
-    }
-  }
-);
-
-*TERMINAL::info = *NUM::info = *ID::info = sub {
-  $_[0]->{attr}
-};
-
-__PACKAGE__->main() unless caller();
 
 =head1 SYNOPSIS
 
 Compile it with:
 
-            eyapp -b '' SemanticInfoInTokens.eyp
+                   $ eyapp -C SemanticInfoInTokens.eyp
 
 Run it with:
 
-            ./SemanticInfoInTokens.pm -t -f inputforsemanticinfo.txt
+                  $ ./SemanticInfoInTokens.pm -t -i -f inputforsemanticinfo.txt
 
 try also:
 
-            ./SemanticInfoInTokens.pm -t -f inputforsemanticinfo2.txt
+            ./SemanticInfoInTokens.pm -t -i -f inputforsemanticinfo2.txt
 
 =head1 THE TYPENAME-IDENTIFIER PROBLEM WHEN PARSING THE C<C> LANGUAGE
 

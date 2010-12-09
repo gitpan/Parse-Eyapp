@@ -14,5 +14,5 @@ S:      'c'+  'd'+
 
 %%
 
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
+# eyapp -C  List3_tree.yp
+# ./List3_tree.pm -c 'ccdd'

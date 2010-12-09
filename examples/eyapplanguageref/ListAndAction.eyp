@@ -15,5 +15,5 @@ S:      'c'
 ;
 %%
 
-use base 'Tail';
-__PACKAGE__->lexer(\&Tail::lex);
+# eyapp -C ListAndAction.eyp
+#./ListAndAction.pm -c 'a a c b b'

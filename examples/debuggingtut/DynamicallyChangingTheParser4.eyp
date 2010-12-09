@@ -1,9 +1,6 @@
 %{
 =head1 SYNOPSIS
 
-This example is here only for historical reasons.
-The method C<YYRestoreLRAction> is deprecated.
-
 See section 'SOLVING CONFLICTS WITH THE POSTPONED CONFLICT STRATEGY' in
 http://search.cpan.org/perldoc?Parse::Eyapp::debuggingtut
 
@@ -13,15 +10,15 @@ change the behavior of the parser for a shift-reduce conflict
 Be sure C<DebugTail.pm> is reachable
 compile it with 
 
-      eyapp -b '' DynamicallyChangingTheParser2.eyp
+      eyapp -b '' DynamicallyChangingTheParser.eyp
 
 execute the generated modulino with the option C<-t>:
 
-      ./DynamicallyChangingTheParser2.pm -t
+      ./DynamicallyChangingTheParser.pm -t
 
-=head1 See instead
+=head1 See also
 
-    DynamicallyChangingTheParser.eyp
+    Debug.eyp Debug1.eyp Debug2.eyp and DebugLookForward.eyp
 
 =cut
 
@@ -34,6 +31,7 @@ use base q{DebugTail};
 
 %tree bypass
 
+# Expect just 1 shift-reduce conflict
 %expect 1 
 
 %%
@@ -42,38 +40,37 @@ p: %name PROG
 ;
 
 block:
-    %name BLOCK
+    %name BLOCK_DS
     '{' ds ';' ss '}' 
-  | %name SS
+  | %name BLOCK_S
     '{' ss '}'
 ;
 
 ds:
-    %name MORE_Ds
+    %name D2
     D conflict ';' ds    
-  | %name LAST_D
+  | %name D1
     D conflict        
-      {
-         # Recover former LALR action
-         $_[0]->YYRestoreLRAction('conflict', ';');
-         # Do whatever you want
-         goto &Parse::Eyapp::Driver::YYBuildAST;
-      }
 ;
 
 ss:
-    %name SS
+    %name S2
     S ';' ss      
-  | %name S
+  | %name S1
     S       
 ;
 
 conflict:
-    /* empty. Just for dynamic precedence */
+      /* empty. This action solves the conflict using dynamic precedence */
       {
         my $self = shift;
 
-        $self->YYSetReduce(';', 'LAST_D' ) if (${$self->input()} =~ m{^\s*;\s*S});
+        if (${$self->input()} =~ m{^\s*;\s*S}) {
+          $self->YYSetReduce(';', 'D1' )
+        }
+        else {
+          $self->YYSetShift(';')
+        }
 
         undef; # skip this node in the AST
       }
