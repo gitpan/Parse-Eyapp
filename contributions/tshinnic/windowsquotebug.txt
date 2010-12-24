@@ -1,0 +1,41 @@
+from  Thomas L. Shinnick <tshinnic@io.com>
+to  Casiano Rodriguez-Leon <casiano@ull.es>
+date  1 March 2009 01:38
+subject Parse-Eyapp
+  
+hide details 01:38 (6 hours ago)
+  
+  
+Reply
+  
+  
+I just now saw that you have been really busy, and the version is now at 1.144 (from 1.139 which I was using).
+
+I feel bad as I had not gotten around to reporting the one 'bug' I'd found so far.  I run with a combination of Linux and Windows and so I came across a problem with Windows paths.  When you output the grammar .pm file you include the source filepath.  But because Windows paths have backslash escape characters and you didn't quote the string nicely it displayed errors on the \P and \G characters of
+     yyFILENAME  => "lib\ES\Parser\Grammar.eyp",
+but if you single-quote then it is fine
+     yyFILENAME  => 'lib\ES\Parser\Grammar.eyp',
+
+I've just checked against the latest 1.144 source and here is the 'fix'
+
+\es31\Parse-Eyapp-1.144\lib\Parse\Eyapp>diff -wu output.pm \Perl588_822\site\lib\Parse\Eyapp\Output.pm
+--- output.pm   2009-01-07 06:45:16.000000000 -0600
++++ \Perl588_822\site\lib\Parse\Eyapp\Output.pm 2009-02-21 22:35:33.187500000 -0600
+@@ -100,7 +100,8 @@
+  $accessors = $self->Accessors;
+  my $accessors_hash = make_accessors($accessors);
+  $TERMS = $self->Terms();
+-  $FILENAME = '"'.$self->Option('inputfile').'"';
++# $FILENAME = '"'.$self->Option('inputfile').'"';
++  $FILENAME = q{'}.$self->Option('inputfile').q{'};
+
+       if ($self->Option('standalone')) {
+    # Copy Base, Driver, Node and YATW
+
+I'll go install 1.144 and start using it.
+
+And... re-read the documentation because I've got to solve two parsing problems, and I think you talk about one of them.  Maybe more doc fixes later?
+
+Thank you,
+Tom
+

@@ -278,6 +278,7 @@ sub conflictHandlers {
   my $t = Dumper $self->{GRAMMAR}{CONFLICTHANDLERS};
   $t =~ s/^\$VAR\d*\s*=\s*//;
   $t =~s/;$//;
+  $t =~s/\\'//g; # quotes inside quotes
   $t;
 }
 
@@ -334,7 +335,7 @@ sub Accessors {
 sub Warnings {
     my($self)=shift;
 
-    return '' unless $self->{OPTIONS}{star};
+    return '' if $self->Option('start');
 
     my($text) = '';
     my($grammar)=$$self{GRAMMAR};

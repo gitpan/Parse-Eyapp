@@ -1,0 +1,11 @@
+# file setperl5lib
+# Execute:
+# source setperl5lib
+export PATH=`pwd`:${PATH}
+export PERL5LIB=`pwd`/lib/:$PERL5LIB
+export TEST_FAST=1
+export DEVELOPER=casiano
+export SVNR=svn+ssh://casiano@orion.pcg.ull.es/var/svn/casiano/PL/YappWithDefaultAction/trunk
+export MACHINES='orion beowulf'
+export PUBLIC_PLACE=/home/lusasoft/public_html/perlexamples/
+export REMOTETEST=remotetest.pl

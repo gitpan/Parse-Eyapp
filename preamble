@@ -1,0 +1,40 @@
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+
+\usepackage{makeidx}
+
+%\topmargin -4 mm
+%\topmargin -31 mm
+\voffset -10 mm
+\topmargin 0 mm
+%\headheight 10 mm
+\headheight 0 mm
+%\headsep 10 mm
+\headsep 0 mm
+
+%\textheight 229 mm
+%\textheight 246 mm
+\textheight 256 mm
+
+\oddsidemargin -5.4 mm
+\evensidemargin -5.4 mm
+
+\textwidth 17 cm
+\columnsep 10 mm
+
+%\title{Parse::Eyapp Reference Manual}
+\author{Casiano Rodriguez-Leon}
+
+
+\makeindex
+\begin{document}
+%\maketitle
+
+%\tableofcontents 
+%\listoffigures
+%\listoftables
+
+%\pagebreak
+
+

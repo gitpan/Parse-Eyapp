@@ -9,11 +9,13 @@ the postponed conflict resolution technique.
 
 Compile the grammar with:
 
-                 eyapp -b '' confusingsolveddynamic.eyp
+                 eyapp -TC confusingsolveddynamic.eyp
 
 and execute it with:
 
-                ./confusingsolveddynamic.pm -t
+                ./confusingsolveddynamic.pm -t -i -c 'x y c d'
+                ./confusingsolveddynamic.pm -t -i -c 'x y c f'
+
 
 =head1 SEE ALSO
  
@@ -25,24 +27,14 @@ and execute it with:
 
 =cut
 
-use base q{DebugTail}; 
 %}
 
 %semantic token 'c' 'd' 'f' 'x' 'y'
-%expect-rr 1
+#%expect-rr 1
 
 %conflict DORF {
-        my $self = shift;
-
-        if (${$self->input()} =~ m{^.*?d}) {
-          $self->YYSetReduce('c', 'XY:D' );
-        }
-        else {
-          $self->YYSetReduce('c', 'XY:F' ); 
-        }
-      }
-
-%tree
+  if (/\G(?=.*?d)/gc) { $self->YYSetReduce('XY:D' ); } else { $self->YYSetReduce('XY:F' ); }
+}
 
 %%
 A: 
@@ -60,9 +52,3 @@ E:  %name XY:F
 
 %%
 
-__PACKAGE__->lexer( \&DebugTail::lex); 
-
-unless (caller) {
-  my $prompt = 'Try "x y c d" or "x y c f" and press <CR><CTRL-D>: ';
-  __PACKAGE__->main($prompt)
-}

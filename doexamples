@@ -1,0 +1,24 @@
+#!/bin/bash
+ls examples/Calculator/{*yp,*.pl}
+ls examples/Driver/{*yp,*.pl}
+ls examples/Eyapp/{*yp,*.pl}
+ls examples/MatchingTrees/{*yp,*.pl}
+ls examples/Node/{*yp,*.pl}
+ls examples/ParsingStringsAndTrees/{*yp,*.pl}
+ls examples/ParsingStringsAndTreesBak/{*yp,*.pl}
+ls examples/README/{*yp,*.pl}
+ls examples/YATW/{*yp,*.pl}
+ls examples/debuggingtut/{*yp,*.pl}
+ls examples/eyappintro/{*yp,*.pl}
+ls examples/eyapplanguageref/{*yp,*.pl}
+ls examples/generator/{*yp,*.pl}
+ls examples/languages/{*yp,*.pl}
+ls examples/lexergeneration/{*yp,*.pl}
+ls examples/naming/{*yp,*.pl}
+ls examples/nestedparsing/{*yp,*.pl}
+ls examples/oldexamples/{*yp,*.pl}
+ls examples/performance/{*yp,*.pl}
+ls examples/recycle/{*yp,*.pl}
+ls examples/translationschemestut/{*.pl}
+ls examples/typechecking/{*yp,*.pl}
+ls examples/yaml/{*yp,*.pl}

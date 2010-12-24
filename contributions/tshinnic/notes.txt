@@ -1,0 +1,213 @@
+Hello.  
+
+I am using Parse::Eyapp to work on a grammar for Javascript.  (The ECMA 
+people are working on a new specification for "ECMAScript 3.1" and I am 
+interested in that effort)
+
+I am trying to do all this by coding first in plain Perl 5 and so your 
+module will work really well for me.  (I hope :-) )
+
+Since I am having some problems I need to force myself to read your
+documentation more closely.  And I also noticed some typos and other
+wording problems.  So I thought I would make two kinds of notes, 
+one set for me, and one set for you?  
+
+I will make notes here about the documentation, and also will make
+'corrections' to the pod and send you the diffs.  Then you can 
+decide which of these are good corrections and comments.
+
+
+I had to stop for awhile about half-way through Eyapp.pod.  I will do
+more later.
+
+
+
+
+**** Eyapp.pod
+
+Changed 
+        exp <%name EXPRESION_LIST + ';'>
+  to
+        exp <%name EXPRESSION_LIST + ';'>
+
+I don't know if you would want to do this everywhere, as some of your examples
+mention output with that name, but it helps for the synopsis to be 'perfect'.
+
+
+
+Changed comment to two lines
+    /* The %name directive defines the name of the 
+       class to which the node being built belongs */
+
+Please look at the web page shown by CPAN
+  http://search.cpan.org/~casiano/Parse-Eyapp-1.139/lib/Parse/Eyapp.pod 
+It hurts a bit when someone has to manually scroll to the right just to
+see the entire text.  
+
+
+
+=head2 Eyapp Grammar
+Missing things like 'bypass', but that is probably good.
+
+
+
+=head2 Example of Head Section
+  pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '1,11p' Calc.eyp | cat -n
+
+Is there a reason you show the command lines you used to display the code?
+It seems to confuse me, and people might wonder if it is "important to know"?
+Could you just show the code and not the commands?
+
+
+
+=head2 The C<%prefix> Directive
+I am unsure, is this only useful under %tree mode?
+
+
+
+=head2 Syntactic and Semantic Tokens
+=head2 Syntactic and Semantic tokens
+Wow, this pod worked !?!  Two different sections, with names almost the same?
+
+
+
+=head2 Rules
+      A syntactic variable cannot appear more than once as a rule name 
+      (This differs from yacc).
+So I can't do 
+    thing: foo bar ;
+    thing: foo baz ;
+Is that right?
+
+
+
+=head2 Example of Body Section
+This example does not uses any of the Eyapp extensions (with the exception of the 
+I<star list> at line 5) and the dot and dollar notations. 
+
+Did you mean ...
+    This example does not uses any of the Eyapp extensions 
+    (with the exception of the I<star list> at line 5 
+    and the dot and dollar notations). 
+Are the "dot and dollar notations" extensions?
+
+
+
+=head2 Solving Ambiguities and Conflicts
+=item * If there is a shift/reduce conflict, and both the grammar production
+and the input character have precedence and associativity associated
+              ^^^^^^^^^
+
+Should that be 'token' ?
+
+
+
+=head2 The C<+> operator
+    Observe that, in spite of C<'d'> being a syntactic token
+    the action related with the C<d+> element creates 
+    the list of C<d>s.
+
+But isn't the action really a "rule action" ?  It isn't an action 
+in the middle of a production.  Where is the action done?
+
+
+
+
+
+
+---------------------------------------------------------------------------
+
+'$' rhselt
+The dolar notation $A can be used as an abbreviation of A.A.
+
+# File Postfix.eyp
+    s/^([0-9]+(?:\.[0-9]+)?)//   and return('NUM',$1);
+%defaultaction { return  "$left $right $op"; }
+exp:        $NUM  { $NUM }            
+        |   VAR.left '='.op exp.right         
+        |   exp.left '+'.op exp.right         
+        |   '-' $exp %prec NEG { "$exp NEG" }
+        |   '(' $exp ')' { $exp }      
+# Lhs.eyp
+%defaultaction { 
+  my $self = shift;
+  my $name = $self->YYName();
+  bless { children => [ grep {ref($_)} @_] }, $name; 
+}
+
+
+                    vvvvvvvvv
+$_[1] refers to the attribute of the first exp, $_[2] is 
+the attribute associated ....
+The returned value will be the attribute associated with 
+the left hand side of the production.
+
+
+$_[2]->str
+$_[2]->children
+$_[2]->child(0)->attr
+
+method YYName
+
+
+When building the syntax tree (i.e. when running under the 
+%tree directive) string literals will be considered syntactic 
+tokens (see section "Syntactic and Semantic tokens").  
+Syntactic tokens do not produce nodes in the Abstract Syntax Tree.
+
+%semantic token 'c'
+
+When inserting the children, the tree (%tree) node construction method 
+(YYBuildAST) omits any attribute that is not a reference. 
+
+Though 'd' was declared semantic the default action associated with the 
+production D: 'd' in line 16 returns $_[1] (that is, the scalar 'd'). 
+Since it is not a reference it won't be inserted in the list of 
+children of _PLUS_LIST.
+
+    D: 'd'
+         {
+           bless { attr => $_[1], children =>[]}, 'DES';
+         }
+    ;
+
+More robust than the former solution of building the node by hand 
+is to use the constructor Parse::Eyapp::Node->new: 
+The method Parse::Eyapp::Node->new is uset to build forests of syntactic trees.
+
+
+  my $r = Parse::Eyapp::Node->new(qw(C(TERMINAL)), sub { $_[1]->attr('c') }) ;
+
+Can you just copy ->token into ->attr ?
+
+Notice that the lexical analyzer only returns references 
+for the NUM and VAR terminals:
+
+
+    |   %name MINUS
+        exp '-' exp
+          {
+            my $self = shift;
+            $self->YYName('SUBSTRACT'); # rename it
+            $self->YYBuildAST(@_); # build the node
+          }
+    %defaultaction {
+      my $self = shift;
+  
+      my $action = $self->YYName;
+  
+      $self->$action(@_);
+    }
+The subroutine used as default action in NoacInh.eyp is so useful 
+that is packed as the Parse::Eyapp::Driver method YYDelegateaction.
+
+Explicit actions receive as arguments the references to the 
+children nodes already built. 
+
+
+Actually, the %tree directive is semantically equivalent to:
+        %default action { goto &Parse::Eyapp::Driver::YYBuildAST }
+
+
+
+#  vim:ft=text:ts=2:sw=2:et:is:hls:ss=10:tw=100:

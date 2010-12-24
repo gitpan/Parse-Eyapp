@@ -1,0 +1,6 @@
+# file setperl5lib
+# Execute:
+# source setperl5lib
+setenv PATH /home/pl/src/perl/YappWithDefaultAction/:${PATH}
+setenv PERL5LIB /home/pl/src/perl/YappWithDefaultAction/lib/:/home/pl/src/perl/Parse-YATW/lib/:$PERL5LIB
+setenv TEST_FAST 1

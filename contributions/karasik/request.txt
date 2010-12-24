@@ -1,0 +1,34 @@
+from    KARASIK via RT <bug-Parse-Eyapp@rt.cpan.org>
+reply-to    bug-Parse-Eyapp@rt.cpan.org
+to  
+date    10 December 2009 16:48
+subject [rt.cpan.org #52650] Modification of a read-only value at Parse/Eyapp/Driver.pm
+mailed-by   cpan.rt.develooper.com
+    
+hide details 16:48 (5 hours ago)
+    
+Thu Dec 10 11:48:51 2009: Request 52650 was acted upon.
+Transaction: Ticket created by KARASIK
+      Queue: Parse-Eyapp
+    Subject: Modification of a read-only value at Parse/Eyapp/Driver.pm
+  Broken in: 1.06503
+   Severity: Important
+      Owner: Nobody
+ Requestors: KARASIK@cpan.org
+     Status: new
+ Ticket <URL: https://rt.cpan.org/Ticket/Display.html?id=52650 >
+
+
+Modification of a read-only value attempted at
+/usr/local/perl/510/site/lib/Parse/Eyapp/Driver.pm line 670.
+
+This warning is triggered if the Parse::Eyapp::Driver is executed f.ex.
+inside a "for qw(1) {}" loop, which aliases $_ to read-only values. The
+culprit line is
+
+   $_ = $right[$i]; # The symbol
+
+which either needs to be changed from using $_ to something else, or $_
+needs to be properly localized.
+
+perl v5.10.0

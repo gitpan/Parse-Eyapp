@@ -1,45 +1,89 @@
-  * examples in MANIFEST: obsolete
+  * Luis: test everything related  with conflict resolution
+  * Need a shift-reduce conflict example solved with 'pure' PPCR
+  * %conflict C symbol? prod : prod
+      - symbol? no necessarily a symbol of the grammar
 
-  *There is abug in "eyapp" in the call 
-                my ($parser) = Parse::Eyapp->new(@args);
-    order of arguments?
-    test the behavior of the function with different arguments
+      - VIEWPOINT in the body, i.e. symbol? must be optional. 
+      In such case the nested parsing is made inside the conflict solver
+      See lastD.eyp and DebugDynamicResolution4
+
+  * Trying to supress the generation of conflict rules when there is no conflict (during nested
+    auxiliary compilation). Count the number of appearances of %PREC conflict . If it is greater
+    than two there is a true conflict. Otherwise the conflict symbols can be ignored.
+    There is however a problem. The translation used by Parse.yp performs some premature 
+    semantic actions that insert the conflict symbols as soon as a production is defined.
+    To solve it we must delay the translation until the whole grammar has been seen.
+
+  * Write code to control
+    Errores por mala colocación de conflictos. Se pueden controlar en _DynamicConflicts en Lalr
+
+  * quiza entre la información guardada en CONFLICTHANDLERS deberían ir las etiquetas simbólicas.
+    Esto simplificaría YYSetReduce
+
+  * Tienes que repasar YYIf: no esta acabada!!!!
+    De hecho, deberías comprobar que tipo de acción (s o r) 
+    es la que hay que hacer. Se puede saber por el signo en 
+    la información asociada con el conflict handler y ejecutarla
+
+  * Artículos:
+      * reescribir con nueva sintáxis TOPLAS y el comsys
+      * Introducir modificaciones de los referees en los articulos de revista
+      * conseguir articulo de Ganapanathi "semantic predicates in"
+      * estudiar e introducir comparaciones
+      * insistir en que esta implementado y "verificado": describir implementación
+
+  * Provide a higher level API for conflicts that can be solved using nested parsing:
+      - %conflict conflictname somesymbol
+         Los tokens en conflicto se pueden deducir, las reglas estan ya anotadas con el PREC,
+         incluso creo que se puede deducir cual de las reglas es la que hay que aplicar 
+         en términos del valor retornado
+         por el parsing anidado. Habría que seguir marcando el punto de exploracion:
+
+        %conflict rangeORenum range
+
+        %%
+
+        type_decl : 'type' ID '=' type ';' 
+        ;
+
+        type : 
+              %name ENUM
+              %rangeORenum? '(' id_list ')' 
+            | %name RANGE
+              %rangeORenum? range
+        ;
+
+        range:
+               expr '..' expr
+        ;
+     SUBGOALS:
+        -- YYSetReduce can work without specifying the token set
+        -- YYSetShift can work without specifying the token set
+
+  * Otra API de mas alto nivel sería el caso regexp
+          %conflict conflictname /regexp/ ruleName
+    esta se ejecuta en el punto del conflicto
+
+  * clean tests deleted. Do it gain?
+
+  * examples in MANIFEST: obsolete
 
   * Use %{ ... %} as syntactic sugar for syntactic code actions
 
   * Generation of Several Parsers
-      - Or, perhaps, eyapp -S C etc. will generate a %start directive and warnings will be supressed
-        make tests
-
-           ~/LEyapp/examples/debuggingtut$ eyapp -S decl -m Decl -P CplusplusNested.eyp
-
-       if no -m the default will be "decl.pm" i.e. the start symbol will name the module
-
-      - %PREC conflict does not check that a conflict handler has been previously declared
       - The lexer must be the one of the main parser
-      - The accept state must change
-          A$ -> A
-          A$ -> A.b where b is in the follow of A, means acceptation
-          Where are the follows?. They have been computed somewhere
-      - Avoid warnings: rule not used, rule not used, etc. How?
-        Shall I use a subgrammar that is the closure of the syntactic variable
-      - %start A
-        %prestart B
-        %start C
-        will generate three files File.pm FileB.pm FileC.pm
 
-  * Tests for png
+  * The accept state must change
+      A$ -> A
+      A$ -> A.b where b is in the follow of A, means acceptation
+      Where are the follows?. They have been computed somewhere
+
+  * %PREC conflict does not check that a conflict handler has been previously declared
+
+
   * GLR in eyapp
+
   * eyapp and PPCR in the Wikipedia
-
-  * $t->str method to produce .dot descriptions of the AST tree
-    -- parametrize call to dot program using file ~/.eyapprc
-
-    -- name of the file: the name of the inputfile. The extension
-       decides the type. But what name to choose for the default case?
-
-    -- write help --dot 
-    -- png for .output also: options -w and -W
 
   * Update documentation
 
@@ -50,19 +94,6 @@
       # Will it give a false acceptance? 
       # I think I shall use an option in eyapp?
       # make a test
-
-  * Include %from directive. See examples/debuggingtut/Range2.eyp
-
-        %from pascalnestedeyapp2 import expr
-        # alternative syntax to include also semantic actions
-        #%from pascalnestedeyapp2 use expr
-        #%from pascalnestedeyapp2 use expr, TAIL 
-
-        %%
-        range: expr '..' expr ';'
-        ;
-
-        %%
 
   * Change the API for YYSetReduce and YYSetshift to include the name of the conflict?
 

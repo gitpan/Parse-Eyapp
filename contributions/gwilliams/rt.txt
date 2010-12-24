@@ -1,0 +1,20 @@
+Wed Sep 12 16:48:29 2007: Request 29329 was acted upon.
+Transaction: Ticket created by GWILLIAMS
+      Queue: Parse-Eyapp
+    Subject: Can't create a standalone parsere
+  Broken in: 1.069577, 1.073
+   Severity: Important
+      Owner: Nobody
+ Requestors: GWILLIAMS@cpan.org
+     Status: new
+ Ticket <URL: http://rt.cpan.org/Ticket/Display.html?id=29329 >
+
+
+Using the eyapp frontend, I am unable to create a standalone parser: The generated parser still
+uses Parse::Eyapp::Node. I run eyapp using the command:
+
+eyapp -s -m RDF::Query::Parser::SPARQL -o lib/RDF/Query/Parser/SPARQL.pm lib/RDF/Query/
+Parser/SPARQL.yp
+
+Is there a way to bundle Parse::Eyapp::Node with the standalone parser, or easily distribute it
+with a code bundle?

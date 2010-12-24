@@ -9,13 +9,15 @@ concatenation of the names of the tokens in the right hand side
 (separated by underscores).
 
 Compile it with:
-                    eyapp -b '' give_names_to_tokens.eyp
+
+                $ eyapp -C give_names_to_tokens.eyp 
+
 and run it:
-                  $ ./give_names_to_tokens.pm  -t -c '*a = b' 
+                  $ ./give_names_to_tokens.pm -t -i -c '*a = b'
 
 It will produce an output like:
 
-    s_is_ASSIGN(l_is_STAR(r_is_l(l_is_VAR(TERMINAL))),r_is_l(l_is_VAR(TERMINAL)))
+    s_is_ASSIGN(l_is_STAR(r_is_l(l_is_VAR(TERMINAL[a]))),r_is_l(l_is_VAR(TERMINAL[b])))
 
 The main difference between this file and C<give_token_names.eyp>
 is that here  C<'='> and C<'*'> are used and therefore we must associate
@@ -23,6 +25,8 @@ with them identifiers via the method C<tokennames>.
 
 =cut
 %}
+
+%token VAR = /([A-Za-z][A-Za-z0-9_]*)/
 
 %namingscheme { 
   #Receives a Parse::Eyapp object describing the grammar
@@ -56,9 +60,4 @@ r:
 ;
 
 %%
-
-use base q{Tail};
-__PACKAGE__->lexer(\&Tail::lex);
-
-__PACKAGE__->main unless caller;
 

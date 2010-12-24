@@ -1,0 +1,11 @@
+# file imac_casiano
+# Execute:
+# source etc/imac_casiano
+export PATH=/Users/casianorodriguezleon/LEyapp:/Users/casianorodriguezleon/LGRID-Machine/scripts/:${PATH}
+export PERL5LIB=/Users/casianorodriguezleon/LEyapp/lib/:/Users/casianorodriguezleon/LGRID-Machine/lib/:$PERL5LIB:/opt/local/lib/perl5/site_perl/5.8.9/IO/
+export TEST_FAST=1
+export DEVELOPER=casiano
+export SVNR=https://parse-eyapp.googlecode.com/svn/trunk
+export MACHINES='pl'
+export PUBLIC_PLACE=/Users/casianorodriguezleon/public_html/eyapp/
+

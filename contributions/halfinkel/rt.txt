@@ -1,0 +1,27 @@
+Sat Aug 23 11:39:50 2008: Request 38685 was acted upon.
+Transaction: Ticket created by HFINKEL
+      Queue: Parse-Eyapp
+    Subject: Tree alias accessors not created properly
+  Broken in: 1.111
+   Severity: Important
+      Owner: Nobody
+ Requestors: half@halssoftware.com
+     Status: new
+ Ticket <URL: http://rt.cpan.org/Ticket/Display.html?id=38685 >
+
+
+Accessors created using the tree alias feature are not always correct in
+the current version. This is because:
+
+1. The $semantic hash reference is not updated upon rule creation to
+record non-terminals an semantic.
+2. The child index is calculated incorrectly is not all semantic
+children are named.
+
+I believe the attached patch fixes both of these issues and adds a test.
+
+Also (not fixed by the attached patch), there should be a way to specify
+a prefix for the accessors so that they can work with a tree built with
+a specified yyprefix.
+
+

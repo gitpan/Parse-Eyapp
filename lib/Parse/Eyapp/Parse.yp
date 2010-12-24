@@ -283,6 +283,35 @@ ENDOFLEXER
   return $lexertemplate;
 }
 
+sub explorer_handler {
+              my ($name, $code) = @_;
+              my ($cn, $line) = @$name;
+
+
+              my ($c, $li) = @$code;
+
+              # TODO: this must be in Output
+              my $conflict_header = <<"CONFLICT_EXPLORER";
+  my \$self = \$_[0];
+  for (\${\$self->input()}) {  
+#line $li "$filename" 
+CONFLICT_EXPLORER
+              $c =~ s/^/$conflict_header/; # }
+
+              # {
+              # follows the closing curly bracket of the for .. to contextualize!!!!!!                 v
+              $c =~ s/$/\n################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################\n  }\n/;
+              #$code->[0] = $c;
+              $conflict{$cn}{explorer} = $c;
+              $conflict{$cn}{explorerline} = $line;
+
+              # TODO: error control. Factorize!!!!!
+              $$syms{$cn.'_explorer'} = $line;
+              $$nterm{$cn.'_explorer'} = undef;
+
+              undef;
+            }
+
 %}
 
 %token ASSOC         /* is %(left|right|nonassoc) */
@@ -355,6 +384,14 @@ ident:  IDENT   {
                 }
 ;
 
+prodname:  IDENT 
+      |   LABEL
+      |   IDENT LABEL
+            {
+              $_[1][0] .= $_[2][0];
+              $_[1];
+            }
+;
 
 # Head section:
 head: headsec '%%'
@@ -568,35 +605,83 @@ CONFLICT_HEADER
 
               undef;
             }
+        # conflict syntacticvariable?  prodname : prodname
+    |   CONFLICT ident IDENT '?' prodname ':' prodname '\n'
+            {
+              #print "<@{$_[2]} @{$_[3]} @{$_[5]} @{$_[7]}>\n";
+            
+              my $conflict = $_[2];
+              my ($startsymbol, $line) = @{$_[3]};
+              my @prodname = ($_[5][0], $_[7][0]);
+
+              my $cn = $conflict->[0];
+
+              my $c = <<"CONFLICT_HEADER";
+  my \$self = \$_[0];
+  for (\${\$self->input()}) {  
+#line $line "$filename" 
+    \$self->YYIf('$startsymbol', '$prodname[0]', '$prodname[1]');
+################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+  }
+CONFLICT_HEADER
+
+              $conflict{$cn}{codeh} = $c;
+              $conflict{$cn}{line} = $line;
+
+              $$syms{$cn} = $line;
+              $$nterm{$cn} = undef;
+
+              #$$nterm{$startsymbol} = undef;
+              #delete $$syms{$startsymbol};
+
+
+              $c = <<"NESTEDPARSING";
+{ \$self->YYNestedParse('$startsymbol'); }
+NESTEDPARSING
+
+              explorer_handler($conflict, [$c, $line]);
+
+              undef;
+            }
     /*********************************************/
     |   EXPLORER ident CODE '\n' # research testing
             {
               my ($name, $code) = @_[2,3];
-              my ($cn, $line) = @$name;
 
+              explorer_handler($name, $code);
+            }
+    |   EXPLORER ident LITERAL '\n' # 
+            {
+              my ($name, $startsymbol) = @_[2,3];
 
-              my ($c, $li) = @$code;
+              my $c = <<"NESTEDPARSING";
+{ \$self->YYNestedParse($startsymbol->[0]); }
+NESTEDPARSING
+              my $li = $startsymbol->[1];
 
-              # TODO: this must be in Output
-              my $conflict_header = <<"CONFLICT_EXPLORER";
-  my \$self = \$_[0];
-  for (\${\$self->input()}) {  
-#line $li "$filename" 
-CONFLICT_EXPLORER
-              $c =~ s/^/$conflict_header/; # }
+              explorer_handler($name, [$c, $li]);
+            }
+    |   EXPLORER ident ident '\n' # research testing: copy paste: factorize!
+            {
+              my ($name, $startsymbol) = @_[2,3];
 
-              # {
-              # follows the closing curly bracket of the for .. to contextualize!!!!!!                 v
-              $c =~ s/$/\n################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################\n  }\n/;
-              #$code->[0] = $c;
-              $conflict{$cn}{explorer} = $c;
-              $conflict{$cn}{explorerline} = $line;
+              my $c = <<"NESTEDPARSING";
+{ \$self->YYNestedParse('$startsymbol->[0]'); }
+NESTEDPARSING
+              my $li = $startsymbol->[1];
 
-              # TODO: error control. Factorize!!!!!
-              $$syms{$cn.'_explorer'} = $line;
-              $$nterm{$cn.'_explorer'} = undef;
+              explorer_handler($name, [$c, $li]);
+            }
+    |   EXPLORER ident ident LITERAL '\n' # research testing: copy paste: factorize!
+            {
+              my ($name, $startsymbol, $file) = @_[2,4];
 
-              undef;
+              my $c = <<"NESTEDPARSING";
+{ \$self->YYNestedParse('$startsymbol->[0]', $file->[0]); }
+NESTEDPARSING
+              my $li = $startsymbol->[1];
+
+              explorer_handler($name, [$c, $li]);
             }
     /*********************************************/
 
@@ -659,11 +744,20 @@ body:
             for my $A (keys %conflict) { 
               my $lhs = [$A, $conflict{$A}{line}];
               my $code = $conflict{$A}{codeh};
+
+              if  (defined($conflict{$A}{explorer}) and !$conflict{$A}{totalviewpoint}) {
+                  $code = "{ $conflict{$A}{explorer} }\n{ $code }";
+                  my $expname = $A.'_explorer';
+                  delete $$syms{$expname};
+                  delete $$nterm{$expname};
+                  delete $conflict{$A}{explorer};
+              }
+
               my $rhss = [ rhs([], name => $lhs, code => $code), ];
               _AddRules($lhs, $rhss);
               delete $conflict{$A}{codeh};
 
-              if (defined($conflict{$A}{explorer})) {
+              if (defined($conflict{$A}{explorer}) and ($conflict{$A}{totalviewpoint})) {
                 my $lhs = [$A.'_explorer', $conflict{$A}{explorerline}];
                 my $code = $conflict{$A}{explorer};
                 my $rhss = [ rhs([], name => $lhs, code => $code), ];
@@ -779,10 +873,16 @@ rhseltwithid :
 
 rhselt:     symbol    { [ 'SYMB', $_[1] ] }
     | code    { [ 'CODE', $_[1] ] }
-    | DPREC ident { [ 'CONFLICTHANDLER', $_[2] ] }
+    | DPREC ident 
+        { 
+           my $cname = $_[2][0];
+           $conflict{$cname}{total}++;
+           [ 'CONFLICTHANDLER', $_[2] ] 
+        }
     #************** research *****************#
     | VIEWPOINT 
         { 
+           $conflict{$_[1][0]}{totalviewpoint}++;
            $_[1][0] .='_explorer';
            [ 'CONFLICTVIEWPOINT', $_[1] ] 
         }
@@ -1084,6 +1184,9 @@ sub _Lexer {
 
     $lineno[0]=$lineno[1];
 
+            $$input=~/\G($LABEL)/gc
+        and return('LABEL',[ $1, $lineno[0] ]);
+
         $$input=~/\G($ID)/gc
     and return('IDENT',[ $1, $lineno[0] ]);
 
@@ -1191,8 +1294,9 @@ sub _Lexer {
           return('NAME',[ $bypass, $lineno[0] ]);
         };
 
-            $$input=~/\G($LABEL)/gc
-        and return('LABEL',[ $1, $lineno[0] ]);
+    # Now label is returned in the "common" area
+    #       $$input=~/\G($LABEL)/gc
+    #   and return('LABEL',[ $1, $lineno[0] ]);
 
             $$input=~/\G%begin\s*{/gc  # }
         and return ('BEGINCODE', &slurp_perl_code());
@@ -1200,7 +1304,7 @@ sub _Lexer {
         #********** research *************#
             $$input=~/\G%([a-zA-Z_]\w*)\?/gc
         and return('VIEWPOINT',[ $1, $lineno[0] ]);
-        #********** research *************#
+
 
     }
 
@@ -1312,8 +1416,8 @@ sub _AddRules {
 }
 
 # This sub is called fro Parse::Eyapp::Grammar::new
-#       0       1      2         3     4          5               6                  7  
-# Args: object, input, filename, tree, nocompact, lexerisdefined, acceptinputprefix, start
+#       0       1      2          3         4     5          6               7                  8
+# Args: object, input, firstline, filename, tree, nocompact, lexerisdefined, acceptinputprefix, start
 #  See the call to thsi sub 'Parse' inside sub new in module Grammar.pm 
 sub Parse {
     my($self)=shift;
@@ -1323,7 +1427,7 @@ sub Parse {
 
     my($parsed)={};
 
-    $input=\$_[0];
+    $input=\$_[0]; # we did a shift for $self, one less
 
     $lexlevel=0;
     my $firstline = $_[1];

@@ -10,13 +10,32 @@ concatenation of the names of the tokens in the right hand side
 (separated by underscores).
 
 Compile it with:
-                    eyapp -b '' give_token_names.eyp
+                  
+                  $ eyapp -C give_token_names.eyp 
+
 and run it:
-                  $ ./give_token_names.pm  -t -c '*a = b' 
+                  $ ./give_token_names.pm -t -i -m 1 -c '*a = b'
 
 It will produce an output like:
 
-    s_is_ASSIGN(l_is_STAR(r_is_l(l_is_VAR(TERMINAL))),r_is_l(l_is_VAR(TERMINAL)))
+
+        s_is_ASSIGN(
+          l_is_POINTER(
+            TERMINAL,
+            r_is_l(
+              l_is_VAR(
+                TERMINAL[a]
+              )
+            )
+          ),
+          TERMINAL,
+          r_is_l(
+            l_is_VAR(
+              TERMINAL[b]
+            )
+          )
+        )
+
 
 The main difference between this file and C<give_names_to_tokens.eyp>
 is that the tokens in the right hand sides 
@@ -26,7 +45,10 @@ are already identifiers: C<ASSIGN> and C<POINTER>.
 %}
 
 %strict
-%token VAR ASSIGN POINTER
+
+%token ASSIGN  = /=/
+%token POINTER = /\*/
+%token VAR = /([A-Za-z][A-Za-z0-9_]*)/
 
 %namingscheme { \&give_token_name; }
 
@@ -48,15 +70,5 @@ r:
 ;
 
 %%
-
-use base q{Tail};
-Tail->set_lexemename(
-  '=' => 'ASSIGN',
-  '*' => 'POINTER',
-);
-
-__PACKAGE__->lexer(\&Tail::lex);
-
-__PACKAGE__->main unless caller;
 
 

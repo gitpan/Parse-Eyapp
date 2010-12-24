@@ -1,20 +1,18 @@
 %whites    =  /([ \t]*(?:#.*)?)/
 %token VAR =  /([A-Za-z][A-Za-z0-9_]*)/
 
-%{
-my $istype = 0;
-%}
-
 %conflict ToN {
-  if ($istype) 
-    { $self->YYSetReduce(',', 'TYPE:VAR' ); }
+  if ($self->YYIs('type'))
+    { $self->YYSetReduce('TYPE:VAR' ); }
   else 
-    { $self->YYSetReduce(',', 'NAME:VAR' ); }
+    { $self->YYSetReduce('NAME:VAR' ); }
 }
+
+%explorer ToN { $self->YYIs('type', 1); } 
 
 %%
 
-def:    param_spec { $istype = 1 } return_spec ','
+def:    param_spec %ToN? return_spec ','
         ;
 param_spec:
              type
@@ -40,11 +38,11 @@ name_list:
 
 Compile it with:
 
-            eyapp -wC reducereduceconflictPPCR.eyp
+            eyapp -vTC reducereduceconflictPPCR.eyp
 
 See the C<.output> file. Run it with this options:
 
-            ./reducereduceconflictPPCR.pm -deb -c 'a,b:c d:e,'
+            ./reducereduceconflictPPCR.pm -deb -t -i -m 1 -c 'a,b:c d:e,'
 
 =cut
 

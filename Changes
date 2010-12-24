@@ -1,4 +1,24 @@
 Revision history for Perl extension Eyapp.
+1.176
+  * Tests in t/88explorer.t for the new %explorer and %conflict syntax!
+       - DebugDynamicResolution.eyp
+       - dynamicgrammar1.eyp
+       - reducereduceconflictPPCR.eyp
+       -  ExpList.eyp, reuseconflicthandler.eyp, noPackratSolvedExpRGconcept.eyp
+       - CplusplusNested.eyp
+       - pascalnestedeyapp3_5.eypp
+  * Conflict resolution syntax:
+                    %conflict rORe range? ID:RANGE ID:ENUM
+   
+  * No warnings with -c in 
+        eyapp -C CplusplusStartOption
+    check this bug!!!!
+    Make a test!  85minusSoption.t
+     
+    May be the nested parser can be embedded in the same module generated without requiring
+    a second compilation with -S start -P
+1.175
+  - Tests for png
 1.174
       - eyapp -S C etc. will generates a %start C directive and warnings will be supressed
        if no -m the default will be "decl.pm" i.e. the start symbol will name the module

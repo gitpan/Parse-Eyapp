@@ -1,0 +1,16 @@
+# file setperl5lib
+# Execute:
+# source setperl5lib
+# Change the values for whatever is more convenient in your platform
+
+
+# To find Math::Calc 
+
+export PERL5LIB=/home/pl/LEyapp/lib:/home/pl/LEyapp/examples/Calculator/lib:${PERL5LIB}
+#
+# To find eyapp and remotetest.pl
+export PATH=/home/pl/LEyapp/:/home/pl/LEyapp/examples/Calculator/scripts:${PATH}
+
+# Used by some SKIP tests
+export DEVELOPER=casiano
+

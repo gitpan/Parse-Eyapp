@@ -583,6 +583,8 @@ sub _DynamicConflicts {
 
     for my $c (@conList) {
       my ($token, $production) = @$c;
+
+      # the action chosen is in: $self->{STATES}[$state]{ACTIONS}{$token}
       push @{$C{($production)}{$state}}, $token;
     }
   }

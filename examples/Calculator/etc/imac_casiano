@@ -1,0 +1,10 @@
+# To find Math::Calc and Parse::Eyapp libraries
+#  In my machine Parse::Eyapp is two dirs above Calculator
+CP=`pwd`
+export PERL5LIB=${CP}/lib:${PERL5LIB}
+
+# Used by some SKIP tests
+export DEVELOPER=casiano
+
+eyapp -m Math::Calc -o lib/Math/Calc.pm lib/Math/Calc.eyp 
+

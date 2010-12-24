@@ -10,7 +10,7 @@ my $nxs = 0;
 
   $nxs++;
 
-  if ($nxs == $nxr+1) { 
+  if ($nxs == $nxr) { 
     print "Reducing by :MIDx input = '".unexpendedInput()."'\n";
     $self->YYSetReduce(['NUM', ';' ], ':MIDx' );
     
@@ -21,8 +21,6 @@ my $nxs = 0;
 
 %explorer isInTheMiddle {
    ($nxr) = $self->YYPreParse('ExpList'); 
-   print "Number of x's = $nxr\n";
-   $nxr = int ($nxr/2);
 }
 
 %%
@@ -51,11 +49,11 @@ Backtracking LR and GLR algorithms can but will perform poorly.
 Compile it with:
 
    $ eyapp -P ExpList.eyp 
-   $ eyapp -TC noPackratSolvedExpRGconcept.eyp
+   $ eyapp -TC reuseconflicthandler.eyp
 
 Run it with:
 
-   $ ./noPackratSolvedExpRGconcept.pm -t -i -m 1 -c '2; 1 2+2 3-5;'
+   $ ./reuseconflicthandler.pm -t -i -m 1 -c '2; 1 2+2 3-5;'
 
 =head1 SEE ALSO
 

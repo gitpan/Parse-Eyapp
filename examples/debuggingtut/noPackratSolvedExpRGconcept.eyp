@@ -2,29 +2,23 @@
 %token OP  = /([-+*\/])/
 
 %{
-
 my $nxs = 0;
-my $nxr = 0;
 %}
 
 %conflict isInTheMiddle {
 
   $nxs++;
 
-  if ($nxs == $nxr+1) { 
+  if ($nxs == $self->YYVal('ExpList')) { 
     print "Reducing by :MIDx\n";
-    $self->YYSetReduce(['NUM',], ':MIDx' );
+    $self->YYSetReduce(':MIDx' );
     
-    $nxr = $nxs = 0; 
+    $nxs = 0; 
   }
-  else { $self->YYSetShift('NUM') } 
+  else { $self->YYSetShift() } 
 }  
 
-%explorer isInTheMiddle {
-   ($nxr) = $self->YYPreParse('ExpList'); 
-   $nxr = int ($nxr/2);
-   print "Number of x's = $nxr\n";
-}
+%explorer isInTheMiddle 'ExpList'
 
 %%
 

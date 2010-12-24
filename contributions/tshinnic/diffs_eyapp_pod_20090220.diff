@@ -1,0 +1,515 @@
+--- Eyapp.pod.original	2009-02-15 08:31:02.000000000 -0600
++++ Eyapp.pod	2009-02-20 14:16:20.906250000 -0600
+@@ -20,11 +20,12 @@
+ 
+     %%
+     line:
+-        exp <%name EXPRESION_LIST + ';'>
++        exp <%name EXPRESSION_LIST + ';'>
+           { $_[1] } /* list of expressions separated by ';' */
+     ;
+ 
+-    /* The %name directive defines the name of the class to which the node being built belongs */
++    /* The %name directive defines the name of the 
++       class to which the node being built belongs */
+     exp:
+         %name NUM
+         NUM
+@@ -332,7 +333,7 @@
+ 
+ 
+ 
+-The semantic of C<Eyapp> agrees with the semantic of C<yacc> and C<yapp> for
++The semantics of C<Eyapp> agrees with the semantics of C<yacc> and C<yapp> for
+ all the common constructions. 
+ 
+ 
+@@ -373,7 +374,7 @@
+ L</Syntactic and Semantic tokens>). I<Syntactic tokens> do not produce
+ nodes in the Abstract Syntax Tree.
+ 
+-The examples used along this document can be found in the directory 
++The examples used within this document can be found in the directory 
+ C<examples/eyapplanguageref> accompanying this distribution.
+ 
+ =head2 Parts of an C<eyapp> Program
+@@ -396,7 +397,7 @@
+ There are different kinds of declarations. 
+ 
+ This reference does not 
+-fully describes all the declarations that are shared with C<yacc> and 
++fully describe all the declarations that are shared with C<yacc> and 
+ L<yapp>. 
+ 
+ =head2 Example of Head Section
+@@ -476,14 +477,14 @@
+ =head2 Expect
+ 
+ The C<%expect #NUMBER> directive works as in C<bison> 
+-and  suppress warnings when the number of Shift/Reduce
++and  suppresses warnings when the number of Shift/Reduce
+ conflicts is exactly C<#NUMBER>. See section 
+ L</Solving Ambiguities and Conflicts> to know more
+ about Shift/Reduce conflicts.
+ 
+ =head2 Type and Union
+ 
+-C oriented declarations like C<%type> and C<%union> are
++C-specific declarations like C<%type> and C<%union> are
+ parsed but ignored.
+ 
+ =head2 The C<%strict> Directive
+@@ -504,7 +505,7 @@
+   Warning! Non declared token NUM at line 3 of bugyapp2.eyp
+ 
+ 
+-To keep silent the compiler declare all tokens using
++To keep the compiler silent declare all tokens using
+ one of the token declaration directives (C<%token>, C<%left>, etc.)
+ 
+   pl@nereida:~/LEyapp/examples/eyapplanguageref$ cat -n bugyapp3.eyp
+@@ -559,7 +560,7 @@
+ 
+ This directive influences the generation of the LALR tables.
+ They will not be compacted and the tokens
+-for the C<DEFAULT> reduction will be explictly set.
++for the C<DEFAULT> reduction will be explicitly set.
+ It can be used to produce an C<.output> file (option C<-v>)
+ with more information.
+ 
+@@ -619,18 +620,18 @@
+ 
+                     A -> X_1 X_2 ... X_n { Perl Code }
+ 
+-Such
++Such a 
+ semantic action is nothing but Perl code that will be treated 
+ as an anonymous subroutine.  The semantic action associated 
+ with production rule C<A -E<gt> X_1 X_2 ... X_n>  is executed
+ after any actions associated with the subtrees of C<X_1>,
+ C<X_2>, ..., C<X_n>.
+ C<Eyapp> parsers build the syntax tree using a left-right
+-bottom-up traverse of the syntax tree. Each times
++bottom-up traverse of the syntax tree. Each time
+ the Parser visits the node associated with the 
+ production C<A -E<gt> X_1 X_2 ... X_n>
+ the associated semantic action is called. 
+-Asociated with each symbol
++Associated with each symbol
+ of a L<Parse::Eyapp> grammar there is a scalar I<Semantic Value>
+ or I<Attribute>. The semantic values of terminals are provided
+ by the lexical analyzer. In the calculator example
+@@ -659,7 +660,7 @@
+ =item * 
+ 
+ C<$_[0]> is the parser object itself.
+-Having C<$_[0]> beeing the parser object itself allows you to call
++Having C<$_[0]> being the parser object itself allows you to call
+ parser methods. Most C<yacc> macros have been converted into
+ parser methods. See section L<Parse::Eyapp/METHODS AVAILABLE IN THE GENERATED CLASS>.
+ 
+@@ -703,7 +704,7 @@
+  ;
+  %%
+ 
+-The auxiliar syntactic variables are named C<@#position-#order> where C<#position>
++The auxiliary syntactic variables are named C<@#position-#order> where C<#position>
+ is the position of the action in the rhs and C<order> is an ordinal number. See
+ the C<.output> file for the former example:
+ 
+@@ -720,7 +721,7 @@
+ 
+ =head2 Example of Body Section
+ 
+-Following with the calculator example, the body is:
++Continuing with the calculator example, the body is:
+ 
+  pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '12,48p' Calc.eyp | cat -n
+   1  start:
+@@ -813,7 +814,7 @@
+                             exp - NUM.- NUM # reduce exp: NUM
+                             exp - exp.- NUM # shift/reduce conflict
+ 
+-up this point two different decisions can be taken: the next description can be
++At this point two different decisions can be taken: the next description can be
+ 
+                                   exp.- NUM # reduce by exp: exp '-' exp (rule 2)
+ 
+@@ -825,7 +826,7 @@
+ 
+ That is also the reason for the precedence declarations in the 
+ head section. Another kind of conflicts are I<reduce-reduce conflicts>.
+-They arise when more that rhs can be applied for a reduction
++They arise when more than one rhs can be applied for a reduction
+ action.
+ 
+ Eyapp solves the conflicts applying the following rules:
+@@ -872,7 +873,7 @@
+ 
+ =over
+ 
+-=item 1. Edit the C<.output> file
++=item 1. View the C<.output> file
+ 
+ =item 2. Search for the state where the conflict between the production and the token
+ is. In our example it looks like:
+@@ -960,8 +961,8 @@
+ 
+ The fact that is a method of the parser object means that 
+ the parser
+-methods are accesible inside the lexical analyzer.
+-Specially interesting is the C<$_[0]-E<gt>YYData> 
++methods are accessible inside the lexical analyzer.
++Particularly interesting is the C<$_[0]-E<gt>YYData> 
+ method which provides access to the user data area.
+ 
+ I<When the lexical analyzer reaches the end of input, it must return the
+@@ -1165,8 +1166,8 @@
+     5:      S -> PLUS-1 PLUS-2
+ 
+ 
+-  By default, the semantic action associated with a C<+> returns the lists of attributes
+-  to which the C<+> applies:
++By default, the semantic action associated with a C<+> returns the lists of attributes
++to which the C<+> applies:
+ 
+   examples/eyapplanguageref$ use_list3.pl
+   ccdd
+@@ -1208,10 +1209,10 @@
+ are skipped.
+ 
+ When executing the example above but under the C<%tree> directive
+-the ouput changes:
++the output changes:
+ 
+   examples/eyapplanguageref$ head -3 List3_tree.yp; eyapp List3_tree.yp
+-  # List3.yp
++  # List3_tree.yp
+   %semantic token 'c'
+   %tree
+   examples/eyapplanguageref$ diff List3.yp List3_tree.yp
+@@ -1246,13 +1247,13 @@
+ The node associated with the list of C<d>s is empty since
+ terminal C<d> wasn't declared semantic.
+ 
+-=head2 When Nodes Dissappear from Lists
++=head2 When Nodes Disappear from Lists
+ 
+ When under the influence of the C<%tree> directive
+ the action associated with a list operator
+-is to I<flat> the children in a single list.
++is to I<flatten> the children in a single list.
+ 
+-In the former example, the C<d> nodes don't show up 
++In the previous example, the C<d> nodes don't show up 
+ since C<'d'> is a syntactic token. However, it may happen that changing the status
+ of C<'d'> to semantic will not suffice.
+ 
+@@ -1299,7 +1300,7 @@
+      7  }
+ 
+ 
+-The execution gives an ouput like this:
++The execution gives an output like this:
+ 
+   examples/eyapplanguageref$ eyapp ListWithRefs1.eyp; use_listwithrefs1.pl
+   ccdd
+@@ -1398,11 +1399,11 @@
+ The former solution consisting on writing I<by hand> the code to 
+ build the node may suffice when dealing with a single node.
+ Writing by hand the code to build a node is a cumbersome task.
+-Even worst: though the node built in the former example
++Even worse: though the node built in the former example
+ looks like a C<Parse::Eyapp> node actually isn't. C<Parse::Eyapp> 
+ nodes always inherit from C<Parse::Eyapp::Node> and 
+ consequently have access to the methods in such package.
+-Thefollowing execution using the debugger illustrates the point:
++The following execution using the debugger illustrates the point:
+ 
+   pl@nereida:~/LEyapp/examples$ perl -wd use_listwithrefs.pl
+ 
+@@ -1455,18 +1456,18 @@
+     DB<7>                      
+ 
+ More robust than the former solution of building the node I<by hand>
+-is to use the constructor C<Parse::Eyapp::Node-E<gt>new>:
++is to use the constructor C<Parse::Eyapp::Node-E<gt>new>.
+ The method C<Parse::Eyapp::Node-E<gt>new>
+-is uset to build forests of syntactic trees.
++is used to build forests of syntactic trees.
+ 
+ It receives a  list of terms describing the trees and - optionally -
+ a reference to a subroutine used to set up the attributes
+ of the just created nodes. After the creation 
+ of the trees the sub is called by C<Parse::Eyapp::Node-E<gt>new>
+-with arguments the list of references to the nodes (in the order
++with arguments of the list of references to the nodes (in the order
+ in which they appear in the terms, from left to right).
+ C<Parse::Eyapp::Node-E<gt>new> returns a list of references 
+-to the jsut created nodes. In a scalar context returns a reference to the first of such trees.
++to the just created nodes. In a scalar context it returns a reference to the first of such trees.
+ See an example:
+ 
+   pl@nereida:~/LEyapp/examples$ perl -MParse::Eyapp -MData::Dumper -wde 0
+@@ -1484,7 +1485,7 @@
+   $VAR1 = bless( {'n' => 4,'children' => []}, 'F' );
+ 
+ See the following example in which the nodes associated with C<'d'> are
+-explictly constructed:
++explicitly constructed:
+ 
+   pl@nereida:~/LEyapp/examples$ head -28 ListWithRefs2.eyp| cat -n
+    1  # ListWithRefs2.eyp
+@@ -1612,18 +1613,18 @@
+ a reference to a list with the attributes of the 
+ matching items.
+ 
+-When working -as in the example -
++When working - as in the example -
+ under a tree creation directive it returns
+ a node belonging to a class named C<_STAR_LIST_#number>
+ whose children are the items in the list.
+ The C<#number> is the ordinal number of the production rule
+ as it appears in the C<.output> file. The attributes must be 
+ references or associated with semantic tokens to be included 
+-in the list. Notice -in the execution of the former
++in the list. Notice how - in the execution of the former
+ example  that follows -
+-how the node for C<PAREN-3> has been 
++the node for C<PAREN-3> has been 
+ eliminated from the tree. Parenthesis nodes are - generally -
+-obivated:
++obviated:
+ 
+   pl@nereida:~/LEyapp/examples$ use_csbetweencommansandd.pl
+   c,c,cd
+@@ -1638,7 +1639,7 @@
+   TERMINAL[d]
+ 
+ Notice that the comma (since it is a syntactic token) has 
+-also been supressed.
++also been suppressed.
+ 
+ 
+ =head2 Giving Names to Lists
+@@ -1722,7 +1723,7 @@
+   3:      S -> 'c' OPTIONAL-1
+ 
+ When C<yybuildingtree> is false the associated attribute 
+-is a list that will be empty if CX> does not show up.
++is a list that will be empty if C<X> does not show up.
+ 
+ Under the C<%tree> directive the action creates an C<_OPTIONAL>
+ node:
+@@ -1792,7 +1793,7 @@
+ C<buildingtree> is set via theC<YYBuildingtree> method
+ the semantic action returns a node with children the attributes
+ of the symbols between parenthesis. As usual attributes
+-which aren't references will be skipped from the list of children.
++which aren't references will be dropped from the list of children.
+ See an example:
+ 
+ 
+@@ -1826,13 +1827,13 @@
+ after the opening parenthesis.
+ 
+ The call to C<YYBuildAST> at line 13
+-with argumetns the attributes of the symbols on the right hand side
++with arguments the attributes of the symbols on the right hand side
+ returns the node describing the current production rule.
+ Notice that line 13 can be rewritten as:
+ 
+                     goto &Parse::Eyapp::Driver::YYBuildAST;
+ 
+-At line 18 the node for the rule is explictly created
++At line 18 the node for the rule is explicitly created
+ using C<Parse::Eyapp::Node->new>. The handler passed as second argument
+ is responsible for setting the value of the atribute C<attr>
+ of the just created C<TERMINAL> node.
+@@ -1853,7 +1854,7 @@
+ 
+ the first reduction occurs by the non recursive rule. The execution
+ shows the tree built by the call to
+-C<Parse::Eyapp::Node->new>
++C<Parse::Eyapp::Node-E<gt>new>
+ at line 18.
+ 
+ The execution continues with the reduction or antiderivation by the rule
+@@ -1906,7 +1907,7 @@
+ 
+ Though is a practice to avoid, since it clutters
+ the code, it is certainly permitted to introduce
+-actions between the parenthesis, as in the example below:
++actions inside the parenthesis, as in the example below:
+ 
+   pl@nereida:~/LEyapp/examples$ head -16 ListAndAction.eyp | cat -n
+    1  # ListAndAction.eyp
+@@ -1958,7 +1959,7 @@
+ to the associated attribute using the lexical variable
+ C<$left>. 
+ 
+-The I<dolar notation> C<$A> can be used as an abbreviation
++The I<dollar notation> C<$A> can be used as an abbreviation
+ of C<A.A>. 
+ 
+ =head1 DEFAULT ACTIONS
+@@ -1973,7 +1974,7 @@
+ 
+ =head2 An Example of Default Action: Translator from Infix to Postfix
+ 
+-See an example that translates an infix expression
++Here is an example that translates an infix expression
+ like C<a=b*-3> into a postfix expression like C<a b 3 NEG * = >:
+ 
+  # File Postfix.eyp (See the examples/ directory)
+@@ -2175,7 +2176,7 @@
+      9              exp '-' exp
+     10                {
+     11                  my $self = shift;
+-    12                  $self->YYName('SUBSTRACT'); # rename it
++    12                  $self->YYName('SUBTRACT'); # rename it
+     13                  $self->YYBuildAST(@_); # build the node
+     14                }
+     15          |   %name TIMES
+@@ -2189,7 +2190,7 @@
+ 
+ 
+ When the client program is executed we can see the presence
+-of the C<SUBSTRACT> nodes:
++of the C<SUBTRACT> nodes:
+ 
+   pl@nereida:~/LEyapp/examples$ useyynamedynamic.pl
+   2-b
+@@ -2203,14 +2204,14 @@
+           'attr' => 'b'
+         }, 'VAR' )
+       ]
+-    }, 'SUBSTRACT' )
++    }, 'SUBTRACT' )
+   ];
+ 
+ =head1 GRAMMAR REUSE
+ 
+ =head2 Reusing Grammars Using Inheritance
+ 
+-An method to reuse a grammar is via inheritance. 
++A method to reuse a grammar is via inheritance. 
+ The client inherits the generated parser module and expands it 
+ with methods that inherit or overwrite the actions.
+ Here is an example. Initially we have this Eyapp grammar:
+@@ -2332,7 +2333,7 @@
+     46
+     47  print "$p\n";
+ 
+-The subroutine used as default action in C<NoacInh.eyp> is so useful 
++The subroutine used as the default action in C<NoacInh.eyp> is so useful 
+ that is packed as the L<Parse::Eyapp::Driver> method 
+ C<YYDelegateaction>. 
+ 
+@@ -2497,9 +2498,9 @@
+ builds an anonymous hash blessed in C<someclass>.
+ The hash has an attribute C<children> containing the references
+ to the AST trees associated with the symbols in the right hand
+-side C<X>, C>Y>, etc.
++side C<X>, C<Y>, etc.
+ 
+-If no explict name was given to the production rule,
++If no explicit name was given to the production rule,
+ C<YYBuildAST> blesses the node in the class name resulting 
+ from the concatenation
+ of the left hand side and the production number. The production number
+@@ -2580,7 +2581,7 @@
+                         1:      PLUS-1 -> PLUS-1 ';' exp
+                         2:      PLUS-1 -> exp
+ 
+-and that the name of the class associated with the non empty list is C<_PLUS_LIST>.
++and that the name of the class associated with the non-empty list is C<_PLUS_LIST>.
+ 
+ =head2 C<%tree> Giving Explicit Names
+ 
+@@ -2610,7 +2611,7 @@
+     ;
+ 
+ 
+-we are explictly naming the productions. Thus, all the node instances 
++we are explicitly naming the productions. Thus, all the node instances 
+ corresponding to the production C<exp: VAR '=' exp> will belong to the class C<ASSIGN>. 
+ Now the tree for C<a=2*b> becomes:
+ 
+@@ -2621,16 +2622,16 @@
+   ************
+ 
+ 
+-Observe how the list has been named C<EXPS>. The C<%name> directive prefixes the 
++Observe how the list has been named C<EXPS>. The C<%name> directive goes in front of the 
+ list operator (C<[+*?]>).
+ 
+ =head2 TERMINAL Nodes
+ 
+ Nodes named C<TERMINAL> are built from the tokens provided by the lexical
+-analyzer.  C<Parse::Eyapp> follows the same protocol than L<Parse::Yapp> for
+-communication between the parser and the lexical analyzer: A couple C<($token,
++analyzer.  C<Parse::Eyapp> follows the same protocol as L<Parse::Yapp> for
++communication between the parser and the lexical analyzer: A value pair C<($token,
+ $attribute)> is returned by the lexical analyzer.  These values are stored
+-under the keys C<token> and C<attr>.  C<TERMINAL> nodes as all
++under the keys C<token> and C<attr>.  C<TERMINAL> nodes like all
+ C<Parse::Eyapp::Node> nodes also have the attribute C<children> but is - almost
+ always - empty.
+ 
+@@ -2647,7 +2648,7 @@
+ these explicit actions. In this example the programmer has decided to simplify the 
+ syntax tree: the nodes associated with the parenthesis are 
+ discarded and the reference to the subtree containing the proper
+-expression is returned. Such manoeuvre is called I<bypassing>.
++expression is returned. Such a manoeuvre is called I<bypassing>.
+ See section L<The  bypass clause and the %no bypass directive>
+ to know more about I<automatic bypassing>
+ 
+@@ -2657,7 +2658,7 @@
+ attributes is just after being built.
+ In such cases the programmer can take I<manual control>
+ building the node with C<YYBuildAST> to 
+-inmediately proceed to decorate it.
++immediately proceed to decorate it.
+ 
+ The following example illustrates the situation (see
+ file C<lib/Simple/Types.eyp> 
+@@ -2680,7 +2681,7 @@
+ 
+ This production rule defines the expression to access an array element 
+ as an identifier followed by
+-a non empty list of binary expressions C< Variable: ID ('[' binary ']')+>. 
++a non-empty list of binary expressions C< Variable: ID ('[' binary ']')+>. 
+ Furthermore, the node corresponding
+ to the list of indices has been named C<INDEXSPEC>. 
+ 
+@@ -2703,7 +2704,7 @@
+ =head2 Returning non References Under C<%tree>
+ 
+ When a I<explicit user action returns s.t. that is not a reference
+-no node will be inserted>. This fact can be used to supress nodes
++no node will be inserted>. This fact can be used to suppress nodes
+ in the AST being built. See the following example (file C<examples/returnnonode.yp>):
+ 
+   $ sed -ne '1,17p' returnnonode.yp | cat -n
+@@ -3157,7 +3158,7 @@
+ methods.
+ There are occasions however where access by name to the children may be preferable.
+ The use of the C<alias> clause with the C<%tree> directive creates accessors
+-to the children with names specified by the programmer. The I<dot and dolar notations>
++to the children with names specified by the programmer. The I<dot and dollar notations>
+ are used for this. When dealing with a production like:
+   
+                        A: 
+@@ -3401,8 +3402,8 @@
+ =head1 NAMING SCHEMES
+ 
+ 
+-Explict names can be given to grammar productions
+-via the C<%name> directive. An alternative to explictly gave 
++Explicit names can be given to grammar productions
++via the C<%name> directive. An alternative to explicitly giving
+ names to rules is to define a I<naming scheme> via the Eyapp directive
+ C<%namingscheme>.
+ 

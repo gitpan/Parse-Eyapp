@@ -1,0 +1,29 @@
+# file etc/etsiistation
+# Execute:
+# source etc/etsiistation
+# Edit this file and change it 
+# to whatever is more convenient in your platform
+
+
+# Use default Perl for this project
+source $HOME/bin/setperl5lib
+# To find Math::Calc 
+CP=`pwd`
+export PERL5LIB=${CP}/lib:${PERL5LIB}
+#
+# To find scripts
+export PATH=${CP}/scripts:${PATH}
+export MANPATH=${CP}/blib${MANPATH}
+
+# Used by some SKIP tests
+export DEVELOPER=casiano
+
+export REMOTEMACHINES=millo
+
+eyapp -m Math::Calc -o lib/Math/Calc.pm lib/Math/Calc.eyp 
+
+# svn 
+# default commit message
+export M='working in ETSII'
+
+export SVNR=https://parse-eyapp.googlecode.com/svn/trunk/examples/Calculator

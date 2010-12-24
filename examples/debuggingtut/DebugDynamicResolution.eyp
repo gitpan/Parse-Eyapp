@@ -28,16 +28,11 @@ It will output s.t. like C<PROG(D(TERMINAL[D],D[D]),SS(TERMINAL[S],S[S]))>
 
 %token D S
 
-%lexer {
-    /\G(\s+)/gc;
-    return ($1,$1) if /\G(.)/gc;
-}
-
 %conflict LAST_OR_MORE {
-  /(?=\G\s*;\s*S)/ ?  $self->YYSetReduce(';', 'D:LAST' ) :  $self->YYSetShift(';') 
+  /(?=\G\s*;\s*S)/ ?  $self->YYSetReduce( 'D:LAST' ) :  $self->YYSetShift() 
 }
 
-%tree bypass
+%tree 
 
 %%
 p:

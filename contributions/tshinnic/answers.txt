@@ -1,0 +1,96 @@
+
+> =head2 Example of Head Section
+>   pl@nereida:~/src/perl/YappWithDefaultAction/examples$ sed -ne '1,11p' Calc.eyp | cat -n
+> 
+> Is there a reason you show the command lines you used to display the code?
+> It seems to confuse me, and people might wonder if it is "important to know"?
+> Could you just show the code and not the commands?
+
+  The reason is I have a very weak memory. The line stands there not because of
+the command but because of the directory. This way I know that I was working in
+machine "nereida" with login "pl" in that directory. Though I use subversion
+and you can argue it is enough, I have sometimes difficulties remembering where
+some files are.
+
+
+> =head2 The C<%prefix> Directive
+> I am unsure, is this only useful under %tree mode?
+
+Almost. But see  the section "Grammar Reuse" in "Parse::Eyapp::defaultactionsintro" 
+
+               http://search.cpan.org/~casiano/Parse-Eyapp/lib/Parse/Eyapp/defaultactionsintro.pod#Grammar_Reuse
+
+for an example where it is used without the "%tree" directive being involved.
+
+> =head2 Syntactic and Semantic Tokens
+> =head2 Syntactic and Semantic tokens
+> Wow, this pod worked !?!  Two different sections, with names almost the same?
+
+Thanks. Changed the first to:
+
+=head2 Tokens and the Abstract Syntax Tree
+
+
+> =head2 Rules
+>       A syntactic variable cannot appear more than once as a rule name 
+>       (This differs from yacc).
+> So I can't do 
+>     thing: foo bar ;
+>     thing: foo baz ;
+> Is that right?
+
+Right
+
+
+> =head2 Example of Body Section
+> This example does not uses any of the Eyapp extensions (with the exception of the
+> I<star list> at line 5) and the dot and dollar notations.
+> 
+> Did you mean ...
+>     This example does not uses any of the Eyapp extensions
+>     (with the exception of the I<star list> at line 5
+>     and the dot and dollar notations).
+> Are the "dot and dollar notations" extensions?
+
+Yes. They do not appear in yacc or yapp.
+
+
+> Should that be 'token' ?
+
+yes
+
+> =head2 The C<+> operator
+>     Observe that, in spite of C<'d'> being a syntactic token
+>     the action related with the C<d+> element creates 
+>     the list of C<d>s.
+
+  examples/eyapplanguageref$ eyapp -v List3.yp | head -9 List3.output
+  Rules:
+  ------
+  0:      $start -> S $end
+    1:      PLUS-1 -> PLUS-1 'c'
+    2:      PLUS-1 -> 'c'
+    3:      PLUS-2 -> PLUS-2 'd'
+    4:      PLUS-2 -> 'd'
+    5:      S -> PLUS-1 PLUS-2
+
+
+  By default, the semantic action associated with a C<+> returns the lists of attributes
+  to which the C<+> applies:
+
+  examples/eyapplanguageref$ use_list3.pl
+  ccdd
+  $VAR1 = [
+            'c',
+            'c'
+          ];
+  $VAR1 = [
+            'd',
+            'd'
+          ];
+
+Observe that, in spite of C<'d'> being a syntactic token
+the actions related with the C<d+> element (i.e. the actions associated
+with the C<PLUS-2> productions) create
+the list of C<d>s.
+

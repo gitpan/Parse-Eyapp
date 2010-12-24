@@ -1,0 +1,26 @@
+Do you think a switch to Parse::Eyapp would be possible, that makes it
+pass the generated hash to Moose's new instead of blessing it?
+
+Eg.
+  bless $hash, $class;
+to
+  $class->new($hash);
+
+Blessing a hashref to a moose-class "works", but it could lead to
+surprises later, when you extend the class.  The new would catch
+those.
+
+############################################################
+
+Or
+
+use Parse::Eyapp qw/use_new/;
+
+############################################################
+
+
+In retrospect, it would be best if the use_new mode tested for
+can('new') before calling it, falling back on bless.  That way we
+don't HAVE to code every node into a proper class :-)
+
+####################

@@ -6,31 +6,29 @@ but the (default) naming scheme is set explictly.
 
 Compile it with:
 
+  $ eyapp -C explicit_default_naming_scheme.eyp 
 
 to run it, write:
 
- $ ./explicit_default_naming_scheme.pm -t -c '*a=b'
+ $ ./explicit_default_naming_scheme.pm -t -i -c '*a=b'
 
 
 It will produce the same output than C<default_naming_scheme.eyp>:
 
-  s_1(l_3(TERMINAL,r_5(l_4(TERMINAL))),TERMINAL,r_5(l_4(TERMINAL)))
+  s_1(l_3(TERMINAL,r_5(l_4(TERMINAL[a]))),TERMINAL,r_5(l_4(TERMINAL[b]))
 
 =cut
 %}
 %strict
-%token VAR ASSIGN POINTER
+
+%token ASSIGN  = /=/
+%token POINTER = /\*/
+%token NUM = /([0-9]+(?:\.[0-9]+)?)/
+%token VAR = /([A-Za-z][A-Za-z0-9_]*)/
+
 
 %namingscheme { \&give_default_name; }
 %tree
-
-%{
-use base q{Tail};
-Tail->set_lexemename(
-  '=' => 'ASSIGN',
-  '*' => 'POINTER',
-);
-%}
 
 %%
 s:
@@ -48,8 +46,4 @@ r:
 ;
 
 %%
-
-__PACKAGE__->lexer(\&Tail::lex);
-
-__PACKAGE__->main unless caller;
 
