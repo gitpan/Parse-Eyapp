@@ -1,5 +1,59 @@
 Revision history for Perl extension Eyapp.
+1.177
+  * Added syntax %token = %/regexp/ meaning a contextual token. One that is returned 
+    only if expected by the syntax anañyzer. 
+
+            %token then = %/(then)\b/
+            %token if   = %/(if)(?!\s*=)/
+            %token ID   = /([a-zA-Z_]\w*)/
+
+    See grammar t/PL_I_conflictContextualTokens.eyp
+
+  * Provided syntax:
+                  %dummy token TUTU
+    Meaning that the token will never be  emited by the lexical generator. 
+    See t/dummytoken.eyp
+            %syntactic token IF        = /(?i:if)/
+            %syntactic token ELSE      = /(?i:else)/
+            %syntactic token THEN      = /(?i:then)/
+            %token EXPR      = /(?i:(e))/
+            %token OTHERSTMT = /(?i:(o))/
+            %dummy token TUTU
+
+
+  * Added to t/77lexicalanalyzergeneration.t a test that uses t/PL_I_conflictContextualTokens.eyp
+    to check the syntax 
+                        %token X = { code }
+
+                %token then =  { $self->expects('then') and /\Gthen\b/gc     and return ('then', 'then'); }
+                %token if   =  { $self->expects('if')   and /\Gif(?!\s*=)/gc and return ('if', 'if'); }
+                %token ID  = /([a-zA-Z_]\w*)/
+        See t/PL_I_conflictContextualTokens.eyp
+
+  * Provided a higher level API for conflicts that can be solved using nested parsing:
+          Cplusplusnested.eyp:
+              %conflict decORexp decl? ID:DEC : ID:EXP
+
+              It means: Check for nested parser "decl" if success, reduce by 'ID:DEC', otherwise
+              reduce by 'ID:EXP'
+          pascalnestedeyapp3_6.eyp:
+              %conflict rORe range? ID:RANGE : ID:ENUM
+          DebugDynamicResolution4.eyp:
+              %conflict LD lastD? D:LAST : shift
+
+              It means: Check for nested parser "lastD" if success, reduce by 'D:LAST', otherwise
+              shift
+
+  * YYSetReduce can work without specifying the token set
+  * YYSetShift can work without specifying the token set
 1.176
+  * A shift-reduce conflict example solved with 'pure' PPCR in DebugdynamicResolution4.eyp
+  * %conflict C symbol? prod : prod
+      - symbol is no necessarily a symbol of the grammar
+
+      - VIEWPOINT in the body, i.e. symbol? must be optional. 
+      In such case the nested parsing is made inside the conflict solver
+      See lastD.eyp and DebugDynamicResolution4
   * Tests in t/88explorer.t for the new %explorer and %conflict syntax!
        - DebugDynamicResolution.eyp
        - dynamicgrammar1.eyp

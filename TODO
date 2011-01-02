@@ -1,11 +1,4 @@
   * Luis: test everything related  with conflict resolution
-  * Need a shift-reduce conflict example solved with 'pure' PPCR
-  * %conflict C symbol? prod : prod
-      - symbol? no necessarily a symbol of the grammar
-
-      - VIEWPOINT in the body, i.e. symbol? must be optional. 
-      In such case the nested parsing is made inside the conflict solver
-      See lastD.eyp and DebugDynamicResolution4
 
   * Trying to supress the generation of conflict rules when there is no conflict (during nested
     auxiliary compilation). Count the number of appearances of %PREC conflict . If it is greater
@@ -32,33 +25,6 @@
       * estudiar e introducir comparaciones
       * insistir en que esta implementado y "verificado": describir implementación
 
-  * Provide a higher level API for conflicts that can be solved using nested parsing:
-      - %conflict conflictname somesymbol
-         Los tokens en conflicto se pueden deducir, las reglas estan ya anotadas con el PREC,
-         incluso creo que se puede deducir cual de las reglas es la que hay que aplicar 
-         en términos del valor retornado
-         por el parsing anidado. Habría que seguir marcando el punto de exploracion:
-
-        %conflict rangeORenum range
-
-        %%
-
-        type_decl : 'type' ID '=' type ';' 
-        ;
-
-        type : 
-              %name ENUM
-              %rangeORenum? '(' id_list ')' 
-            | %name RANGE
-              %rangeORenum? range
-        ;
-
-        range:
-               expr '..' expr
-        ;
-     SUBGOALS:
-        -- YYSetReduce can work without specifying the token set
-        -- YYSetShift can work without specifying the token set
 
   * Otra API de mas alto nivel sería el caso regexp
           %conflict conflictname /regexp/ ruleName

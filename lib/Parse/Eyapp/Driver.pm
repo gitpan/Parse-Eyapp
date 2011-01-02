@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.176";
+$VERSION = "1.177";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 

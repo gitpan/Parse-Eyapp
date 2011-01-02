@@ -615,6 +615,7 @@ sub _ReduceGrammar {
                    INCREMENTAL       => $values->{INCREMENTAL},       # true if '%incremental lexer' was used
                    MODULINO          => $values->{MODULINO},          # hash perlpath => path, prompt => question
                    STRICT            => $values->{STRICT},            # true if %stric
+                   DUMMY             => $values->{DUMMY},             # array ref 
                    TOKENNAMES     => {},                              # for naming schemes
                  }, __PACKAGE__;
 

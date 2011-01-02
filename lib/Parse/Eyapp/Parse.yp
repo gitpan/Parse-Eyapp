@@ -35,7 +35,8 @@ my $rules;
 my $precterm; # hash ref. key token used in %prec. value: priority
 my $start;
 my $nullable;
-my $semantic;
+my $semantic; # hash ref. Keys are the tokens. Value: 0 = syntactic 1 = semantic
+my $dummy = []; # array ref. the dummy tokens
 
 my ($expect);
 my $namingscheme;
@@ -446,6 +447,19 @@ decl:  '\n'                 #default action
                 }
                 undef
             }
+    |   DUMMY typedecl toklist '\n'
+            {
+                for (@{$_[3]}) {
+                    my($symbol,$lineno, $def)=@$_;
+
+                    $$token{$symbol}=$lineno;
+                    $$term{$symbol} = [ ];
+                    $$semantic{$symbol} = 0;
+                    push @$dummy, $symbol;
+                    $$termdef{$symbol} = $def if $def;
+                }
+                undef
+            }
     |   TOKEN typedecl toklist '\n'
             {
                 for (@{$_[3]}) {
@@ -708,9 +722,14 @@ toklist:    toklist tokendef        { push(@{$_[1]},$_[2]); $_[1] }
     |       tokendef                { [ $_[1] ] }
 ;
 
-tokendef:   ident '=' REGEXP    { 
+tokendef:   ident '=' REGEXP     { 
                                     push @{$_[3]}, 'REGEXP';
                                     push @{$_[1]}, $_[3]; 
+                                    $_[1] 
+                                 } 
+    |       ident '=' '%' REGEXP { 
+                                    push @{$_[4]}, 'CONTEXTUAL_REGEXP';
+                                    push @{$_[1]}, $_[4]; 
                                     $_[1] 
                                  } 
     |       ident '=' CODE      { 
@@ -1243,7 +1262,7 @@ sub _Lexer {
           return('TREE',[ $treeoptions, $lineno[0] ])
         };
 
-        $$input=~/\G%(?:(semantic|syntactic)(?:\s+token)?)\b/gc and return(uc($1),[ undef, $lineno[0] ]);
+        $$input=~/\G%(?:(semantic|syntactic|dummy)(?:\s+token)?)\b/gc and return(uc($1),[ undef, $lineno[0] ]);
 
         $$input=~/\G%(?:(incremental)(?:\s+lexer)?)\b/gc and return(uc($1),[ undef, $lineno[0] ]);
 
@@ -1488,6 +1507,7 @@ sub Parse {
               'LEXERISDEFINED',
               'INCREMENTAL',
               'STRICT',
+              'DUMMY',
             }
     =       (  $head,  $tail,  $rules,  $nterm,  $term,
                $nullable, $precterm, $syms, $start, $expect, 
@@ -1501,6 +1521,7 @@ sub Parse {
                $lexer,
                $incremental,
                $strict,
+               $dummy,
             );
 
     undef($input);
