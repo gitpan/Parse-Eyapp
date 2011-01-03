@@ -122,6 +122,38 @@ EORT
       \$self->expects('$t') and ${reg}gc and return ('$t', \$1);
 EORT
     }
+    elsif ($termdef{$t}[2] eq 'CONTEXTUAL_REGEXP_MATCH') {
+      my $reg = $termdef{$t}[0];
+      my $parser = $termdef{$t}[3][0];
+      $reg =~ s{^/}{/\\G}; # add \G at the begining of the regexp
+      $DEFINEDTOKENS .= << "EORT";
+      my \$pos = pos();
+      if (${reg}gc) { 
+        if (\$self->expects('$t')) {   
+           if (\$self->YYPreParse('$parser')) {
+             return ('$t', \$1); 
+           }
+        }
+      }
+      pos(\$_) = \$pos;
+EORT
+    }
+    elsif ($termdef{$t}[2] eq 'CONTEXTUAL_REGEXP_NOMATCH') {
+      my $reg = $termdef{$t}[0];
+      my $parser = $termdef{$t}[3][0];
+      $reg =~ s{^/}{/\\G}; # add \G at the begining of the regexp
+      $DEFINEDTOKENS .= << "EORT";
+      my \$pos = pos();
+      if (${reg}gc) { 
+        if (\$self->expects('$t')) {   
+           if (!\$self->YYPreParse('$parser')) {
+             return ('$t', \$1); 
+           }
+        }
+      }
+      pos(\$_) = \$pos;
+EORT
+    }
     elsif ($termdef{$t}[2] eq 'LITERAL') { # %token without regexp or code definition
       my $reg = $termdef{$t}[0];
       $reg =~ s{^'?}{};   # $reg =~ s{^'?}{/\\G(};

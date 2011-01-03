@@ -1,5 +1,9 @@
 Revision history for Perl extension Eyapp.
 1.177
+  * "Contextual tokens" syntax with nested parsing introduced:
+      - %token if   = %/(if)(?!\s*=)/
+      - %token if   = %/(if)\b/ !Assign2
+
   * Added syntax %token = %/regexp/ meaning a contextual token. One that is returned 
     only if expected by the syntax anañyzer. 
 

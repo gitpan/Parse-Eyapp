@@ -1,10 +1,13 @@
 #!/usr/bin/perl -w
 use strict;
-my ($nt, $nt2, $nt3, $nt4, $nt5, $nt6);
+my ($nt, $nt2, $nt3, $nt4, $nt5, $nt6, $nt7, $nt8, $nt9);
 
 BEGIN { $nt = 8; $nt2 = 7; $nt3 = 11; $nt4 = 7; $nt5 = 7; $nt6 = 6;
+  $nt7 = 7;
+  $nt8 = 7;
+  $nt9 = 9;
 }
-use Test::More tests=> $nt+$nt2+$nt3+$nt4+$nt5+$nt6;
+use Test::More tests=> $nt+$nt2+$nt3+$nt4+$nt5+$nt6+$nt7+$nt8+$nt9;
 
 # test PPCR methodology with Pascal range versus enumerated conflict
 SKIP: {
@@ -418,7 +421,7 @@ PROG(PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],ID[x]),NUM[2])),DECL(TERMINAL[int],ID
 
 }
 
-# testing PPCR with Cdynamic.eyp
+# testing PPCR with dynamic.eyp
 SKIP: {
   skip "t/dynamic.eyp not found", $nt6 unless ($ENV{DEVELOPER} 
                                                         && -r "t/dynamic.eyp"
@@ -459,5 +462,156 @@ SKIP: {
   like($r, $expected,'AST for "int (x) + 2; int (z) = 4;"');
 
   unlink 't/ppcr.pl';
+
+}
+
+SKIP: {
+  skip "t/DebugDynamicResolution4.eyp not found", $nt7 unless ($ENV{DEVELOPER} 
+                                                        && -r "t/DebugDynamicResolution4.eyp"
+                                                        && -r "t/lastD.eyp" 
+                                                        && -x "./eyapp");
+
+  unlink 't/ppcr.pl';
+
+  my $r = system(q{perl -I./lib/ eyapp  -Po t/lastD.pm t/lastD.eyp});
+  ok(!$r, "Auxiliary grammar lastD.eyp compiled witn -P option");
+
+  $r = system(q{perl -I./lib/ eyapp -C -o t/ppcr.pl t/DebugDynamicResolution4.eyp 2> t/err});
+  ok(!$r, "t/DebugDynamicResolution4.eyp grammar compiled");
+  like(qx{cat t/err},qr{1 shift/reduce conflict},"1 shift-reduce conflict");
+
+  ok(-s "t/ppcr.pl", "modulino ppcr exists");
+
+  ok(-x "t/ppcr.pl", "modulino has execution permits");
+
+  eval {
+
+    $r = qx{perl -Ilib -It t/ppcr.pl -t -i -c 'D; D; S; S ' 2>&1};
+
+  };
+
+  ok(!$@,'t/DebugDynamicResolution4.eyp executed as modulino');
+
+  my $expected = q{
+PROG(D(D),SS(S)
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST for "D; D; S; S "');
+
+  unlink 't/ppcr.pl';
+  unlink 't/lastD.pm';
+
+}
+
+SKIP: {
+  skip "t/CplusplusNested4.eyp not found", $nt8 unless ($ENV{DEVELOPER} 
+                                                        && -r "t/CplusplusNested4.eyp"
+                                                        && -x "./eyapp");
+
+  unlink 't/ppcr.pl';
+
+  my $r = system(q{perl -I./lib/ eyapp  -S decl -Po t/decl.pm t/CplusplusNested4.eyp});
+  ok(!$r, "Auxiliary parser decl.pm generated from t/CplusplusNested4.eyp");
+
+  $r = system(q{perl -I./lib/ eyapp -C -o t/ppcr.pl t/CplusplusNested4.eyp 2> t/err});
+  ok(!$r, "t/CplusplusNested4.eyp grammar compiled");
+  is(qx{cat t/err},'',"no warnings");
+
+  ok(-s "t/ppcr.pl", "modulino ppcr exists");
+
+  ok(-x "t/ppcr.pl", "modulino has execution permits");
+
+  eval {
+
+    $r = qx{perl -Ilib -It t/ppcr.pl -t -i -c 'int (x) + 2; int (z) = 4; ' 2>&1};
+
+  };
+
+  ok(!$@,'t/CplusplusNested4.eyp executed as modulino');
+
+  my $expected = q{
+PROG(PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],ID[x]),NUM[2])),DECL(TERMINAL[int],ID[z],NUM[4])
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST for "int (x) + 2; int (z) = 4; "');
+
+  unlink 't/ppcr.pl';
+  unlink 't/decl.pm';
+
+}
+
+SKIP: {
+  skip "t/pascalnestedeyapp3_6.eyp not found", $nt9 unless ($ENV{DEVELOPER} 
+                                                        && -r "t/pascalnestedeyapp3_6.eyp"
+                                                        && -x "./eyapp");
+
+  unlink 't/ppcr.pl';
+
+  my $r = system(q{perl -I./lib/ eyapp  -S range -Po t/range.pm t/pascalnestedeyapp3_6.eyp});
+  ok(!$r, "Auxiliary parser decl.pm generated from t/pascalnestedeyapp3_6.eyp");
+
+  $r = system(q{perl -I./lib/ eyapp -TC -o t/ppcr.pl t/pascalnestedeyapp3_6.eyp 2> t/err});
+  ok(!$r, "t/pascalnestedeyapp3_6.eyp grammar compiled");
+  is(qx{cat t/err},'',"no warnings");
+
+  ok(-s "t/ppcr.pl", "modulino ppcr exists");
+
+  ok(-x "t/ppcr.pl", "modulino has execution permits");
+
+  eval {
+
+    $r = qx{perl -Ilib -It t/ppcr.pl -t -i -c 'type e = (x)..(z);' 2>&1};
+
+  };
+
+  ok(!$@,'t/pascalnestedeyapp3_6.eyp executed as modulino');
+
+  my $expected = q{
+typeDecl_is_type_ID_type(TERMINAL[e],RANGE(range_is_expr_expr(ID(TERMINAL[x]),ID(TERMINAL[z]))))
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST for "type e = (x)..(z);"');
+
+  ###################################################
+  eval {
+
+    $r = qx{perl -Ilib -It t/ppcr.pl -t -i -c 'type e = (x, y, z);' 2>&1};
+
+  };
+
+  ok(!$@,'t/pascalnestedeyapp3_6.eyp executed as modulino');
+
+  $expected = q{
+typeDecl_is_type_ID_type(TERMINAL[e],ENUM(idList_is_idList_ID(idList_is_idList_ID(ID(TERMINAL[x]),TERMINAL[y]),TERMINAL[z]))
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST for "type e = (x, y, z);"');
+
+  unlink 't/ppcr.pl';
+  unlink 't/decl.pm';
 
 }

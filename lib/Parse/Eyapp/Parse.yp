@@ -732,6 +732,18 @@ tokendef:   ident '=' REGEXP     {
                                     push @{$_[1]}, $_[4]; 
                                     $_[1] 
                                  } 
+    |       ident '=' '%' REGEXP '=' IDENT { 
+                                    push @{$_[4]}, 'CONTEXTUAL_REGEXP_MATCH';
+                                    push @{$_[4]}, $_[6];
+                                    push @{$_[1]}, $_[4]; 
+                                    $_[1] 
+                                 } 
+    |       ident '=' '%' REGEXP '!' IDENT { 
+                                    push @{$_[4]}, 'CONTEXTUAL_REGEXP_NOMATCH';
+                                    push @{$_[4]}, $_[6];
+                                    push @{$_[1]}, $_[4]; 
+                                    $_[1] 
+                                 } 
     |       ident '=' CODE      { 
                                     push @{$_[3]}, 'CODE';
                                     push @{$_[1]}, $_[3]; 
