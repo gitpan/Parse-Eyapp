@@ -49,7 +49,7 @@ stmt:
 ;
 
 ifstmt: 
-     %name IF
+    %name IF
     if expr then stmt
 ;
 

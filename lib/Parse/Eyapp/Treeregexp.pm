@@ -1,6 +1,6 @@
 ########################################################################################
 #
-#    This file was generated using Parse::Eyapp version 1.178.
+#    This file was generated using Parse::Eyapp version 1.179.
 #
 # (c) Parse::Yapp Copyright 1998-2001 Francois Desarmenien.
 # (c) Parse::Eyapp Copyright 2006-2008 Casiano Rodriguez-Leon. Universidad de La Laguna.
@@ -243,7 +243,7 @@ sub new {
 
   warn $warnmessage unless __PACKAGE__->isa('Parse::Eyapp::Driver'); 
   my($self)=$class->SUPER::new( 
-    yyversion => '1.178',
+    yyversion => '1.179',
     yyGRAMMAR  =>
 [#[productionNameAndLabel => lhs, [ rhs], bypass]]
   [ '_SUPERSTART' => '$start', [ 'treeregexplist', '$end' ], 0 ],
@@ -1201,6 +1201,7 @@ sub {
    },
     yyconflicthandlers => {}
 ,
+    yystateconflict => {  },
     @_,
   );
   bless($self,$class);

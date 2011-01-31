@@ -38,7 +38,7 @@ S:
 
 x:
      NUM
-  |  x OP NUM
+  |  NUM OP x
 ;
 %%
 

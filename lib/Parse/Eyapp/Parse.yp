@@ -107,7 +107,7 @@ sub symbol_index {
 
   local $_ = 0;
   for my $value (@{$rhs}) {
-    $_++ unless ($value->[0] eq 'CODE') and $metatree;
+    $_++ unless (($value->[0] eq 'CODE') and $metatree) or ($value->[0] eq 'CONFLICTHANDLER');
     my $id = $value->[1][2];
     if (defined($id)) {
         _SyntaxError(
@@ -187,6 +187,7 @@ sub process_production {
   my $position = $#$rules;
   my @newrhs = ();
 
+  my $m = 0;
   for my $s (0..$#$rhs) {
       my($what,$value)=@{$$rhs[$s]};
 
@@ -213,14 +214,16 @@ sub process_production {
           push(@newrhs, $tmplhs);
           next;
       }
-      elsif ($what eq 'CONFLICTHANDLER') {
-        my $ch = $value->[0];
-        push @{$conflict{$ch}{production}{-$position}}, $s; 
-      }
-      elsif ($what eq 'CONFLICTVIEWPOINT') {
-      }
+     elsif ($what eq 'CONFLICTHANDLER') {
+       my $ch = $value->[0];
+       push @{$conflict{$ch}{production}{-$position}}, $m; 
+       next;
+     }
+#     elsif ($what eq 'CONFLICTVIEWPOINT') {
+#     }
       
       push(@newrhs, $$value[0]);
+      $m++;
   }
   return \@newrhs;
 }
@@ -307,8 +310,8 @@ CONFLICT_EXPLORER
               $conflict{$cn}{explorerline} = $line;
 
               # TODO: error control. Factorize!!!!!
-              $$syms{$cn.'_explorer'} = $line;
-              $$nterm{$cn.'_explorer'} = undef;
+              $$syms{$cn} = $line;
+              $$nterm{$cn} = undef;
 
               undef;
             }
@@ -396,6 +399,15 @@ prodname:  IDENT
 
 # Head section:
 head: headsec '%%'
+;
+
+perlident:  
+          IDENT 
+      |   perlident '::' IDENT
+            {
+              $_[1][0] .= "::".$_[3][0];
+              $_[1];
+            }
 ;
 
 headsec:    #empty  #default action
@@ -615,12 +627,12 @@ CONFLICT_HEADER
               $conflict{$cn}{line} = $line;
 
               $$syms{$cn} = $line;
-              $$nterm{$cn} = undef;
+              #$$nterm{$cn} = undef;
 
               undef;
             }
         # conflict syntacticvariable?  prodname : prodname
-    |   CONFLICT ident IDENT '?' prodname ':' prodname '\n'
+    |   CONFLICT ident perlident '?' prodname ':' prodname '\n'
             {
               #print "<@{$_[2]} @{$_[3]} @{$_[5]} @{$_[7]}>\n";
             
@@ -649,8 +661,56 @@ CONFLICT_HEADER
               #delete $$syms{$startsymbol};
 
 
+              if ($startsymbol eq 'EMPTY') {
+              $c = <<"NESTEDPARSING";
+{ \$self->YYIs('EMPTY', 1); }
+NESTEDPARSING
+              }
+              else {
               $c = <<"NESTEDPARSING";
 { \$self->YYNestedParse('$startsymbol'); }
+NESTEDPARSING
+              }
+
+              explorer_handler($conflict, [$c, $line]);
+
+              undef;
+            }
+    |   CONFLICT ident neg REGEXP '?' prodname ':' prodname '\n'
+            {
+            
+              my $conflict = $_[2];
+              my $neg = $_[3];
+              my ($regexp, $line) = @{$_[4]};
+              my @prodname = ($_[6][0], $_[8][0]);
+
+              my $cn = $conflict->[0];
+
+              my $c = <<"CONFLICT_HEADER";
+  my \$self = \$_[0];
+  for (\${\$self->input()}) {  
+#line $line "$filename" 
+    \$self->YYIf('.regexp', '$prodname[0]', '$prodname[1]');
+################ @@@@@@@@@ End of User Code @@@@@@@@@ ###################
+  }
+CONFLICT_HEADER
+
+              $conflict{$cn}{codeh} = $c;
+              $conflict{$cn}{line} = $line;
+
+              $$syms{$cn} = $line;
+              $$nterm{$cn} = undef;
+              $regexp = substr($regexp,1,-1);
+
+              if (!$neg) {
+                $regexp = "\\G(?=$regexp)"; 
+              }
+              else {
+                $regexp = "\\G(?!$regexp)"; 
+              }
+
+              $c = <<"NESTEDPARSING";
+{ \$self->YYNestedRegexp('$regexp'); }
 NESTEDPARSING
 
               explorer_handler($conflict, [$c, $line]);
@@ -675,7 +735,7 @@ NESTEDPARSING
 
               explorer_handler($name, [$c, $li]);
             }
-    |   EXPLORER ident ident '\n' # research testing: copy paste: factorize!
+    |   EXPLORER ident perlident '\n' # research testing: copy paste: factorize!
             {
               my ($name, $startsymbol) = @_[2,3];
 
@@ -686,7 +746,7 @@ NESTEDPARSING
 
               explorer_handler($name, [$c, $li]);
             }
-    |   EXPLORER ident ident LITERAL '\n' # research testing: copy paste: factorize!
+    |   EXPLORER ident perlident LITERAL '\n' # research testing: copy paste: factorize!
             {
               my ($name, $startsymbol, $file) = @_[2,4];
 
@@ -710,6 +770,10 @@ NESTEDPARSING
     |   error '\n'                     { $_[0]->YYErrok }
 ;    
 
+neg:
+      /* empty */ {}
+    | '!'         { 1; }
+;
 typedecl:   #empty
     |       '<' IDENT '>'
 ;
@@ -773,27 +837,28 @@ body:
             # Add conflict handlers
             # [ left hand side,   right hand side,  precedence, rulename, code, ]
             for my $A (keys %conflict) { 
-              my $lhs = [$A, $conflict{$A}{line}];
-              my $code = $conflict{$A}{codeh};
 
-              if  (defined($conflict{$A}{explorer}) and !$conflict{$A}{totalviewpoint}) {
-                  $code = "{ $conflict{$A}{explorer} }\n{ $code }";
-                  my $expname = $A.'_explorer';
-                  delete $$syms{$expname};
-                  delete $$nterm{$expname};
-                  delete $conflict{$A}{explorer};
+              if  (defined($conflict{$A}{explorer}))  {
+                  if (!$conflict{$A}{totalviewpoint}) {
+                      my $code = $conflict{$A}{codeh};
+                      $conflict{$A}{codeh} = "{ $conflict{$A}{explorer} }\n{ $code }";
+                      delete $$syms{$A};
+                      delete $$nterm{$A};
+                      delete $$term{$A};
+                      delete $conflict{$A}{explorer};
+                  }
+                  else {
+                    my $lhs = [$A, $conflict{$A}{explorerline}];
+                    my $code = $conflict{$A}{explorer};
+                    my $rhss = [ rhs([], name => $lhs, code => $code), ];
+                    _AddRules($lhs, $rhss);
+                    delete $conflict{$A}{explorer};
+                  }
               }
-
-              my $rhss = [ rhs([], name => $lhs, code => $code), ];
-              _AddRules($lhs, $rhss);
-              delete $conflict{$A}{codeh};
-
-              if (defined($conflict{$A}{explorer}) and ($conflict{$A}{totalviewpoint})) {
-                my $lhs = [$A.'_explorer', $conflict{$A}{explorerline}];
-                my $code = $conflict{$A}{explorer};
-                my $rhss = [ rhs([], name => $lhs, code => $code), ];
-                _AddRules($lhs, $rhss);
-                delete $conflict{$A}{explorer};
+              else {
+                 delete $$syms{$A};
+                 delete $$nterm{$A};
+                 delete $$term{$A};
               }
             }
 
@@ -801,7 +866,7 @@ body:
             if ($strict) {
               for (keys %nondeclared) {
                   warn "Warning! Non declared token $_ at line $$syms{$_} of $filename\n" 
-                unless ($_ eq 'error' || $$term{$_} || exists($$nterm{$_}));
+                unless ($_ eq 'error' || $$term{$_} || exists($$nterm{$_}) || exists($conflict{$_}));
               }
             }
             # Superstart rule
@@ -877,7 +942,7 @@ rhs:    #empty      #default action (will return undef)
 
 rhselts:    rhselts rhseltwithid  
               { 
-                push(@{$_[1]},$_[2]); 
+                push(@{$_[1]},$_[2]);
                 $_[1] 
               }
     |   rhseltwithid              { [ $_[1] ] }
@@ -900,6 +965,9 @@ rhseltwithid :
     | '$' error { _SyntaxError(2,"\$ is allowed for identifiers only",$lineno[0]) }
 
     | rhselt
+       {
+         $_[1];
+       }
 ;
 
 rhselt:     symbol    { [ 'SYMB', $_[1] ] }
@@ -914,7 +982,6 @@ rhselt:     symbol    { [ 'SYMB', $_[1] ] }
     | VIEWPOINT 
         { 
            $conflict{$_[1][0]}{totalviewpoint}++;
-           $_[1][0] .='_explorer';
            [ 'CONFLICTVIEWPOINT', $_[1] ] 
         }
     #************** research *****************#
@@ -1289,6 +1356,8 @@ sub _Lexer {
         $$input=~/\G%($ID)/gc     and return($headertoken{$1},[ undef, $lineno[0] ]);
 
         $$input=~/\G($REGEXP)/gc  and return('REGEXP',[ $1, $lineno[0] ]);
+
+        $$input=~/\G::/gc and return('::',[ undef, $lineno[0] ]);
 
     }
     else {  # In rule section

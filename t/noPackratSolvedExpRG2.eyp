@@ -14,24 +14,24 @@ my $nxs = 0;
 
   warn "nxr = $nxr nxs = $nxs\n";
   if ($nxs == $nxr+1) { 
-    warn "Reducing by :MIDx nxs = $nxs nxr = $nxr\n";
-    $self->YYSetReduce(['NUM', ], ':MIDx' );
+    warn "Reducing by :MIDx nxs = $nxs nxr = $nxr input: '".unexpendedInput()."'\n";
+    $self->YYSetReduce(':MIDx' );
     
     $nxr = $nxs = 0; 
   }
   else { 
-     warn "Shifting\n";
-     $self->YYSetShift(['NUM', ]  ) 
+     warn "Shifting input: '".unexpendedInput()."'\n";
+     $self->YYSetShift() 
      ##$self->YYSetShift(['NUM',]  ) 
   } 
 }
 
 %%
 
-T: preproc S 'other' 'things'
+T: isInTheMiddle S 'other' 'things'
 ;
 
-preproc: /* empty */
+isInTheMiddle: /* empty */
    {
      ($nxr) = $_[0]->YYPreParse('ExpList'); 
      warn "Number of x's = $nxr\n";
@@ -47,7 +47,7 @@ S:
 
 x:
      NUM
-  |  x OP NUM
+  |  NUM OP x
 ;
 %%
 

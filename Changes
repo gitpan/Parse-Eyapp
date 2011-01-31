@@ -1,4 +1,19 @@
 Revision history for Perl extension Eyapp.
+1.179
+  * No syntactic auxiliary variable will be introduced in the %PREC positions. 
+  * Modified the LR parser algorithm:
+  * The arguments for the 'code' handler are the parser itself and the conflict name.
+  * bug in notation x.y and $x related with explorers
+  * two tests with examples/debuggingtut/AmbiguousLanguage2.eyp 
+  * tests for perlident in conflict syntaxes using a parser that is in a different directory than the main parser
+  * tests for syntax:
+                %conflict ToN EMPTY? TYPE:VAR : NAME:VAR
+  * tests for syntax 
+              %conflict decORexp /regexp/? ID:DEC : ID:EXP
+1.178
+  * Syntax:
+                %conflict ToN EMPTY? TYPE:VAR : NAME:VAR
+    see examples/debuggingtut/reducereduceconflictPPCR2.eyp
 1.177
   * "Contextual tokens" syntax with nested parsing introduced:
       - %token if   = %/(if)(?!\s*=)/

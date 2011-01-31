@@ -4,9 +4,9 @@
 
 %conflict rangeORenum {
   if ($is_range) 
-    { $self->YYSetReduce([',', ')'], 'ID:RANGE' ); }
+    { $self->YYSetReduce('ID:RANGE' ); }
   else 
-    { $self->YYSetReduce([',', ')'], 'ID:ENUM' ); }
+    { $self->YYSetReduce('ID:ENUM' ); }
 } 
 
 %explorer rangeORenum { $is_range = $self->YYPreParse('range'); } 
@@ -80,6 +80,7 @@ and option -P to generate a parser that accepts if a prefix of the input matches
 
 Run it with this options:
 
+    $ ./pascalnestedeyapp3.pm -t -i -m 1 -c 'type e = (x) .. (z);'
     $ ./pascalnestedeyapp3.pm -t -i -m 1 -c 'type e = (x, y, z);'
     $ ./pascalnestedeyapp3.pm -t -i -m 1 -c 'type e = (x, @, z);'
 

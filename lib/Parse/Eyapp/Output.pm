@@ -290,7 +290,7 @@ MODULINO
   my $lexerisdefined = $self->Option('lexerisdefined') || $self->{GRAMMAR}{LEXERISDEFINED}; 
   my $defaultLexer = $lexerisdefined ? q{} : $self->makeLexer();
 
-  my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree, $prefix, $conflict_handlers);
+  my($head,$states,$rules,$tail,$driver, $bypass, $accessors, $buildingtree, $prefix, $conflict_handlers, $state_conflict);
   my($version)=$Parse::Eyapp::Driver::VERSION;
   my($datapos);
   my $makenodeclasses = '';
@@ -317,6 +317,7 @@ MODULINO
   $prefix = $self->Prefix;
 
   $conflict_handlers = $self->conflictHandlers;
+  $state_conflict = $self->stateConflict;
 
   $buildingtree = $self->Buildingtree;
   $accessors = $self->Accessors;
@@ -420,6 +421,7 @@ sub new {
     yyprefix       => '<<$prefix>>',
     yyaccessors    => <<$accessors_hash>>,
     yyconflicthandlers => <<$conflict_handlers>>,
+    yystateconflict => <<$state_conflict>>,
     @_,
   );
   bless($self,$class);

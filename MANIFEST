@@ -1,9 +1,5 @@
 Changes
 examples/Calculator/Changes
-examples/Calculator/etc/etsiistation
-examples/Calculator/etc/imac_casiano
-examples/Calculator/etc/nereida
-examples/Calculator/etc/setperl5lib
 examples/Calculator/lib/Math/Calc.eyp
 examples/Calculator/lib/Math/Calc.pod
 examples/Calculator/local.preamble.pl
@@ -16,6 +12,9 @@ examples/Calculator/scripts/witherrors
 examples/Calculator/t/01smoke.t
 examples/Calculator/t/02semanticerrors.t
 examples/Calculator/t/03syntacticerrors.t
+examples/debuggingtut/AmbiguousLanguage.eyp
+examples/debuggingtut/AmbiguousLanguage2.eyp
+examples/debuggingtut/ab.eyp
 examples/debuggingtut/aSb.yp
 examples/debuggingtut/Assign.eyp
 examples/debuggingtut/bugyapp2.eyp
@@ -25,6 +24,7 @@ examples/debuggingtut/confusing.eyp
 examples/debuggingtut/confusingsolveddynamic.eyp
 examples/debuggingtut/confusingsolvedstatic.eyp
 examples/debuggingtut/confusingsolvedstatic2.eyp
+examples/debuggingtut/confusingsolvedppcr.eyp
 examples/debuggingtut/correcttypicalrr.eyp
 examples/debuggingtut/Cplusplus.eyp
 examples/debuggingtut/Cplusplus1.eyp
@@ -36,7 +36,6 @@ examples/debuggingtut/Debug1.eyp
 examples/debuggingtut/Debug2.eyp
 examples/debuggingtut/DebugDynamicResolution.eyp
 examples/debuggingtut/DebugDynamicResolution2.eyp
-examples/debuggingtut/DebugDynamicResolution3.eyp
 examples/debuggingtut/DebugDynamicResolution4.eyp
 examples/debuggingtut/lastD.eyp
 examples/debuggingtut/DebugLookForward.eyp
@@ -82,7 +81,7 @@ examples/debuggingtut/PL_I_conflictNested.eyp
 examples/debuggingtut/PLIConflictNested.eyp
 examples/debuggingtut/PLIConflictNested2.eyp
 examples/debuggingtut/Precedencia.eyp
-examples/debuggingtut/Range.eyp
+#examples/debuggingtut/Range.eyp
 examples/debuggingtut/Range2.eyp
 examples/debuggingtut/reducereduceconflict.eyp
 examples/debuggingtut/reducereduceconflict_fix1.eyp
@@ -145,7 +144,6 @@ examples/eyapplanguageref/bugyapp2.eyp
 examples/eyapplanguageref/bugyapp3.eyp
 examples/eyapplanguageref/bypass.pl
 examples/eyapplanguageref/Calc.eyp
-examples/eyapplanguageref/calc.pl
 examples/eyapplanguageref/CalcUsingTail.eyp
 examples/eyapplanguageref/CalcwithAttributeGrammar.pl
 examples/eyapplanguageref/CsBetweenCommansAndD.eyp
@@ -269,7 +267,6 @@ examples/ParsingStringsAndTrees/doc/images/pdf_logo.jpg
 examples/ParsingStringsAndTrees/doc/latex8.sty
 examples/ParsingStringsAndTrees/doc/lexicalanalysis.tex.lexer
 examples/ParsingStringsAndTrees/doc/makefile
-examples/ParsingStringsAndTrees/doc/src/eyapp
 examples/ParsingStringsAndTrees/doc/src/I2PIR.trg
 examples/ParsingStringsAndTrees/doc/src/Infix.eyp
 examples/ParsingStringsAndTrees/doc/src/infix2pir.pl
@@ -506,9 +503,15 @@ t/PLIConflictNested2.eyp
 t/78twolexers.t
 t/79syntactictokenwithdef.t
 t/80ppcr.t
+t/AmbiguousLanguage2.eyp
+t/ab.eyp
 t/CplusplusNested4.eyp
+t/CplusplusNested5.eyp
 t/DebugDynamicResolution4.eyp
+t/DebugDynamicResolution2.eyp
 t/pascalnestedeyapp3_6.eyp
+t/confusingsolvedppcr.eyp
+t/confusingsolvedppcrnot.eyp
 t/81tokendirectiveandsubstitution.t
 t/82expectandPLI.t
 t/83parsingstringsandtrees.t

@@ -21,7 +21,7 @@ our ( $VERSION, $COMPATIBLE, $FILENAME );
 
 
 # $VERSION is also in Parse/Eyapp.pm
-$VERSION = "1.178";
+$VERSION = "1.179";
 $COMPATIBLE = '0.07';
 $FILENAME   =__FILE__;
 
@@ -42,6 +42,7 @@ my (%params)=(YYLEX => 'CODE', 'YYERROR' => 'CODE', YYVERSION => '',
        YYBUILDINGTREE  => '',
        YYACCESSORS => 'HASH',
        YYCONFLICTHANDLERS => 'HASH',
+       YYSTATECONFLICT => 'HASH',
        YYLABELS => 'HASH',
        ); 
 my (%newparams) = (%params, YYPREFIX => '',);
@@ -427,12 +428,25 @@ sub YYPreParse {
 sub YYNestedParse {
   my $self = shift;
   my $parser = shift;
-  my $conflictName = $self->YYLhs;
-  $conflictName =~ s/_explorer$//;
+  my $conflictName =  shift;
+
+  $conflictName = $self->YYLhs unless $conflictName;
 
   my ($t, $ok) = $self->YYPreParse($parser, @_);
 
   $self->{CONFLICTHANDLERS}{$conflictName}{".".$parser} = [$ok, $t];
+
+  return $ok;
+}
+
+sub YYNestedRegexp {
+  my $self = shift;
+  my $regexp = shift;
+  my $conflictName = $self->YYLhs;
+
+  my $ok = $_ =~ /$regexp/gc;
+
+  $self->{CONFLICTHANDLERS}{$conflictName}{'..regexp'} = [$ok, undef];
 
   return $ok;
 }
@@ -475,7 +489,7 @@ sub YYVal {
 #            25 => ARRAY(0x100b305c0)
 #               0  '\',\''
 #               1  '\')\''
-sub YYSetReduce {
+sub YYSetReduceXXXXX {
   my $self = shift;
   my $action = pop;
   my $token = shift;
@@ -512,7 +526,51 @@ sub YYSetReduce {
   $token = [ $token ] unless ref($token);
   for (@$token) {
     # save if shift
-    if ($self->{STATES}[$conflictstate]{ACTIONS}{$_} >= 0) {
+    if (exists($self->{STATES}[$conflictstate]{ACTIONS}) and $self->{STATES}[$conflictstate]{ACTIONS}{$_} >= 0) {
+      $self->{CONFLICT}{$conflictName}{$_}  = [ $conflictstate,  $self->{STATES}[$conflictstate]{ACTIONS}{$_} ];
+    }
+    $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $action;
+  }
+}
+
+sub YYSetReduce {
+  my $self = shift;
+  my $action = pop;
+  my $token = shift;
+  
+
+  croak "YYSetReduce error: specify a production" unless defined($action);
+
+  my $conflictName = $self->YYLhs;
+
+  #$self->{CONFLICTHANDLERS}{conflictName}{states}
+  # is a hash
+  #        statenumber => [ tokens, '\'-\'' ]
+  my $cS = $self->{CONFLICTHANDLERS}{$conflictName}{states};
+  my @conflictStates = $cS ? @$cS : ();
+ 
+  return unless @conflictStates;
+
+  # Conflict state
+  my $cs = $conflictStates[0];
+
+
+  my ($conflictstate) = keys %{$cs};
+
+  # Action can be given using the name of the production
+  unless (looks_like_number($action)) {
+    my $actionnum = $self->{LABELS}{$action};
+    unless (looks_like_number($actionnum)) {
+      croak "YYSetReduce error: can't find production '$action'. Did you forget to name it?";
+    }
+    $action = -$actionnum;
+  }
+
+  $token = $cs->{$conflictstate} unless defined($token);
+  $token = [ $token ] unless ref($token);
+  for (@$token) {
+    # save if shift
+    if (exists($self->{STATES}[$conflictstate]{ACTIONS}) and $self->{STATES}[$conflictstate]{ACTIONS}{$_} >= 0) {
       $self->{CONFLICT}{$conflictName}{$_}  = [ $conflictstate,  $self->{STATES}[$conflictstate]{ACTIONS}{$_} ];
     }
     $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $action;
@@ -525,29 +583,27 @@ sub YYSetShift {
   # my ($self, $token, $action) = @_;
   # $action is syntactic sugar ...
 
-  # Conflict state
-  my $conflictstate = $self->YYNextState();
 
   my $conflictName = $self->YYLhs;
 
   my $cS = $self->{CONFLICTHANDLERS}{$conflictName}{states};
   my @conflictStates = $cS ? @$cS : ();
+ 
+  return unless @conflictStates;
 
-  # Perform the action to change the LALR tables only if the next state 
-  # is listed as a conflictstate
-  my ($cs) = (grep { exists $_->{$conflictstate}} @conflictStates); 
-  return unless $cs;
+  my $cs = $conflictStates[0];
+
+  my ($conflictstate) = keys %{$cs};
 
   $token = $cs->{$conflictstate} unless defined($token);
   $token = [ $token ] unless ref($token);
 
-  my $conflictname = $self->YYLhs;
   for (@$token) {
-    if (defined($self->{CONFLICT}{$conflictname}{$_}))  {
-      my ($conflictstate2, $action) = @{$self->{CONFLICT}{$conflictname}{$_}};
+    if (defined($self->{CONFLICT}{$conflictName}{$_}))  {
+      my ($conflictstate2, $action) = @{$self->{CONFLICT}{$conflictName}{$_}};
       # assert($conflictstate == $conflictstate2) 
 
-      $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $self->{CONFLICT}{$conflictname}{$_}[1];
+      $self->{STATES}[$conflictstate]{ACTIONS}{$_} = $self->{CONFLICT}{$conflictName}{$_}[1];
     }
     else {
       #croak "YYSetShift error. No shift action found";
@@ -591,6 +647,7 @@ sub YYIf {
       $self->YYSetReduce($_[1]); 
     }
   }
+  $self->YYIs($syntaxVariable, 0); 
 }
 
 sub YYGetLRAction {
@@ -1694,7 +1751,7 @@ sub _Parse {
   my($errstatus,$nberror,$token,$value,$stack,$check,$dotpos)
      = @$self{ 'ERRST', 'NBERR', 'TOKEN', 'VALUE', 'STACK', 'CHECK', 'DOTPOS' };
 
-
+  my %conflictiveStates = %{$self->{STATECONFLICT}};
 #DBG> my($debug)=$$self{DEBUG};
 #DBG> my($dbgerror)=0;
 
@@ -1719,7 +1776,18 @@ sub _Parse {
     while(1) {
         my($actions,$act,$stateno);
 
+        $self->{POS} = pos(${$self->input()});
         $stateno=$$stack[-1][0];
+        if (exists($conflictiveStates{$stateno})) {
+          #warn "Conflictive state $stateno managed by conflict handler '$conflictiveStates{$stateno}{name}'\n" 
+          for my $h (@{$conflictiveStates{$stateno}}) {
+            $self->{CURRENT_LHS} = $h->{name};
+            $h->{codeh}($self);
+          }
+        }
+
+        # check if the state is a conflictive one,
+        # if so, execute its conflict handlers
         $actions=$$states[$stateno];
 
 #DBG> print STDERR ('-' x 40),"\n";
@@ -1731,7 +1799,6 @@ sub _Parse {
 #DBG>          "\n";
 
 
-        $self->{POS} = pos(${$self->input()});
         if  (exists($$actions{ACTIONS})) {
 
         defined($$token)
@@ -1783,8 +1850,8 @@ sub _Parse {
         push(@$stack,[ $act, $$value ]);
 #DBG>   push(@{$stack->[-1]},$$token);
 
-          $$token ne '' #Don't eat the eof
-        and $$token=$$value=undef;
+          defined($$token) and ($$token ne '') #Don't eat the eof
+              and $$token=$$value=undef;
                 next;
             };
 

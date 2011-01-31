@@ -1,14 +1,15 @@
 %whites    =  /([ \t]*(?:#.*)?)/
 %token VAR =  /([A-Za-z][A-Za-z0-9_]*)/
 
+#%conflict ToN EMPTY? TYPE:VAR : NAME:VAR
 %conflict ToN {
-  if ($self->YYIs('type'))
+  if ($self->YYIs('EMPTY'))
     { $self->YYSetReduce('TYPE:VAR' ); }
   else 
     { $self->YYSetReduce('NAME:VAR' ); }
 }
 
-%explorer ToN { $self->YYIs('type', 1); } 
+%explorer ToN { $self->YYIs('EMPTY', 1); } 
 
 %%
 

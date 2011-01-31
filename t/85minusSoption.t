@@ -239,6 +239,7 @@ PROG(PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],ID[x]),NUM[2])),DECL(TERMINAL[int],ID
 
   unlink 't/ppcr.pl';
   unlink 'decl.pm';
+  unlink 't/err';
 
 }
 
@@ -285,6 +286,7 @@ PROG(PROG(EMPTY,EXP(TYPECAST(TERMINAL[int],ID[x]),NUM[2])),DECL(TERMINAL[int],ID
 
   unlink 't/ppcr.pl';
   unlink 'decl.pm';
+  unlink 't/err';
 
 }
 
@@ -328,6 +330,7 @@ DECLARATORINIT(TERMINAL[int],ID[x],PLUS(ID[y],ID[z]))
   like($r, $expected,'AST for "int (x) = y+z;"');
 
   unlink 't/ppcr.pl';
+  unlink 't/err';
 
 }
 
@@ -367,6 +370,7 @@ DECLARATORINIT(TERMINAL[int],ID[x],PLUS(ID[y],ID[z]))
   like($r, $expected,'AST for "int (x) = y+z;"');
 
   unlink 't/ppcr.pl';
+  unlink 't/err';
 
 }
 

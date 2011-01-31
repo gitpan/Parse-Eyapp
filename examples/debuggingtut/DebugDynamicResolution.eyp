@@ -14,9 +14,8 @@ compile it with
 
 Execute the generated modulino with:
 
-       ./DebugDynamicResolution.pm -t -i -c 'D;D;S;S'
+       ./DebugDynamicResolution.pm -t -c 'D;D;S;S'
 
-It will output s.t. like C<PROG(D(TERMINAL[D],D[D]),SS(TERMINAL[S],S[S]))>
 
 =head1 See also
 
@@ -28,9 +27,10 @@ It will output s.t. like C<PROG(D(TERMINAL[D],D[D]),SS(TERMINAL[S],S[S]))>
 
 %token D S
 
-%conflict LAST_OR_MORE {
-  /(?=\G\s*;\s*S)/ ?  $self->YYSetReduce( 'D:LAST' ) :  $self->YYSetShift() 
-}
+%conflict LAST_OR_MORE  /\s*;\s*S/?  D:LAST  :  shift 
+#%conflict LAST_OR_MORE {
+#  /(?=\G\s*;\s*S)/ ?  $self->YYSetReduce( 'D:LAST' ) :  $self->YYSetShift() 
+#}
 
 %tree 
 
