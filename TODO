@@ -1,4 +1,7 @@
+  * Check that Driver and generated parser are compatible. Version numbers
+
   * Implement support for tie-ins in the generated lexical analyzer
+
   * AmbiguousLanguage2.eyp usar como contraejemplo a la primera teoria
     
     The difficulty of using yacc is extraordinary. See t/noPackratSolvedExpRG2.yp

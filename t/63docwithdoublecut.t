@@ -181,7 +181,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 }; # end grammar
 
-unlink('main.pm', 't/main.pm');
+unlink('main.pm', 't/main.pm', 'main.output');
 
 Parse::Eyapp->new_grammar(
   input=>$grammar, 
@@ -200,4 +200,4 @@ like($generated,
    'documentation inside eyapp ends ok');
 }
 
-unlink('main.pm', 't/main.pm');
+unlink('main.pm', 't/main.pm', 'main.output');

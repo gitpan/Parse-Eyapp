@@ -401,6 +401,10 @@ prodname:  IDENT
 head: headsec '%%'
 ;
 
+#perlidents: /* empty */
+#      | perlidents perlident
+#;
+
 perlident:  
           IDENT 
       |   perlident '::' IDENT
