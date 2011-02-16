@@ -38,7 +38,7 @@ Also try:
 %strict
 
 %token then = %/(then)\b/
-%token if   = %/(if)\b/ !Assign2
+%token if   = %/(if)\b/=Assign2
 %token ID   = /([a-zA-Z_]\w*)/
 
 %tree bypass

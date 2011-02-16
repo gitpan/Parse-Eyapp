@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
-my ($nt, $nt6, $nt7, $nt8, $nt9, $nt10, $nt11);
+my ($nt, $nt6, $nt7, $nt8, $nt9, $nt10, $nt11, $nt12);
 my $skips;
 
 BEGIN { 
@@ -12,8 +12,9 @@ BEGIN {
   $nt9 = 9;
   $nt10 = 11;
   $nt11 = 11;
+  $nt12 = 23;
 }
-use Test::More tests=> $skips*$nt+$nt6+$nt7+$nt8+$nt9+$nt10+$nt11;
+use Test::More tests=> $skips*$nt+$nt6+$nt7+$nt8+$nt9+$nt10+$nt11+$nt12;
 
 
 SKIP: {
@@ -532,7 +533,7 @@ IF(TERMINAL[if],EQ(ID[then],ID[if]),TERMINAL[then],
 
 }
 
-# Checking syntax: %token if   = %/(if)\b/ !Assign2
+# Checking syntax: %token if   = %/(if)\b/=Assign2
 SKIP: {
   skip "t/PLIConflictNested2.eyp not found", $nt10 unless ($ENV{DEVELOPER} && -r "t/PLIConflictNested2.eyp" && -x "./eyapp");
 
@@ -614,5 +615,173 @@ IF(TERMINAL[if],EQ(ID[then],ID[if]),TERMINAL[then],
 
   unlink 't/PLIConflictNested2.pl';
   unlink 't/Assign2.pm';
+
+}
+
+# Checking syntax: %token if   = %/(if)\b/=variable
+# with forforeach example
+SKIP: {
+  skip "t/forforeacherik.eyp not found", $nt12 unless 
+      ($ENV{DEVELOPER} 
+      && -r "t/forforeacherik.eyp" 
+      && -r "t/forforeacherikcontextual.eyp" 
+      && -r "t/forforeacherikcontextual2.eyp" 
+      && -r "t/C.eyp" 
+      && -x "./eyapp");
+
+  unlink 't/forforeacherik.pl';
+  unlink 't/C.pm';
+
+  my $r = system(q{perl -I./lib/ eyapp -P -o t/C.pm  t/C.eyp});
+  
+  ok(!$r, "aux grammar C.eyp compiled");
+
+  ok(-s "t/C.pm", "aux module C.pm exists");
+
+  $r = system(q{perl -I./lib/ eyapp -TC -o t/forforeacherik.pl t/forforeacherik.eyp});
+  
+  ok(!$r, "compiled t/forforeacherik.eyp");
+
+  ok(-s "t/forforeacherik.pl", "modulino exists");
+
+  ok(-x "t/forforeacherik.pl", "modulino has execution permits");
+
+
+    $r = qx{perl -It t/forforeacherik.pl -t -i -c 'with for each a' 2>&1};
+
+
+  ok(!$@,'t/forforeacherik.eyp executed as standalone modulino');
+
+  my $expected = q{
+s_is_with_FE_ID(TERMINAL[foreach],TERMINAL[a])
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST of forforeacherik.eyp for "with for each a"');
+
+
+
+    $r = qx{perl -It t/forforeacherik.pl -t -i -c 'for each' 2>&1};
+
+
+  ok(!$@,'t/forforeacherik.eyp executed as standalone modulino');
+
+  $expected = q{
+Syntax error near 'for each'. 
+Expected one of these terminals: 'F' 'with'
+There were 1 errors during parsing
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,q{syntax error in  forforeacherik.eyp for "for each" since token isn't context sensitive});
+
+  ############################################
+
+  $r = system(q{perl -I./lib/ eyapp -TC -o t/forforeacherik.pl t/forforeacherikcontextual.eyp});
+  
+  ok(!$r, "compiled t/forforeacherikcontextual.eyp");
+
+  ok(-s "t/forforeacherik.pl", "modulino exists");
+
+  ok(-x "t/forforeacherik.pl", "modulino has execution permits");
+
+
+    $r = qx{perl -It t/forforeacherik.pl -t -i -c 'with for each a' 2>&1};
+
+
+  ok(!$@,'t/forforeacherikcontextual.eyp executed as standalone modulino');
+
+  $expected = q{
+s_is_with_FE_ID(TERMINAL[foreach],TERMINAL[a])
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST of forforeacherikcontextual.eyp for "with for each a"');
+
+
+
+    $r = qx{perl -It t/forforeacherik.pl -t -i -c 'for each' 2>&1};
+
+
+  ok(!$@,'t/forforeacherikcontextual.eyp executed as standalone modulino');
+
+  $expected = q{
+s_is_F_ID(TERMINAL[for],TERMINAL[each])
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,q{AST in  forforeacherikcontextual.eyp for "for each"});
+
+  ############################################
+
+  $r = system(q{perl -I./lib/ eyapp -TC -o t/forforeacherik.pl t/forforeacherikcontextual2.eyp});
+  
+  ok(!$r, "compiled t/forforeacherikcontextual2.eyp");
+
+  ok(-s "t/forforeacherik.pl", "modulino exists");
+
+  ok(-x "t/forforeacherik.pl", "modulino has execution permits");
+
+
+    $r = qx{perl -It t/forforeacherik.pl -t -i -c 'for each each s' 2>&1};
+
+
+  ok(!$@,'t/forforeacherikcontextual2.eyp executed as standalone modulino');
+
+  $expected = q{
+s_is_FE_ID_s(TERMINAL[for each],TERMINAL[each])
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'AST of forforeacherikcontextual2.eyp for "for each each s"');
+
+
+
+    $r = qx{perl -It t/forforeacherik.pl -t -i -c 'for each' 2>&1};
+
+
+  ok(!$@,'t/forforeacherikcontextual2.eyp executed as standalone modulino');
+
+  $expected = q{
+s_is_F_ID(TERMINAL[for],TERMINAL[each])
+};
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,q{AST in  forforeacherikcontextual2.eyp for "for each"});
+
+  ############################################
+
+  unlink 't/forforeacherik.pl';
+  unlink 't/C.pm';
 
 }

@@ -1,3 +1,30 @@
+  * La informacion acerca de los números de línea en el debugger 
+    para la generación del analizador léxico esta hecha un desastre
+
+  * Bug and conceptual errors in contextual tokens:
+         * factorize, factorize makeLexer!!!!
+         * There is a "token" synchronization  problem in this case
+           See files:
+           t/forforeacherikcontextual.eyp 
+           t/forforeacherik.eyp 
+           t/forforeacherikcontextual2.eyp
+           t/C.eyp
+
+           creo que hay salvar en self->{POS} la $pos despues del matching
+           en el código del lexer generado para este tipo de tokens
+
+         * %/.../ defines contextual tokens and it is independent of
+                           / ... /=Var
+                           / ... /!Var
+           they must exist independently
+
+         * This technique can be used to parse difficult ambiguous grammars
+                   EQUAB = %//=ab 
+           then in the body of the grammar:
+                         s: EQUAB ab cs | as bc
+           etc.
+
+
   * Check that Driver and generated parser are compatible. Version numbers
 
   * Implement support for tie-ins in the generated lexical analyzer

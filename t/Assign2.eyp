@@ -1,4 +1,4 @@
-%token ID = /[a-zA-Z_]\w*/
+%token ID = /([a-zA-Z_])\w*/
 
 %%
 assignstmt: 

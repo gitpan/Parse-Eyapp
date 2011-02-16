@@ -499,6 +499,10 @@ t/CplusplusNested3.eyp
 t/ExpList2.eyp
 t/PLIConflictNested.eyp
 t/PLIConflictNested2.eyp
+t/forforeacherik.eyp
+t/forforeacherikcontextual.eyp
+t/forforeacherikcontextual2.eyp
+t/C.eyp
 t/78twolexers.t
 t/79syntactictokenwithdef.t
 t/80ppcr.t
