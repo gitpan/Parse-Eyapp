@@ -2,9 +2,9 @@
 use strict;
 my ($nt, );
 
-BEGIN { $nt = 10; 
+BEGIN { $nt = 10 + 3; 
 }
-use Test::More tests=> $nt;
+use Test::More 'no_plan'; #tests=> $nt;
 
 # test "expects" method with PL-I if if=then then then=if example
 SKIP: {
@@ -125,5 +125,23 @@ IF(
   unlink 't/pl1.pl';
   unlink 't/Assign.pm';
 
+}
+
+SKIP: {
+  skip "t/albertosimoes.yp not found", 3, unless ($ENV{DEVELOPER} 
+                                                        && -r "t/albertosimoes.yp" 
+                                                        && -x "./eyapp");
+
+  unlink 't/pl1.pl';
+
+  my $r = system(q{perl -I./lib/ eyapp -C -o t/pl1.pl t/albertosimoes.yp 2>&1 > t/albertosimoes.err});
+  ok(!$r, "t/albertosimoes.yp compiled");
+
+  ok(-s "t/pl1.pl", "modulino pl1 exists");
+
+  ok(-x "t/pl1.pl", "modulino has execution permits");
+
+  unlink 't/pl1.pl';
+  unlink 't/albertosimoes.err';
 }
 

@@ -1,8 +1,9 @@
+%token then = %/(then)\b/
 %token ID = /([a-zA-Z_])\w*/
 
 %%
-assignstmt: 
-    id '=' expr
+expr_then: 
+     expr then 
 ;
 
 expr:
@@ -15,3 +16,5 @@ id:
 ;
 
 %%
+
+

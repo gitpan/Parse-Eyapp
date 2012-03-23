@@ -10,11 +10,11 @@ BEGIN {
   $nt7 = 7;
   $nt8 = 9;
   $nt9 = 9;
-  $nt10 = 11;
+  $nt10 = 15;
   $nt11 = 11;
   $nt12 = 23;
 }
-use Test::More tests=> $skips*$nt+$nt6+$nt7+$nt8+$nt9+$nt10+$nt11+$nt12;
+use Test::More 'no_plan'; #tests=> $skips*$nt+$nt6+$nt7+$nt8+$nt9+$nt10+$nt11+$nt12;
 
 
 SKIP: {
@@ -612,6 +612,71 @@ IF(TERMINAL[if],EQ(ID[then],ID[if]),TERMINAL[then],
 
 
   like($r, $expected,'AST for "if then=if then if a=b then c=d"');
+
+  #############################################
+
+  eval {
+
+    $r = qx{perl -It t/PLIConflictNested2.pl -t -i -c 'if if then if if then if=then'};
+
+  };
+
+  ok(!$@,'t/PLIConflictNested2.eyp executed as standalone modulino');
+
+  $expected = q{
+        IF(
+          TERMINAL[if],
+          ID[if],
+          TERMINAL[then],
+          IF(
+            TERMINAL[if],
+            ID[if],
+            TERMINAL[then],
+            ASSIGN(
+              ID[if],
+              ID[then]
+            )
+          )
+        )
+  };
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'PLIConflictNested2 AST for "if if then if if then if=then"');
+
+  #############################################
+
+  eval {
+
+    $r = qx{perl -It t/PLIConflictNested2.pl -t -i -c 'if if then if=then'};
+
+  };
+
+  ok(!$@,'t/PLIConflictNested2.eyp executed as standalone modulino');
+
+  $expected = q{
+        IF(
+          TERMINAL[if],
+          ID[if],
+          TERMINAL[then],
+          ASSIGN(
+            ID[if],
+            ID[then]
+          )
+        )
+  };
+  $expected =~ s/\s+//g;
+  $expected = quotemeta($expected);
+  $expected = qr{$expected};
+
+  $r =~ s/\s+//g;
+
+
+  like($r, $expected,'PLIConflictNested2 AST for "if if then if if then if=then"');
 
   unlink 't/PLIConflictNested2.pl';
   unlink 't/Assign2.pm';

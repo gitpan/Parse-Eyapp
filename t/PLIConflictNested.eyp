@@ -43,8 +43,14 @@ Also try:
                   my $pos = pos();
                   if (/\Gif\b/gc) { 
                     if ($self->expects('if')) {   
-                       if (!$self->YYPreParse('Assign2')) {
+                       my $oldselfpos = $self->{POS};
+                       $self->{POS} = pos();   
+                       if ($self->YYPreParse('Assign2')) {
+                         $self->{POS} = $oldselfpos;
                          return ('if', 'if'); 
+                       }
+                       else {
+                         $self->{POS} = $oldselfpos;
                        }
                     }
                   }

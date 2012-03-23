@@ -1,7 +1,16 @@
+  * Lars request (see dir contributions): allow AST classes to be Moose or any other OOP framework
+     Node clases inherit from Parse::Eyapp::Node.pm inherit from Moose, wrapping around Node?
+
+  * Lexer generation:
+       %token = /(reg1)(reg)(reg3)/
+
+    return the array of parenthesis not just $1
+
+  * Include PERLCODE as a predefined token in lexer generation
   * La informacion acerca de los números de línea en el debugger 
     para la generación del analizador léxico esta hecha un desastre
 
-  * Bug and conceptual errors in contextual tokens:
+  * Bug and conceptual errors in contextual tokens: (see t/77. I believe it is solved)
          * factorize, factorize makeLexer!!!!
          * There is a "token" synchronization  problem in this case
            See files:
@@ -709,8 +718,6 @@
   *  Line numbers seem to be in a buggy state.
      There is also a "bug" with tokenline and the static attribute approach: tokenline
      attribute is defined to 1 while the static/attribute approach searches while "undef"
-
-  * Lars request (see dir contributions): allow AST classes to be Moose or any other OOP framework
 
   * Provide a module providing regexp for most common non destructive lexing: NUMs, IDs, etc
 

@@ -517,6 +517,7 @@ t/confusingsolvedppcr.eyp
 t/confusingsolvedppcrnot.eyp
 t/81tokendirectiveandsubstitution.t
 t/82expectandPLI.t
+t/albertosimoes.yp
 t/83parsingstringsandtrees.t
 t/84graphics.t
 t/85minusSoption.t
@@ -684,4 +685,5 @@ t/twolexers.eyp
 t/twolexers2.eyp
 TODO
 treereg
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)

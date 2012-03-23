@@ -494,7 +494,8 @@ sub Tail {
     my($linenums)=$self->Option('linenumbers');
     my($text);
 
-        $$self{GRAMMAR}{TAIL}[0]
+        ((reftype $$self{GRAMMAR}{TAIL} eq 'ARRAY') and 
+        $$self{GRAMMAR}{TAIL}[0])
     or  return '';
 
         defined($inputfile)
